@@ -4,7 +4,7 @@
 %x DQUOTE
 
 %{
-
+#include "token.h"
 #include <string.h>
 #include <stdarg.h>
 
@@ -61,10 +61,16 @@ void copy_line();
 "true"                      { yylval.s = strdup("1"); return BOOL_LITERAL; }
 "false"                     { yylval.s = strdup("0"); return BOOL_LITERAL; }
 "read"                      { yylval.s = strdup(yytext); return READ; }
-"print"                    { yylval.s = strdup(yytext); return PRINT;} 
+"print"                     { yylval.s = strdup(yytext); return PRINT;} 
 "function"                  { return FUNCTION; }
 "end"                       { return END; }
 "return"                    { return RETURN; }
+
+    /* operatori logici */
+    
+"not"                       { return NOT; }
+"and"                       { return AND; }
+"or"                        { return OR; }
 
     /* identificatori */
 
@@ -78,11 +84,8 @@ void copy_line();
 "/" |
 "="                         { return yytext[0]; }
 
-    /* operatori logici */
 
-"not"                         { return NOT; }
-"and"                        { return AND; }
-"or"                        { return OR; }
+
 
     /* operatori di confronto */
 
