@@ -34,12 +34,16 @@ void print_usage();
     int t;
 }
 
-%token NIL BOOL_LITERAL FUNCTION END WHILE DO LOCAL THEN
-%token IF ELSE FOR RETURN PRINT READ 
-%left AND OR NOT
-%left '>' '<' GE LE EQ NE 
-%left '+' '-'
-%left '*' '/'
+%token  IF ELSE THEN FOR DO FUNCTION END RETURN
+%token  PRINT READ 
+%token  NIL
+%token  STRING
+%token  BOOL
+%token  INT_NUM  FLOAT_NUM
+%token  ID
+%left   AND OR NOT
+%left   '>' '<' GE LE EQ NE 
+%left   '+' '-' '=' '*' '/'
 %right MINUS
 
 %expect 1 /* conflitto shift/reduce (else) , bison lo risolve scegliendo shift */
@@ -48,7 +52,7 @@ void print_usage();
 %type <ast> return_statement expr_statement func_call args format_string printf_statement  if_cond
 %type <ast> declarator_list declarator
 %type <ast> func_declaration param_list param compound_statement statement_list statement
-%type <ast> scanf_statement scanf_var_list iteration_statement init cond update selection_statement
+%type <ast> read_statement read_var_list iteration_statement init cond update selection_statement
 %type <ast> embedded_statement single_statement
 %type <t> type
 
@@ -69,8 +73,8 @@ global_declaration
     ;
 
 var_declaration
-	: type declarator_list ';'                                      { $$ = new_declaration(DECL_T, $1, $2); fill_symtab(current_symtab, $$, -1, VARIABLE); }  
-    | ID declarator_list ';'                                        { $$ = new_error(ERROR_NODE_T); yyerror(error_string_format("Unknown type name: " BOLD "%s" RESET, $1 )); }
+	: type declarator_list                                          { $$ = new_declaration(DECL_T, $1, $2); fill_symtab(current_symtab, $$, -1, VARIABLE); }  
+    | ID declarator_list                                            { $$ = new_error(ERROR_NODE_T); yyerror(error_string_format("Unknown type name: " BOLD "%s" RESET, $1 )); }
     ;
 
 declarator_list
@@ -84,24 +88,20 @@ declarator
 	;
 
 type
-    : INT                                                           { $$ = INT_T; }
-    | FLOAT                                                         { $$ = FLOAT_T; }
-    | DOUBLE                                                        { $$ = DOUBLE_T; }
-    | VOID                                                          { $$ = VOID_T; } 
+    : INT_NUM                                                           { $$ = INT_T; }
+    | FLOAT_NUM                                                         { $$ = FLOAT_T; }
     ;
 
 var
     : ID                                                            { $$ = new_variable(VAR_T, $1, NULL); }
-    | ID '[' expr ']'                                               { $$ = new_variable(VAR_T, $1, $3); check_array($3); }
+    | ID '{' expr '}'                                               { $$ = new_variable(VAR_T, $1, $3); check_array($3); }
     ;
 
 func_declaration
-    : type ID '(' param_list ')'                                    { param_list = $4; ret_type = $1; insert_sym(current_symtab, $2, $1, FUNCTION, $4, yylineno, line); } 
+    : FUNCTION ID '(' param_list ')'                                    { param_list = $4; ret_type = $1; insert_sym(current_symtab, $2, $1, FUNCTION, $4, yylineno, line); } 
             compound_statement                                      { $$ = new_func_def(FDEF_T, $1, $2, $4, $7); check_func_return($1, $7); }
-    | type ID '(' ')'                                               { ret_type = $1; insert_sym(current_symtab, $2, $1, FUNCTION, NULL, yylineno, line); } 
+    | FUNCTION ID '(' ')'                                               { ret_type = $1; insert_sym(current_symtab, $2, $1, FUNCTION, NULL, yylineno, line); } 
             compound_statement                                      { $$ = new_func_def(FDEF_T, $1, $2, NULL, $6); check_func_return($1, $6); }
-    | type ID '(' VOID ')'                                          { ret_type = $1; insert_sym(current_symtab, $2, $1, FUNCTION, NULL, yylineno, line); } 
-            compound_statement                                      { $$ = new_func_def(FDEF_T, $1, $2, NULL, $7); check_func_return($1, $7); }
     ;
 
 param_list
@@ -110,8 +110,8 @@ param_list
     ;
 
 param
-    : type ID                                                       { $$ = new_declaration(DECL_T, $1, new_variable(VAR_T, $2, NULL)); }
-    | type ID '[' ']'                                               { $$ = new_declaration(DECL_T, $1, new_variable(VAR_T, $2, new_value(VAL_T, INT_T, "0"))); }
+    : ID                                                       { $$ = new_declaration(DECL_T, $1, new_variable(VAR_T, $2, NULL)); }
+    | ID '[' ']'                                               { $$ = new_declaration(DECL_T, $1, new_variable(VAR_T, $2, new_value(VAL_T, INT_T, "0"))); }
     ;
 
 compound_statement
@@ -139,7 +139,7 @@ statement
     | iteration_statement
     | return_statement
     | printf_statement                                              { fmt_flag = 1; }
-    | scanf_statement                                               { fmt_flag = 1; }
+    | read_statement                                               { fmt_flag = 1; }
     | assignment_statement
     ;
 
@@ -156,12 +156,12 @@ single_statement
     | iteration_statement
     | return_statement
     | printf_statement                                              { fmt_flag = 1; }
-    | scanf_statement                                               { fmt_flag = 1; }
+    | read_statement                                               { fmt_flag = 1; }
     | assignment_statement
     ;
 
 expr_statement
-    : expr ';'                                                      { eval_expr_type($1); $$ = check_expr_statement($1); }
+    : expr                                                          { eval_expr_type($1); $$ = check_expr_statement($1); }
     ;
 
 selection_statement
@@ -174,7 +174,7 @@ if_cond
     ;
 
 iteration_statement
-    : FOR '(' init ';' cond ';' update ')' embedded_statement       { $$ = new_for(FOR_T, $3, $5, $7, $9); scope_exit(); }
+    : FOR init ',' cond ',' update DO embedded_statement       { $$ = new_for(FOR_T, $2, $4, $6, $8); scope_exit(); }
     ;
 
 init
@@ -195,28 +195,28 @@ update
     ;
     
 return_statement
-    : RETURN ';'                                                    { $$ = new_return(RETURN_T, NULL); check_return(NULL); }
-    | RETURN expr ';'                                               { $$ = new_return(RETURN_T, $2); check_return($2); }
+    : RETURN                                                        { $$ = new_return(RETURN_T, NULL); check_return(NULL); }
+    | RETURN expr                                                   { $$ = new_return(RETURN_T, $2); check_return($2); }
     ;
 
 printf_statement
-    : PRINTF '(' format_string ')' ';'                              { $$ = new_func_call(FCALL_T, $1, $3); check_format_string($3, NULL, PRINTF_T); }
-    | PRINTF '(' format_string ',' args ')' ';'                     { $$ = new_func_call(FCALL_T, $1, link_AstNode($3,$5)); check_format_string($3, $5, PRINTF_T); }
-    | PRINTF '(' ')' ';'                                            { $$ = new_error(ERROR_NODE_T); yyerror("too few arguments to function" BOLD " printf" RESET); }
+    : PRINT '(' format_string ')'                                   { $$ = new_func_call(FCALL_T, $1, $3); check_format_string($3, NULL, PRINT_T); }
+    | PRINT '(' format_string ',' args ')'                          { $$ = new_func_call(FCALL_T, $1, link_AstNode($3,$5)); check_format_string($3, $5, PRINT_T); }
+    | PRINT '(' ')'                                                 { $$ = new_error(ERROR_NODE_T); yyerror("too few arguments to function" BOLD " print" RESET); }
     ;
 
 
-scanf_statement
-    : SCANF '(' format_string ',' scanf_var_list ')' ';'            { check_format_string($3, $5, SCANF_T); $$ = new_func_call(FCALL_T, $1, link_AstNode($3, $5)); }
-    | SCANF '(' format_string ')' ';'                               { check_format_string($3, NULL, SCANF_T); $$ = new_func_call(FCALL_T, $1, $3); }
-    | SCANF '(' ')' ';'                                             { $$ = new_error(ERROR_NODE_T); yyerror("too few arguments to function" BOLD " scanf" RESET); }
+read_statement
+    : READ '(' format_string ',' read_var_list ')'                { check_format_string($3, $5, READ_T); $$ = new_func_call(FCALL_T, $1, link_AstNode($3, $5)); }
+    | READ '(' format_string ')'                                   { check_format_string($3, NULL, READ_T); $$ = new_func_call(FCALL_T, $1, $3); }
+    | READ '(' ')'                                                 { $$ = new_error(ERROR_NODE_T); yyerror("too few arguments to function" BOLD " read" RESET); }
     ;
 
-scanf_var_list
+read_var_list
     : '&' var                                                       { check_var_reference($2); by_reference($2); $$ = $2; }
     | var                                                           { check_var_reference($1); $$ = $1; }
-    | '&' var ',' scanf_var_list                                    { check_var_reference($2); by_reference($2); $$ = link_AstNode($2, $4); }
-    | var ','   scanf_var_list                                      { check_var_reference($1); link_AstNode($1, $3); }
+    | '&' var ',' read_var_list                                    { check_var_reference($2); by_reference($2); $$ = link_AstNode($2, $4); }
+    | var ','   read_var_list                                      { check_var_reference($1); link_AstNode($1, $3); }
     ;
 
 format_string
@@ -224,7 +224,7 @@ format_string
     ;
 
 assignment_statement
-    : assignment ';'                                                { $$ = $1; eval_expr_type($1); }
+    : assignment                                                    { $$ = $1; eval_expr_type($1); }
     ;
 
 assignment
@@ -414,8 +414,8 @@ void fill_symtab(struct symlist * syml, struct AstNode *n, enum TYPE type, enum 
 void print_usage(){
     printf("Usage: ./compiler [options] file  \n");
     printf("options: \n");
-    printf(" --help \t Diplay this information. \n");
-    printf(" -h \t\t Diplay this information. \n");
+    printf(" --help \t Display this information. \n");
+    printf(" -h \t\t Display this information. \n");
     printf(" -s \t\t Print Symbol Table. \n");
     printf(" -t \t\t Print Abstract Syntax Tree. \n");
 }

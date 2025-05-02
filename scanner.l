@@ -57,9 +57,11 @@ void copy_line();
 "if"                        { return IF; }
 "else"                      { return ELSE; }
 "for"                       { return FOR; }
+"do"                        { return DO; }
+"then"                      { return THEN; }
 "nil"                       { return NIL; }
-"true"                      { yylval.s = strdup("1"); return BOOL_LITERAL; }
-"false"                     { yylval.s = strdup("0"); return BOOL_LITERAL; }
+"true"                      { yylval.s = strdup("1"); return BOOL; }
+"false"                     { yylval.s = strdup("0"); return BOOL; }
 "read"                      { yylval.s = strdup(yytext); return READ; }
 "print"                     { yylval.s = strdup(yytext); return PRINT;} 
 "function"                  { return FUNCTION; }
