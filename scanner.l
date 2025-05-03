@@ -31,11 +31,11 @@ void copy_line();
 
     /* stringhe */
 
-\"\"|''                     { yylval.s = " "; return STRING; }
+\"\"                     { yylval.s = ""; return STRING; }
 
-\"|'                        { BEGIN DQUOTE; }
+\"                        { BEGIN DQUOTE; }
 <DQUOTE>([^"'\\\n]|\\.)*     { yylval.s = strdup(yytext); return STRING; }
-<DQUOTE>\"|'                { BEGIN INITIAL; }
+<DQUOTE>\"                { BEGIN INITIAL; }
 <DQUOTE>\n |
 <DQUOTE><<EOF>>             { yyerror("missing terminating \" character"); BEGIN INITIAL; }
 
@@ -54,25 +54,28 @@ void copy_line();
 
     /* keyword */
 
-"if"                        { return IF; }
-"else"                      { return ELSE; }
-"for"                       { return FOR; }
-"do"                        { return DO; }
-"then"                      { return THEN; }
-"nil"                       { return NIL; }
-"true"                      { yylval.s = strdup("1"); return BOOL; }
-"false"                     { yylval.s = strdup("0"); return BOOL; }
-"read"                      { yylval.s = strdup(yytext); return READ; }
-"print"                     { yylval.s = strdup(yytext); return PRINT;} 
-"function"                  { return FUNCTION; }
-"end"                       { return END; }
-"return"                    { return RETURN; }
-
-    /* operatori logici */
-    
-"not"                       { return NOT; }
-"and"                       { return AND; }
-"or"                        { return OR; }
+"and"           { return AND; }
+"break"         { return BREAK; }
+"do"            { return DO; }
+"else"          { return ELSE; }
+"elseif"        { return ELSEIF; }
+"end"           { return END; }
+"false"         { return FALSE; }
+"for"           { return FOR; }
+"function"      { return FUNCTION; }
+"goto"          { return GOTO; }
+"if"            { return IF; }
+"in"            { return IN; }
+"local"         { return LOCAL; }
+"nil"           { return NIL; }
+"not"           { return NOT; }
+"or"            { return OR; }
+"repeat"        { return REPEAT; }
+"return"        { return RETURN; }
+"then"          { return THEN; }
+"true"          { return TRUE; }
+"until"         { return UNTIL; }
+"while"         { return WHILE; }
 
     /* identificatori */
 
