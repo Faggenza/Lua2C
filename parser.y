@@ -1,11 +1,7 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
-#include "symtab.h"
-#include "tree.h"
-#include "global.h"
-#include "semantic.h"
-#include "translate.h"
+#include "ast.h"
 
 extern int yylex();
 extern FILE *yyin;
@@ -24,6 +20,8 @@ int print_symtab_flag = 0;
 int print_ast_flag = 0;
 void print_usage();
 
+enum TYPE type;
+
 %}
 
 %define parse.error verbose
@@ -34,16 +32,18 @@ void print_usage();
     int t;
 }
 
-%token  IF ELSE THEN FOR DO FUNCTION END RETURN
-%token  PRINT READ 
+%token  IF ELSE THEN FOR DO END RETURN
+%token  <t>  FUNCTION
+%token  <s> PRINT READ 
 %token  NIL
-%token  STRING
+%token  <s> STRING
 %token  BOOL
-%token  INT_NUM  FLOAT_NUM
-%token  ID
+%token  <s> INT_NUM  FLOAT_NUM
+%token  <s> ID
 %left   AND OR NOT
 %left   '>' '<' GE LE EQ NE 
-%left   '+' '-' '=' '*' '/'
+%left   '+' '-' '*' '/'
+%right  '='
 %right MINUS
 
 %expect 1 /* conflitto shift/reduce (else) , bison lo risolve scegliendo shift */
@@ -54,7 +54,7 @@ void print_usage();
 %type <ast> func_declaration param_list param compound_statement statement_list statement
 %type <ast> read_statement read_var_list iteration_statement init cond update selection_statement
 %type <ast> embedded_statement single_statement
-%type <t> type
+//%type <t> type
 
 %%
 
@@ -73,7 +73,7 @@ global_declaration
     ;
 
 var_declaration
-	: type declarator_list                                          { $$ = new_declaration(DECL_T, $1, $2); fill_symtab(current_symtab, $$, -1, VARIABLE); }  
+	: declarator_list               /*TODO:check_type*/             { $$ = new_declaration(DECL_T, $1); fill_symtab(current_symtab, $$, -1, VARIABLE); }  
     | ID declarator_list                                            { $$ = new_error(ERROR_NODE_T); yyerror(error_string_format("Unknown type name: " BOLD "%s" RESET, $1 )); }
     ;
 
@@ -87,10 +87,6 @@ declarator
 	| assignment
 	;
 
-type
-    : INT_NUM                                                           { $$ = INT_T; }
-    | FLOAT_NUM                                                         { $$ = FLOAT_T; }
-    ;
 
 var
     : ID                                                            { $$ = new_variable(VAR_T, $1, NULL); }
@@ -98,9 +94,9 @@ var
     ;
 
 func_declaration
-    : FUNCTION ID '(' param_list ')'                                    { param_list = $4; ret_type = $1; insert_sym(current_symtab, $2, $1, FUNCTION, $4, yylineno, line); } 
-            compound_statement                                      { $$ = new_func_def(FDEF_T, $1, $2, $4, $7); check_func_return($1, $7); }
-    | FUNCTION ID '(' ')'                                               { ret_type = $1; insert_sym(current_symtab, $2, $1, FUNCTION, NULL, yylineno, line); } 
+    : FUNCTION ID '(' param_list ')'                                { param_list = $4; insert_sym(current_symtab, $2, $1, FUNCTION, $4, yylineno, line); } 
+            compound_statement      /*TODO:remove type function*/   { $$ = new_func_def(FDEF_T, $1, $2, $4, $7); check_func_return($1, $7); }
+    | FUNCTION ID '(' ')'                                           { ret_type = $1; insert_sym(current_symtab, $2, $1, FUNCTION, NULL, yylineno, line); } 
             compound_statement                                      { $$ = new_func_def(FDEF_T, $1, $2, NULL, $6); check_func_return($1, $6); }
     ;
 
@@ -110,8 +106,8 @@ param_list
     ;
 
 param
-    : ID                                                       { $$ = new_declaration(DECL_T, $1, new_variable(VAR_T, $2, NULL)); }
-    | ID '[' ']'                                               { $$ = new_declaration(DECL_T, $1, new_variable(VAR_T, $2, new_value(VAL_T, INT_T, "0"))); }
+    : ID                                                            { $$ = new_declaration(DECL_T, new_variable(VAR_T, $1, NULL)); }
+    | ID '[' ']'                                                    { $$ = new_declaration(DECL_T, new_variable(VAR_T, $1, new_value(VAL_T, INT_T, "0"))); }
     ;
 
 compound_statement
@@ -165,8 +161,8 @@ expr_statement
     ;
 
 selection_statement
-    : IF  if_cond THEN embedded_statement END                         { $$ = new_if(IF_T, $2, $4, NULL); }
-    | IF  if_cond embedded_statement ELSE embedded_statement END     END       { $$ = new_if(IF_T, $2, $4, $6); }
+    : IF  if_cond THEN embedded_statement END                              { $$ = new_if(IF_T, $2, $4, NULL); }
+    | IF  if_cond THEN embedded_statement ELSE embedded_statement END      { $$ = new_if(IF_T, $2, $4, $6); }
     ;
 
 if_cond
@@ -178,8 +174,8 @@ iteration_statement
     ;
 
 init
-    : assignment                                                    { scope_enter(); eval_expr_type($1); $$ = $1;}
-    | type assignment                                               { scope_enter(); $$ = new_declaration(DECL_T, $1, $2); fill_symtab(current_symtab, $$, -1, VARIABLE); } 
+    //non posso usare una variabile già esistente 
+    : assignment                                                    { scope_enter(); $$ = new_declaration(DECL_T, $1); fill_symtab(current_symtab, $$, -1, VARIABLE); } 
     | /* empty */                                                   { scope_enter(); $$ = NULL; }
     ;
 

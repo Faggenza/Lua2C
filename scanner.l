@@ -4,7 +4,7 @@
 %x DQUOTE
 
 %{
-#include "token.h"
+#include "parser.tab.h"
 #include <string.h>
 #include <stdarg.h>
 
