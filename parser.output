@@ -1,32 +1,23 @@
-Terminals unused in grammar
+Terminals which are not used
 
-    NIL
-    BOOL
-
-
-Rules useless in parser due to conflicts
-
-   72 assignment_statement: assignment
+   NIL
+   BOOL
 
 
-Stato 5 1 conflitti shift/riduzione
-Stato 15 1 conflitti shift/riduzione
-Stato 24 2 conflitti shift/riduzione
-Stato 85 6 conflitti shift/riduzione
-Stato 88 3 conflitti shift/riduzione
-Stato 90 15 conflitti riduzione/riduzione
-Stato 101 15 conflitti riduzione/riduzione
-Stato 102 1 conflitti shift/riduzione
-Stato 110 1 conflitti shift/riduzione
+State 24 conflicts: 2 shift/reduce
+State 85 conflicts: 6 shift/reduce
+State 88 conflicts: 3 shift/reduce
+State 100 conflicts: 1 shift/reduce
+State 107 conflicts: 1 shift/reduce
 
 
-Grammatica
+Grammar
 
     0 $accept: program $end
 
-    1 $@1: ε
+    1 @1: /* empty */
 
-    2 program: $@1 global_declaration_list
+    2 program: @1 global_declaration_list
 
     3 global_declaration_list: global_declaration
     4                        | global_declaration global_declaration_list
@@ -40,2531 +31,2367 @@ Grammatica
     9 declarator_list: declarator
    10                | declarator ',' declarator_list
 
-   11 declarator: var
-   12           | assignment
+   11 declarator: assignment
 
-   13 var: ID
-   14    | ID '{' expr '}'
+   12 var: ID
+   13    | ID '{' expr '}'
 
-   15 $@2: ε
+   14 @2: /* empty */
 
-   16 func_declaration: FUNCTION ID '(' param_list ')' $@2 compound_statement
+   15 func_declaration: FUNCTION ID '(' param_list ')' @2 compound_statement
 
-   17 $@3: ε
+   16 @3: /* empty */
 
-   18 func_declaration: FUNCTION ID '(' ')' $@3 compound_statement
+   17 func_declaration: FUNCTION ID '(' ')' @3 compound_statement
 
-   19 param_list: param
-   20           | param ',' param_list
+   18 param_list: param
+   19           | param ',' param_list
 
-   21 param: ID
-   22      | ID '[' ']'
+   20 param: ID
+   21      | ID '[' ']'
 
-   23 compound_statement: scope_enter statement_list scope_exit
+   22 compound_statement: scope_enter statement_list scope_exit
 
-   24 scope_enter: '{'
+   23 scope_enter: '{'
 
-   25 scope_exit: '}'
+   24 scope_exit: '}'
 
-   26 statement_list: statement
-   27               | statement statement_list
+   25 statement_list: statement
+   26               | statement statement_list
 
-   28 statement: var_declaration
-   29          | compound_statement
-   30          | expr_statement
-   31          | selection_statement
-   32          | iteration_statement
-   33          | return_statement
-   34          | printf_statement
-   35          | read_statement
-   36          | assignment_statement
+   27 statement: var_declaration
+   28          | compound_statement
+   29          | expr_statement
+   30          | selection_statement
+   31          | iteration_statement
+   32          | return_statement
+   33          | printf_statement
+   34          | read_statement
 
-   37 embedded_statement: compound_statement
-   38                   | single_statement
-
-   39 single_statement: var_declaration
-   40                 | expr_statement
-   41                 | selection_statement
-   42                 | iteration_statement
-   43                 | return_statement
-   44                 | printf_statement
-   45                 | read_statement
-   46                 | assignment_statement
-
-   47 expr_statement: expr
-
-   48 selection_statement: IF if_cond THEN embedded_statement END
-   49                    | IF if_cond THEN embedded_statement ELSE embedded_statement END
-
-   50 if_cond: expr
-
-   51 iteration_statement: FOR init ',' cond ',' update DO embedded_statement
-
-   52 init: assignment
-   53     | ε
-
-   54 cond: expr
-   55     | ε
-
-   56 update: assignment
-   57       | expr
-   58       | ε
-
-   59 return_statement: RETURN
-   60                 | RETURN expr
-
-   61 printf_statement: PRINT '(' format_string ')'
-   62                 | PRINT '(' format_string ',' args ')'
-   63                 | PRINT '(' ')'
-
-   64 read_statement: READ '(' format_string ',' read_var_list ')'
-   65               | READ '(' format_string ')'
-   66               | READ '(' ')'
-
-   67 read_var_list: '&' var
-   68              | var
-   69              | '&' var ',' read_var_list
-   70              | var ',' read_var_list
-
-   71 format_string: STRING
-
-   72 assignment_statement: assignment
-
-   73 assignment: var '=' expr
-
-   74 expr: var
-   75     | number
-   76     | func_call
-   77     | expr '+' expr
-   78     | expr '-' expr
-   79     | expr '*' expr
-   80     | expr '/' expr
-   81     | NOT expr
-   82     | expr AND expr
-   83     | expr OR expr
-   84     | expr '>' expr
-   85     | expr '<' expr
-   86     | expr GE expr
-   87     | expr LE expr
-   88     | expr EQ expr
-   89     | expr NE expr
-   90     | '(' expr ')'
-   91     | '-' expr
-
-   92 number: INT_NUM
-   93       | FLOAT_NUM
-
-   94 func_call: ID '(' args ')'
-   95          | ID '(' ')'
-
-   96 args: expr
-   97     | expr ',' args
-
-
-Simboli terminali e regole in cui appaiono
-
-    $end (0) 0
-    '&' (38) 67 69
-    '(' (40) 16 18 61 62 63 64 65 66 90 94 95
-    ')' (41) 16 18 61 62 63 64 65 66 90 94 95
-    '*' (42) 79
-    '+' (43) 77
-    ',' (44) 10 20 51 62 64 69 70 97
-    '-' (45) 78 91
-    '/' (47) 80
-    '<' (60) 85
-    '=' (61) 73
-    '>' (62) 84
-    '[' (91) 22
-    ']' (93) 22
-    '{' (123) 14 24
-    '}' (125) 14 25
-    error (256)
-    IF (258) 48 49
-    ELSE (259) 49
-    THEN (260) 48 49
-    FOR (261) 51
-    DO (262) 51
-    END (263) 48 49
-    RETURN (264) 59 60
-    FUNCTION <t> (265) 16 18
-    PRINT <s> (266) 61 62 63
-    READ <s> (267) 64 65 66
-    NIL (268)
-    STRING <s> (269) 71
-    BOOL (270)
-    INT_NUM <s> (271) 92
-    FLOAT_NUM <s> (272) 93
-    ID <s> (273) 8 13 14 16 18 21 22 94 95
-    AND (274) 82
-    OR (275) 83
-    NOT (276) 81
-    GE (277) 86
-    LE (278) 87
-    EQ (279) 88
-    NE (280) 89
-    MINUS (281)
-
-
-Simboli nonterminali e regole in cui appaiono
-
-    $accept (42)
-        on left: 0
-    program (43)
-        on left: 2
-        on right: 0
-    $@1 (44)
-        on left: 1
-        on right: 2
-    global_declaration_list <ast> (45)
-        on left: 3 4
-        on right: 2 4
-    global_declaration <ast> (46)
-        on left: 5 6
-        on right: 3 4
-    var_declaration <ast> (47)
-        on left: 7 8
-        on right: 5 28 39
-    declarator_list <ast> (48)
-        on left: 9 10
-        on right: 7 8 10
-    declarator <ast> (49)
-        on left: 11 12
-        on right: 9 10
-    var <ast> (50)
-        on left: 13 14
-        on right: 11 67 68 69 70 73 74
-    func_declaration <ast> (51)
-        on left: 16 18
-        on right: 6
-    $@2 (52)
-        on left: 15
-        on right: 16
-    $@3 (53)
-        on left: 17
-        on right: 18
-    param_list <ast> (54)
-        on left: 19 20
-        on right: 16 20
-    param <ast> (55)
-        on left: 21 22
-        on right: 19 20
-    compound_statement <ast> (56)
-        on left: 23
-        on right: 16 18 29 37
-    scope_enter (57)
-        on left: 24
-        on right: 23
-    scope_exit (58)
-        on left: 25
-        on right: 23
-    statement_list <ast> (59)
-        on left: 26 27
-        on right: 23 27
-    statement <ast> (60)
-        on left: 28 29 30 31 32 33 34 35 36
-        on right: 26 27
-    embedded_statement <ast> (61)
-        on left: 37 38
-        on right: 48 49 51
-    single_statement <ast> (62)
-        on left: 39 40 41 42 43 44 45 46
-        on right: 38
-    expr_statement <ast> (63)
-        on left: 47
-        on right: 30 40
-    selection_statement <ast> (64)
-        on left: 48 49
-        on right: 31 41
-    if_cond <ast> (65)
-        on left: 50
-        on right: 48 49
-    iteration_statement <ast> (66)
-        on left: 51
-        on right: 32 42
-    init <ast> (67)
-        on left: 52 53
-        on right: 51
-    cond <ast> (68)
-        on left: 54 55
-        on right: 51
-    update <ast> (69)
-        on left: 56 57 58
-        on right: 51
-    return_statement <ast> (70)
-        on left: 59 60
-        on right: 33 43
-    printf_statement <ast> (71)
-        on left: 61 62 63
-        on right: 34 44
-    read_statement <ast> (72)
-        on left: 64 65 66
-        on right: 35 45
-    read_var_list <ast> (73)
-        on left: 67 68 69 70
-        on right: 64 69 70
-    format_string <ast> (74)
-        on left: 71
-        on right: 61 62 64 65
-    assignment_statement <ast> (75)
-        on left: 72
-        on right: 36 46
-    assignment <ast> (76)
-        on left: 73
-        on right: 12 52 56 72
-    expr <ast> (77)
-        on left: 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91
-        on right: 14 47 50 54 57 60 73 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 96 97
-    number <ast> (78)
-        on left: 92 93
-        on right: 75
-    func_call <ast> (79)
-        on left: 94 95
-        on right: 76
-    args <ast> (80)
-        on left: 96 97
-        on right: 62 94 97
-
-
-State 0
-
-    0 $accept: • program $end
-
-    $default  riduzione con la regola 1 ($@1)
-
-    program  prosecuzione allo stato 1
-    $@1      prosecuzione allo stato 2
-
-
-State 1
-
-    0 $accept: program • $end
-
-    $end  shift e prosecuzione allo stato 3
-
-
-State 2
-
-    2 program: $@1 • global_declaration_list
-
-    FUNCTION  shift e prosecuzione allo stato 4
-    ID        shift e prosecuzione allo stato 5
-
-    global_declaration_list  prosecuzione allo stato 6
-    global_declaration       prosecuzione allo stato 7
-    var_declaration          prosecuzione allo stato 8
-    declarator_list          prosecuzione allo stato 9
-    declarator               prosecuzione allo stato 10
-    var                      prosecuzione allo stato 11
-    func_declaration         prosecuzione allo stato 12
-    assignment               prosecuzione allo stato 13
-
-
-State 3
-
-    0 $accept: program $end •
-
-    $default  accetta
-
-
-State 4
-
-   16 func_declaration: FUNCTION • ID '(' param_list ')' $@2 compound_statement
-   18                 | FUNCTION • ID '(' ')' $@3 compound_statement
-
-    ID  shift e prosecuzione allo stato 14
-
-
-State 5
-
-    8 var_declaration: ID • declarator_list
-   13 var: ID •
-   14    | ID • '{' expr '}'
-
-    ID   shift e prosecuzione allo stato 15
-    '{'  shift e prosecuzione allo stato 16
-
-    ID        [riduzione con la regola 13 (var)]
-    $default  riduzione con la regola 13 (var)
-
-    declarator_list  prosecuzione allo stato 17
-    declarator       prosecuzione allo stato 10
-    var              prosecuzione allo stato 11
-    assignment       prosecuzione allo stato 13
-
-
-State 6
-
-    2 program: $@1 global_declaration_list •
-
-    $default  riduzione con la regola 2 (program)
-
-
-State 7
-
-    3 global_declaration_list: global_declaration •
-    4                        | global_declaration • global_declaration_list
-
-    FUNCTION  shift e prosecuzione allo stato 4
-    ID        shift e prosecuzione allo stato 5
-
-    $default  riduzione con la regola 3 (global_declaration_list)
-
-    global_declaration_list  prosecuzione allo stato 18
-    global_declaration       prosecuzione allo stato 7
-    var_declaration          prosecuzione allo stato 8
-    declarator_list          prosecuzione allo stato 9
-    declarator               prosecuzione allo stato 10
-    var                      prosecuzione allo stato 11
-    func_declaration         prosecuzione allo stato 12
-    assignment               prosecuzione allo stato 13
+   35 embedded_statement: compound_statement
+   36                   | single_statement
+
+   37 single_statement: var_declaration
+   38                 | expr_statement
+   39                 | selection_statement
+   40                 | iteration_statement
+   41                 | return_statement
+   42                 | printf_statement
+   43                 | read_statement
+
+   44 expr_statement: expr
+
+   45 selection_statement: IF if_cond THEN embedded_statement END
+   46                    | IF if_cond THEN embedded_statement ELSE embedded_statement END
+
+   47 if_cond: expr
+
+   48 iteration_statement: FOR init ',' cond ',' update DO embedded_statement
+
+   49 init: assignment
+   50     | /* empty */
+
+   51 cond: expr
+   52     | /* empty */
+
+   53 update: assignment
+   54       | expr
+   55       | /* empty */
+
+   56 return_statement: RETURN
+   57                 | RETURN expr
+
+   58 printf_statement: PRINT '(' format_string ')'
+   59                 | PRINT '(' format_string ',' args ')'
+   60                 | PRINT '(' ')'
+
+   61 read_statement: READ '(' format_string ',' read_var_list ')'
+   62               | READ '(' format_string ')'
+   63               | READ '(' ')'
+
+   64 read_var_list: '&' var
+   65              | var
+   66              | '&' var ',' read_var_list
+   67              | var ',' read_var_list
+
+   68 format_string: STRING
+
+   69 assignment: var '=' expr
+
+   70 expr: var
+   71     | number
+   72     | func_call
+   73     | expr '+' expr
+   74     | expr '-' expr
+   75     | expr '*' expr
+   76     | expr '/' expr
+   77     | NOT expr
+   78     | expr AND expr
+   79     | expr OR expr
+   80     | expr '>' expr
+   81     | expr '<' expr
+   82     | expr GE expr
+   83     | expr LE expr
+   84     | expr EQ expr
+   85     | expr NE expr
+   86     | '(' expr ')'
+   87     | '-' expr
+
+   88 number: INT_NUM
+   89       | FLOAT_NUM
+
+   90 func_call: ID '(' args ')'
+   91          | ID '(' ')'
+
+   92 args: expr
+   93     | expr ',' args
+
+
+Terminals, with rules where they appear
+
+$end (0) 0
+'&' (38) 64 66
+'(' (40) 15 17 58 59 60 61 62 63 86 90 91
+')' (41) 15 17 58 59 60 61 62 63 86 90 91
+'*' (42) 75
+'+' (43) 73
+',' (44) 10 19 48 59 61 66 67 93
+'-' (45) 74 87
+'/' (47) 76
+'<' (60) 81
+'=' (61) 69
+'>' (62) 80
+'[' (91) 21
+']' (93) 21
+'{' (123) 13 23
+'}' (125) 13 24
+error (256)
+IF (258) 45 46
+ELSE (259) 46
+THEN (260) 45 46
+FOR (261) 48
+DO (262) 48
+END (263) 45 46
+RETURN (264) 56 57
+FUNCTION (265) 15 17
+PRINT (266) 58 59 60
+READ (267) 61 62 63
+NIL (268)
+STRING (269) 68
+BOOL (270)
+INT_NUM (271) 88
+FLOAT_NUM (272) 89
+ID (273) 8 12 13 15 17 20 21 90 91
+NOT (274) 77
+OR (275) 79
+AND (276) 78
+NE (277) 85
+EQ (278) 84
+LE (279) 83
+GE (280) 82
+MINUS (281)
+
+
+Nonterminals, with rules where they appear
+
+$accept (42)
+    on left: 0
+program (43)
+    on left: 2, on right: 0
+@1 (44)
+    on left: 1, on right: 2
+global_declaration_list (45)
+    on left: 3 4, on right: 2 4
+global_declaration (46)
+    on left: 5 6, on right: 3 4
+var_declaration (47)
+    on left: 7 8, on right: 5 27 37
+declarator_list (48)
+    on left: 9 10, on right: 7 8 10
+declarator (49)
+    on left: 11, on right: 9 10
+var (50)
+    on left: 12 13, on right: 64 65 66 67 69 70
+func_declaration (51)
+    on left: 15 17, on right: 6
+@2 (52)
+    on left: 14, on right: 15
+@3 (53)
+    on left: 16, on right: 17
+param_list (54)
+    on left: 18 19, on right: 15 19
+param (55)
+    on left: 20 21, on right: 18 19
+compound_statement (56)
+    on left: 22, on right: 15 17 28 35
+scope_enter (57)
+    on left: 23, on right: 22
+scope_exit (58)
+    on left: 24, on right: 22
+statement_list (59)
+    on left: 25 26, on right: 22 26
+statement (60)
+    on left: 27 28 29 30 31 32 33 34, on right: 25 26
+embedded_statement (61)
+    on left: 35 36, on right: 45 46 48
+single_statement (62)
+    on left: 37 38 39 40 41 42 43, on right: 36
+expr_statement (63)
+    on left: 44, on right: 29 38
+selection_statement (64)
+    on left: 45 46, on right: 30 39
+if_cond (65)
+    on left: 47, on right: 45 46
+iteration_statement (66)
+    on left: 48, on right: 31 40
+init (67)
+    on left: 49 50, on right: 48
+cond (68)
+    on left: 51 52, on right: 48
+update (69)
+    on left: 53 54 55, on right: 48
+return_statement (70)
+    on left: 56 57, on right: 32 41
+printf_statement (71)
+    on left: 58 59 60, on right: 33 42
+read_statement (72)
+    on left: 61 62 63, on right: 34 43
+read_var_list (73)
+    on left: 64 65 66 67, on right: 61 66 67
+format_string (74)
+    on left: 68, on right: 58 59 61 62
+assignment (75)
+    on left: 69, on right: 11 49 53
+expr (76)
+    on left: 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87
+   , on right: 13 44 47 51 54 57 69 73 74 75 76 77 78 79 80 81 82 83
+    84 85 86 87 92 93
+number (77)
+    on left: 88 89, on right: 71
+func_call (78)
+    on left: 90 91, on right: 72
+args (79)
+    on left: 92 93, on right: 59 90 93
+
+
+state 0
+
+    0 $accept: . program $end
+
+    $default  reduce using rule 1 (@1)
+
+    program  go to state 1
+    @1       go to state 2
+
+
+state 1
+
+    0 $accept: program . $end
+
+    $end  shift, and go to state 3
+
+
+state 2
+
+    2 program: @1 . global_declaration_list
+
+    FUNCTION  shift, and go to state 4
+    ID        shift, and go to state 5
+
+    global_declaration_list  go to state 6
+    global_declaration       go to state 7
+    var_declaration          go to state 8
+    declarator_list          go to state 9
+    declarator               go to state 10
+    var                      go to state 11
+    func_declaration         go to state 12
+    assignment               go to state 13
 
 
-State 8
+state 3
 
-    5 global_declaration: var_declaration •
+    0 $accept: program $end .
 
-    $default  riduzione con la regola 5 (global_declaration)
+    $default  accept
 
 
-State 9
+state 4
 
-    7 var_declaration: declarator_list •
+   15 func_declaration: FUNCTION . ID '(' param_list ')' @2 compound_statement
+   17                 | FUNCTION . ID '(' ')' @3 compound_statement
 
-    $default  riduzione con la regola 7 (var_declaration)
+    ID  shift, and go to state 14
 
 
-State 10
+state 5
 
-    9 declarator_list: declarator •
-   10                | declarator • ',' declarator_list
+    8 var_declaration: ID . declarator_list
+   12 var: ID .
+   13    | ID . '{' expr '}'
 
-    ','  shift e prosecuzione allo stato 19
+    ID   shift, and go to state 15
+    '{'  shift, and go to state 16
 
-    $default  riduzione con la regola 9 (declarator_list)
+    $default  reduce using rule 12 (var)
 
+    declarator_list  go to state 17
+    declarator       go to state 10
+    var              go to state 11
+    assignment       go to state 13
 
-State 11
 
-   11 declarator: var •
-   73 assignment: var • '=' expr
+state 6
 
-    '='  shift e prosecuzione allo stato 20
+    2 program: @1 global_declaration_list .
 
-    $default  riduzione con la regola 11 (declarator)
+    $default  reduce using rule 2 (program)
 
 
-State 12
+state 7
 
-    6 global_declaration: func_declaration •
+    3 global_declaration_list: global_declaration .
+    4                        | global_declaration . global_declaration_list
 
-    $default  riduzione con la regola 6 (global_declaration)
+    FUNCTION  shift, and go to state 4
+    ID        shift, and go to state 5
 
+    $default  reduce using rule 3 (global_declaration_list)
 
-State 13
+    global_declaration_list  go to state 18
+    global_declaration       go to state 7
+    var_declaration          go to state 8
+    declarator_list          go to state 9
+    declarator               go to state 10
+    var                      go to state 11
+    func_declaration         go to state 12
+    assignment               go to state 13
 
-   12 declarator: assignment •
 
-    $default  riduzione con la regola 12 (declarator)
+state 8
 
+    5 global_declaration: var_declaration .
 
-State 14
+    $default  reduce using rule 5 (global_declaration)
 
-   16 func_declaration: FUNCTION ID • '(' param_list ')' $@2 compound_statement
-   18                 | FUNCTION ID • '(' ')' $@3 compound_statement
 
-    '('  shift e prosecuzione allo stato 21
+state 9
 
+    7 var_declaration: declarator_list .
 
-State 15
+    $default  reduce using rule 7 (var_declaration)
 
-   13 var: ID •
-   14    | ID • '{' expr '}'
 
-    '{'  shift e prosecuzione allo stato 16
+state 10
 
-    '{'       [riduzione con la regola 13 (var)]
-    $default  riduzione con la regola 13 (var)
+    9 declarator_list: declarator .
+   10                | declarator . ',' declarator_list
 
+    ','  shift, and go to state 19
 
-State 16
+    $default  reduce using rule 9 (declarator_list)
 
-   14 var: ID '{' • expr '}'
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
+state 11
 
-    var        prosecuzione allo stato 28
-    expr       prosecuzione allo stato 29
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
+   69 assignment: var . '=' expr
 
+    '='  shift, and go to state 20
 
-State 17
 
-    8 var_declaration: ID declarator_list •
+state 12
 
-    $default  riduzione con la regola 8 (var_declaration)
+    6 global_declaration: func_declaration .
 
+    $default  reduce using rule 6 (global_declaration)
 
-State 18
 
-    4 global_declaration_list: global_declaration global_declaration_list •
+state 13
 
-    $default  riduzione con la regola 4 (global_declaration_list)
+   11 declarator: assignment .
 
+    $default  reduce using rule 11 (declarator)
 
-State 19
 
-   10 declarator_list: declarator ',' • declarator_list
+state 14
 
-    ID  shift e prosecuzione allo stato 15
+   15 func_declaration: FUNCTION ID . '(' param_list ')' @2 compound_statement
+   17                 | FUNCTION ID . '(' ')' @3 compound_statement
 
-    declarator_list  prosecuzione allo stato 32
-    declarator       prosecuzione allo stato 10
-    var              prosecuzione allo stato 11
-    assignment       prosecuzione allo stato 13
+    '('  shift, and go to state 21
 
 
-State 20
+state 15
 
-   73 assignment: var '=' • expr
+   12 var: ID .
+   13    | ID . '{' expr '}'
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
+    '{'  shift, and go to state 16
 
-    var        prosecuzione allo stato 28
-    expr       prosecuzione allo stato 33
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
+    $default  reduce using rule 12 (var)
 
 
-State 21
+state 16
 
-   16 func_declaration: FUNCTION ID '(' • param_list ')' $@2 compound_statement
-   18                 | FUNCTION ID '(' • ')' $@3 compound_statement
+   13 var: ID '{' . expr '}'
 
-    ID   shift e prosecuzione allo stato 34
-    ')'  shift e prosecuzione allo stato 35
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-    param_list  prosecuzione allo stato 36
-    param       prosecuzione allo stato 37
+    var        go to state 28
+    expr       go to state 29
+    number     go to state 30
+    func_call  go to state 31
 
 
-State 22
+state 17
 
-   92 number: INT_NUM •
+    8 var_declaration: ID declarator_list .
 
-    $default  riduzione con la regola 92 (number)
+    $default  reduce using rule 8 (var_declaration)
 
 
-State 23
+state 18
 
-   93 number: FLOAT_NUM •
+    4 global_declaration_list: global_declaration global_declaration_list .
 
-    $default  riduzione con la regola 93 (number)
+    $default  reduce using rule 4 (global_declaration_list)
 
 
-State 24
+state 19
 
-   13 var: ID •
-   14    | ID • '{' expr '}'
-   94 func_call: ID • '(' args ')'
-   95          | ID • '(' ')'
+   10 declarator_list: declarator ',' . declarator_list
 
-    '{'  shift e prosecuzione allo stato 16
-    '('  shift e prosecuzione allo stato 38
+    ID  shift, and go to state 15
 
-    '{'       [riduzione con la regola 13 (var)]
-    '('       [riduzione con la regola 13 (var)]
-    $default  riduzione con la regola 13 (var)
+    declarator_list  go to state 32
+    declarator       go to state 10
+    var              go to state 11
+    assignment       go to state 13
 
 
-State 25
+state 20
 
-   81 expr: NOT • expr
+   69 assignment: var '=' . expr
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-    var        prosecuzione allo stato 28
-    expr       prosecuzione allo stato 39
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
+    var        go to state 28
+    expr       go to state 33
+    number     go to state 30
+    func_call  go to state 31
 
 
-State 26
+state 21
 
-   91 expr: '-' • expr
+   15 func_declaration: FUNCTION ID '(' . param_list ')' @2 compound_statement
+   17                 | FUNCTION ID '(' . ')' @3 compound_statement
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
+    ID   shift, and go to state 34
+    ')'  shift, and go to state 35
 
-    var        prosecuzione allo stato 28
-    expr       prosecuzione allo stato 40
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
+    param_list  go to state 36
+    param       go to state 37
 
 
-State 27
+state 22
 
-   90 expr: '(' • expr ')'
+   88 number: INT_NUM .
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
+    $default  reduce using rule 88 (number)
 
-    var        prosecuzione allo stato 28
-    expr       prosecuzione allo stato 41
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
 
+state 23
 
-State 28
+   89 number: FLOAT_NUM .
 
-   74 expr: var •
+    $default  reduce using rule 89 (number)
 
-    $default  riduzione con la regola 74 (expr)
 
+state 24
 
-State 29
+   12 var: ID .
+   13    | ID . '{' expr '}'
+   90 func_call: ID . '(' args ')'
+   91          | ID . '(' ')'
 
-   14 var: ID '{' expr • '}'
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   82     | expr • AND expr
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   89     | expr • NE expr
+    '{'  shift, and go to state 16
+    '('  shift, and go to state 38
 
-    AND  shift e prosecuzione allo stato 42
-    OR   shift e prosecuzione allo stato 43
-    '>'  shift e prosecuzione allo stato 44
-    '<'  shift e prosecuzione allo stato 45
-    GE   shift e prosecuzione allo stato 46
-    LE   shift e prosecuzione allo stato 47
-    EQ   shift e prosecuzione allo stato 48
-    NE   shift e prosecuzione allo stato 49
-    '+'  shift e prosecuzione allo stato 50
-    '-'  shift e prosecuzione allo stato 51
-    '*'  shift e prosecuzione allo stato 52
-    '/'  shift e prosecuzione allo stato 53
-    '}'  shift e prosecuzione allo stato 54
+    '{'       [reduce using rule 12 (var)]
+    '('       [reduce using rule 12 (var)]
+    $default  reduce using rule 12 (var)
 
 
-State 30
+state 25
 
-   75 expr: number •
+   77 expr: NOT . expr
 
-    $default  riduzione con la regola 75 (expr)
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
+    var        go to state 28
+    expr       go to state 39
+    number     go to state 30
+    func_call  go to state 31
 
-State 31
 
-   76 expr: func_call •
+state 26
 
-    $default  riduzione con la regola 76 (expr)
+   87 expr: '-' . expr
 
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-State 32
+    var        go to state 28
+    expr       go to state 40
+    number     go to state 30
+    func_call  go to state 31
 
-   10 declarator_list: declarator ',' declarator_list •
 
-    $default  riduzione con la regola 10 (declarator_list)
+state 27
 
+   86 expr: '(' . expr ')'
 
-State 33
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-   73 assignment: var '=' expr •
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   82     | expr • AND expr
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   89     | expr • NE expr
+    var        go to state 28
+    expr       go to state 41
+    number     go to state 30
+    func_call  go to state 31
 
-    AND  shift e prosecuzione allo stato 42
-    OR   shift e prosecuzione allo stato 43
-    '>'  shift e prosecuzione allo stato 44
-    '<'  shift e prosecuzione allo stato 45
-    GE   shift e prosecuzione allo stato 46
-    LE   shift e prosecuzione allo stato 47
-    EQ   shift e prosecuzione allo stato 48
-    NE   shift e prosecuzione allo stato 49
-    '+'  shift e prosecuzione allo stato 50
-    '*'  shift e prosecuzione allo stato 52
-    '/'  shift e prosecuzione allo stato 53
 
-    $default  riduzione con la regola 73 (assignment)
+state 28
 
+   70 expr: var .
 
-State 34
+    $default  reduce using rule 70 (expr)
 
-   21 param: ID •
-   22      | ID • '[' ']'
 
-    '['  shift e prosecuzione allo stato 55
+state 29
 
-    $default  riduzione con la regola 21 (param)
+   13 var: ID '{' expr . '}'
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   78     | expr . AND expr
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   85     | expr . NE expr
 
+    OR   shift, and go to state 42
+    AND  shift, and go to state 43
+    '>'  shift, and go to state 44
+    '<'  shift, and go to state 45
+    NE   shift, and go to state 46
+    EQ   shift, and go to state 47
+    LE   shift, and go to state 48
+    GE   shift, and go to state 49
+    '+'  shift, and go to state 50
+    '-'  shift, and go to state 51
+    '*'  shift, and go to state 52
+    '/'  shift, and go to state 53
+    '}'  shift, and go to state 54
 
-State 35
 
-   18 func_declaration: FUNCTION ID '(' ')' • $@3 compound_statement
+state 30
 
-    $default  riduzione con la regola 17 ($@3)
+   71 expr: number .
 
-    $@3  prosecuzione allo stato 56
+    $default  reduce using rule 71 (expr)
 
 
-State 36
+state 31
 
-   16 func_declaration: FUNCTION ID '(' param_list • ')' $@2 compound_statement
+   72 expr: func_call .
 
-    ')'  shift e prosecuzione allo stato 57
+    $default  reduce using rule 72 (expr)
 
 
-State 37
+state 32
 
-   19 param_list: param •
-   20           | param • ',' param_list
+   10 declarator_list: declarator ',' declarator_list .
 
-    ','  shift e prosecuzione allo stato 58
+    $default  reduce using rule 10 (declarator_list)
 
-    $default  riduzione con la regola 19 (param_list)
 
+state 33
 
-State 38
+   69 assignment: var '=' expr .
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   78     | expr . AND expr
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   85     | expr . NE expr
 
-   94 func_call: ID '(' • args ')'
-   95          | ID '(' • ')'
+    OR   shift, and go to state 42
+    AND  shift, and go to state 43
+    '>'  shift, and go to state 44
+    '<'  shift, and go to state 45
+    NE   shift, and go to state 46
+    EQ   shift, and go to state 47
+    LE   shift, and go to state 48
+    GE   shift, and go to state 49
+    '+'  shift, and go to state 50
+    '*'  shift, and go to state 52
+    '/'  shift, and go to state 53
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
-    ')'        shift e prosecuzione allo stato 59
+    $default  reduce using rule 69 (assignment)
 
-    var        prosecuzione allo stato 28
-    expr       prosecuzione allo stato 60
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
-    args       prosecuzione allo stato 61
 
+state 34
 
-State 39
+   20 param: ID .
+   21      | ID . '[' ']'
 
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   81     | NOT expr •
-   82     | expr • AND expr
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   89     | expr • NE expr
+    '['  shift, and go to state 55
 
-    '>'  shift e prosecuzione allo stato 44
-    '<'  shift e prosecuzione allo stato 45
-    GE   shift e prosecuzione allo stato 46
-    LE   shift e prosecuzione allo stato 47
-    EQ   shift e prosecuzione allo stato 48
-    NE   shift e prosecuzione allo stato 49
-    '+'  shift e prosecuzione allo stato 50
-    '-'  shift e prosecuzione allo stato 51
-    '*'  shift e prosecuzione allo stato 52
-    '/'  shift e prosecuzione allo stato 53
+    $default  reduce using rule 20 (param)
 
-    $default  riduzione con la regola 81 (expr)
 
+state 35
 
-State 40
+   17 func_declaration: FUNCTION ID '(' ')' . @3 compound_statement
 
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   82     | expr • AND expr
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   89     | expr • NE expr
-   91     | '-' expr •
+    $default  reduce using rule 16 (@3)
 
-    $default  riduzione con la regola 91 (expr)
+    @3  go to state 56
 
 
-State 41
+state 36
 
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   82     | expr • AND expr
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   89     | expr • NE expr
-   90     | '(' expr • ')'
+   15 func_declaration: FUNCTION ID '(' param_list . ')' @2 compound_statement
 
-    AND  shift e prosecuzione allo stato 42
-    OR   shift e prosecuzione allo stato 43
-    '>'  shift e prosecuzione allo stato 44
-    '<'  shift e prosecuzione allo stato 45
-    GE   shift e prosecuzione allo stato 46
-    LE   shift e prosecuzione allo stato 47
-    EQ   shift e prosecuzione allo stato 48
-    NE   shift e prosecuzione allo stato 49
-    '+'  shift e prosecuzione allo stato 50
-    '-'  shift e prosecuzione allo stato 51
-    '*'  shift e prosecuzione allo stato 52
-    '/'  shift e prosecuzione allo stato 53
-    ')'  shift e prosecuzione allo stato 62
+    ')'  shift, and go to state 57
 
 
-State 42
+state 37
 
-   82 expr: expr AND • expr
+   18 param_list: param .
+   19           | param . ',' param_list
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
+    ','  shift, and go to state 58
 
-    var        prosecuzione allo stato 28
-    expr       prosecuzione allo stato 63
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
+    $default  reduce using rule 18 (param_list)
 
 
-State 43
+state 38
 
-   83 expr: expr OR • expr
+   90 func_call: ID '(' . args ')'
+   91          | ID '(' . ')'
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
+    ')'        shift, and go to state 59
 
-    var        prosecuzione allo stato 28
-    expr       prosecuzione allo stato 64
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
+    var        go to state 28
+    expr       go to state 60
+    number     go to state 30
+    func_call  go to state 31
+    args       go to state 61
 
 
-State 44
+state 39
 
-   84 expr: expr '>' • expr
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   77     | NOT expr .
+   78     | expr . AND expr
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   85     | expr . NE expr
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
+    '>'  shift, and go to state 44
+    '<'  shift, and go to state 45
+    NE   shift, and go to state 46
+    EQ   shift, and go to state 47
+    LE   shift, and go to state 48
+    GE   shift, and go to state 49
+    '+'  shift, and go to state 50
+    '-'  shift, and go to state 51
+    '*'  shift, and go to state 52
+    '/'  shift, and go to state 53
 
-    var        prosecuzione allo stato 28
-    expr       prosecuzione allo stato 65
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
+    $default  reduce using rule 77 (expr)
 
 
-State 45
+state 40
 
-   85 expr: expr '<' • expr
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   78     | expr . AND expr
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   85     | expr . NE expr
+   87     | '-' expr .
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
+    $default  reduce using rule 87 (expr)
 
-    var        prosecuzione allo stato 28
-    expr       prosecuzione allo stato 66
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
 
+state 41
 
-State 46
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   78     | expr . AND expr
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   85     | expr . NE expr
+   86     | '(' expr . ')'
 
-   86 expr: expr GE • expr
+    OR   shift, and go to state 42
+    AND  shift, and go to state 43
+    '>'  shift, and go to state 44
+    '<'  shift, and go to state 45
+    NE   shift, and go to state 46
+    EQ   shift, and go to state 47
+    LE   shift, and go to state 48
+    GE   shift, and go to state 49
+    '+'  shift, and go to state 50
+    '-'  shift, and go to state 51
+    '*'  shift, and go to state 52
+    '/'  shift, and go to state 53
+    ')'  shift, and go to state 62
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
 
-    var        prosecuzione allo stato 28
-    expr       prosecuzione allo stato 67
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
+state 42
 
+   79 expr: expr OR . expr
 
-State 47
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-   87 expr: expr LE • expr
+    var        go to state 28
+    expr       go to state 63
+    number     go to state 30
+    func_call  go to state 31
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
 
-    var        prosecuzione allo stato 28
-    expr       prosecuzione allo stato 68
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
+state 43
 
+   78 expr: expr AND . expr
 
-State 48
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-   88 expr: expr EQ • expr
+    var        go to state 28
+    expr       go to state 64
+    number     go to state 30
+    func_call  go to state 31
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
 
-    var        prosecuzione allo stato 28
-    expr       prosecuzione allo stato 69
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
+state 44
 
+   80 expr: expr '>' . expr
 
-State 49
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-   89 expr: expr NE • expr
+    var        go to state 28
+    expr       go to state 65
+    number     go to state 30
+    func_call  go to state 31
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
 
-    var        prosecuzione allo stato 28
-    expr       prosecuzione allo stato 70
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
+state 45
 
+   81 expr: expr '<' . expr
 
-State 50
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-   77 expr: expr '+' • expr
+    var        go to state 28
+    expr       go to state 66
+    number     go to state 30
+    func_call  go to state 31
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
 
-    var        prosecuzione allo stato 28
-    expr       prosecuzione allo stato 71
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
+state 46
 
+   85 expr: expr NE . expr
 
-State 51
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-   78 expr: expr '-' • expr
+    var        go to state 28
+    expr       go to state 67
+    number     go to state 30
+    func_call  go to state 31
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
 
-    var        prosecuzione allo stato 28
-    expr       prosecuzione allo stato 72
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
+state 47
 
+   84 expr: expr EQ . expr
 
-State 52
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-   79 expr: expr '*' • expr
+    var        go to state 28
+    expr       go to state 68
+    number     go to state 30
+    func_call  go to state 31
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
 
-    var        prosecuzione allo stato 28
-    expr       prosecuzione allo stato 73
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
+state 48
 
+   83 expr: expr LE . expr
 
-State 53
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-   80 expr: expr '/' • expr
+    var        go to state 28
+    expr       go to state 69
+    number     go to state 30
+    func_call  go to state 31
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
 
-    var        prosecuzione allo stato 28
-    expr       prosecuzione allo stato 74
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
+state 49
 
+   82 expr: expr GE . expr
 
-State 54
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-   14 var: ID '{' expr '}' •
+    var        go to state 28
+    expr       go to state 70
+    number     go to state 30
+    func_call  go to state 31
 
-    $default  riduzione con la regola 14 (var)
 
+state 50
 
-State 55
+   73 expr: expr '+' . expr
 
-   22 param: ID '[' • ']'
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-    ']'  shift e prosecuzione allo stato 75
+    var        go to state 28
+    expr       go to state 71
+    number     go to state 30
+    func_call  go to state 31
 
 
-State 56
+state 51
 
-   18 func_declaration: FUNCTION ID '(' ')' $@3 • compound_statement
+   74 expr: expr '-' . expr
 
-    '{'  shift e prosecuzione allo stato 76
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-    compound_statement  prosecuzione allo stato 77
-    scope_enter         prosecuzione allo stato 78
+    var        go to state 28
+    expr       go to state 72
+    number     go to state 30
+    func_call  go to state 31
 
 
-State 57
+state 52
 
-   16 func_declaration: FUNCTION ID '(' param_list ')' • $@2 compound_statement
+   75 expr: expr '*' . expr
 
-    $default  riduzione con la regola 15 ($@2)
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-    $@2  prosecuzione allo stato 79
+    var        go to state 28
+    expr       go to state 73
+    number     go to state 30
+    func_call  go to state 31
 
 
-State 58
+state 53
 
-   20 param_list: param ',' • param_list
+   76 expr: expr '/' . expr
 
-    ID  shift e prosecuzione allo stato 34
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-    param_list  prosecuzione allo stato 80
-    param       prosecuzione allo stato 37
+    var        go to state 28
+    expr       go to state 74
+    number     go to state 30
+    func_call  go to state 31
 
 
-State 59
+state 54
 
-   95 func_call: ID '(' ')' •
+   13 var: ID '{' expr '}' .
 
-    $default  riduzione con la regola 95 (func_call)
+    $default  reduce using rule 13 (var)
 
 
-State 60
+state 55
 
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   82     | expr • AND expr
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   89     | expr • NE expr
-   96 args: expr •
-   97     | expr • ',' args
+   21 param: ID '[' . ']'
 
-    AND  shift e prosecuzione allo stato 42
-    OR   shift e prosecuzione allo stato 43
-    '>'  shift e prosecuzione allo stato 44
-    '<'  shift e prosecuzione allo stato 45
-    GE   shift e prosecuzione allo stato 46
-    LE   shift e prosecuzione allo stato 47
-    EQ   shift e prosecuzione allo stato 48
-    NE   shift e prosecuzione allo stato 49
-    '+'  shift e prosecuzione allo stato 50
-    '-'  shift e prosecuzione allo stato 51
-    '*'  shift e prosecuzione allo stato 52
-    '/'  shift e prosecuzione allo stato 53
-    ','  shift e prosecuzione allo stato 81
+    ']'  shift, and go to state 75
 
-    $default  riduzione con la regola 96 (args)
 
+state 56
 
-State 61
+   17 func_declaration: FUNCTION ID '(' ')' @3 . compound_statement
 
-   94 func_call: ID '(' args • ')'
+    '{'  shift, and go to state 76
 
-    ')'  shift e prosecuzione allo stato 82
+    compound_statement  go to state 77
+    scope_enter         go to state 78
 
 
-State 62
+state 57
 
-   90 expr: '(' expr ')' •
+   15 func_declaration: FUNCTION ID '(' param_list ')' . @2 compound_statement
 
-    $default  riduzione con la regola 90 (expr)
+    $default  reduce using rule 14 (@2)
 
+    @2  go to state 79
 
-State 63
 
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   82     | expr • AND expr
-   82     | expr AND expr •
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   89     | expr • NE expr
+state 58
 
-    '>'  shift e prosecuzione allo stato 44
-    '<'  shift e prosecuzione allo stato 45
-    GE   shift e prosecuzione allo stato 46
-    LE   shift e prosecuzione allo stato 47
-    EQ   shift e prosecuzione allo stato 48
-    NE   shift e prosecuzione allo stato 49
-    '+'  shift e prosecuzione allo stato 50
-    '-'  shift e prosecuzione allo stato 51
-    '*'  shift e prosecuzione allo stato 52
-    '/'  shift e prosecuzione allo stato 53
+   19 param_list: param ',' . param_list
 
-    $default  riduzione con la regola 82 (expr)
+    ID  shift, and go to state 34
 
+    param_list  go to state 80
+    param       go to state 37
 
-State 64
 
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   82     | expr • AND expr
-   83     | expr • OR expr
-   83     | expr OR expr •
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   89     | expr • NE expr
+state 59
 
-    '>'  shift e prosecuzione allo stato 44
-    '<'  shift e prosecuzione allo stato 45
-    GE   shift e prosecuzione allo stato 46
-    LE   shift e prosecuzione allo stato 47
-    EQ   shift e prosecuzione allo stato 48
-    NE   shift e prosecuzione allo stato 49
-    '+'  shift e prosecuzione allo stato 50
-    '-'  shift e prosecuzione allo stato 51
-    '*'  shift e prosecuzione allo stato 52
-    '/'  shift e prosecuzione allo stato 53
+   91 func_call: ID '(' ')' .
 
-    $default  riduzione con la regola 83 (expr)
+    $default  reduce using rule 91 (func_call)
 
 
-State 65
+state 60
 
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   82     | expr • AND expr
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   84     | expr '>' expr •
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   89     | expr • NE expr
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   78     | expr . AND expr
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   85     | expr . NE expr
+   92 args: expr .
+   93     | expr . ',' args
 
-    '+'  shift e prosecuzione allo stato 50
-    '-'  shift e prosecuzione allo stato 51
-    '*'  shift e prosecuzione allo stato 52
-    '/'  shift e prosecuzione allo stato 53
+    OR   shift, and go to state 42
+    AND  shift, and go to state 43
+    '>'  shift, and go to state 44
+    '<'  shift, and go to state 45
+    NE   shift, and go to state 46
+    EQ   shift, and go to state 47
+    LE   shift, and go to state 48
+    GE   shift, and go to state 49
+    '+'  shift, and go to state 50
+    '-'  shift, and go to state 51
+    '*'  shift, and go to state 52
+    '/'  shift, and go to state 53
+    ','  shift, and go to state 81
 
-    $default  riduzione con la regola 84 (expr)
+    $default  reduce using rule 92 (args)
 
 
-State 66
+state 61
 
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   82     | expr • AND expr
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   85     | expr '<' expr •
-   86     | expr • GE expr
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   89     | expr • NE expr
+   90 func_call: ID '(' args . ')'
 
-    '+'  shift e prosecuzione allo stato 50
-    '-'  shift e prosecuzione allo stato 51
-    '*'  shift e prosecuzione allo stato 52
-    '/'  shift e prosecuzione allo stato 53
+    ')'  shift, and go to state 82
 
-    $default  riduzione con la regola 85 (expr)
 
+state 62
 
-State 67
+   86 expr: '(' expr ')' .
 
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   82     | expr • AND expr
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   86     | expr GE expr •
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   89     | expr • NE expr
+    $default  reduce using rule 86 (expr)
 
-    '+'  shift e prosecuzione allo stato 50
-    '-'  shift e prosecuzione allo stato 51
-    '*'  shift e prosecuzione allo stato 52
-    '/'  shift e prosecuzione allo stato 53
 
-    $default  riduzione con la regola 86 (expr)
+state 63
 
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   78     | expr . AND expr
+   79     | expr . OR expr
+   79     | expr OR expr .
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   85     | expr . NE expr
 
-State 68
+    '>'  shift, and go to state 44
+    '<'  shift, and go to state 45
+    NE   shift, and go to state 46
+    EQ   shift, and go to state 47
+    LE   shift, and go to state 48
+    GE   shift, and go to state 49
+    '+'  shift, and go to state 50
+    '-'  shift, and go to state 51
+    '*'  shift, and go to state 52
+    '/'  shift, and go to state 53
 
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   82     | expr • AND expr
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   87     | expr • LE expr
-   87     | expr LE expr •
-   88     | expr • EQ expr
-   89     | expr • NE expr
+    $default  reduce using rule 79 (expr)
 
-    '+'  shift e prosecuzione allo stato 50
-    '-'  shift e prosecuzione allo stato 51
-    '*'  shift e prosecuzione allo stato 52
-    '/'  shift e prosecuzione allo stato 53
 
-    $default  riduzione con la regola 87 (expr)
+state 64
 
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   78     | expr . AND expr
+   78     | expr AND expr .
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   85     | expr . NE expr
 
-State 69
+    '>'  shift, and go to state 44
+    '<'  shift, and go to state 45
+    NE   shift, and go to state 46
+    EQ   shift, and go to state 47
+    LE   shift, and go to state 48
+    GE   shift, and go to state 49
+    '+'  shift, and go to state 50
+    '-'  shift, and go to state 51
+    '*'  shift, and go to state 52
+    '/'  shift, and go to state 53
 
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   82     | expr • AND expr
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   88     | expr EQ expr •
-   89     | expr • NE expr
+    $default  reduce using rule 78 (expr)
 
-    '+'  shift e prosecuzione allo stato 50
-    '-'  shift e prosecuzione allo stato 51
-    '*'  shift e prosecuzione allo stato 52
-    '/'  shift e prosecuzione allo stato 53
 
-    $default  riduzione con la regola 88 (expr)
+state 65
 
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   78     | expr . AND expr
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   80     | expr '>' expr .
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   85     | expr . NE expr
 
-State 70
+    '+'  shift, and go to state 50
+    '-'  shift, and go to state 51
+    '*'  shift, and go to state 52
+    '/'  shift, and go to state 53
 
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   82     | expr • AND expr
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   89     | expr • NE expr
-   89     | expr NE expr •
+    $default  reduce using rule 80 (expr)
 
-    '+'  shift e prosecuzione allo stato 50
-    '-'  shift e prosecuzione allo stato 51
-    '*'  shift e prosecuzione allo stato 52
-    '/'  shift e prosecuzione allo stato 53
 
-    $default  riduzione con la regola 89 (expr)
+state 66
 
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   78     | expr . AND expr
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   81     | expr '<' expr .
+   82     | expr . GE expr
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   85     | expr . NE expr
 
-State 71
+    '+'  shift, and go to state 50
+    '-'  shift, and go to state 51
+    '*'  shift, and go to state 52
+    '/'  shift, and go to state 53
 
-   77 expr: expr • '+' expr
-   77     | expr '+' expr •
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   82     | expr • AND expr
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   89     | expr • NE expr
+    $default  reduce using rule 81 (expr)
 
-    $default  riduzione con la regola 77 (expr)
 
+state 67
 
-State 72
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   78     | expr . AND expr
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   85     | expr . NE expr
+   85     | expr NE expr .
 
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   78     | expr '-' expr •
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   82     | expr • AND expr
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   89     | expr • NE expr
+    '+'  shift, and go to state 50
+    '-'  shift, and go to state 51
+    '*'  shift, and go to state 52
+    '/'  shift, and go to state 53
 
-    $default  riduzione con la regola 78 (expr)
+    $default  reduce using rule 85 (expr)
 
 
-State 73
+state 68
 
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   79     | expr '*' expr •
-   80     | expr • '/' expr
-   82     | expr • AND expr
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   89     | expr • NE expr
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   78     | expr . AND expr
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   84     | expr EQ expr .
+   85     | expr . NE expr
 
-    $default  riduzione con la regola 79 (expr)
+    '+'  shift, and go to state 50
+    '-'  shift, and go to state 51
+    '*'  shift, and go to state 52
+    '/'  shift, and go to state 53
 
+    $default  reduce using rule 84 (expr)
 
-State 74
 
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   80     | expr '/' expr •
-   82     | expr • AND expr
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   89     | expr • NE expr
+state 69
 
-    $default  riduzione con la regola 80 (expr)
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   78     | expr . AND expr
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   83     | expr . LE expr
+   83     | expr LE expr .
+   84     | expr . EQ expr
+   85     | expr . NE expr
 
+    '+'  shift, and go to state 50
+    '-'  shift, and go to state 51
+    '*'  shift, and go to state 52
+    '/'  shift, and go to state 53
 
-State 75
+    $default  reduce using rule 83 (expr)
 
-   22 param: ID '[' ']' •
 
-    $default  riduzione con la regola 22 (param)
+state 70
 
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   78     | expr . AND expr
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   82     | expr GE expr .
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   85     | expr . NE expr
 
-State 76
+    '+'  shift, and go to state 50
+    '-'  shift, and go to state 51
+    '*'  shift, and go to state 52
+    '/'  shift, and go to state 53
 
-   24 scope_enter: '{' •
+    $default  reduce using rule 82 (expr)
 
-    $default  riduzione con la regola 24 (scope_enter)
 
+state 71
 
-State 77
+   73 expr: expr . '+' expr
+   73     | expr '+' expr .
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   78     | expr . AND expr
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   85     | expr . NE expr
 
-   18 func_declaration: FUNCTION ID '(' ')' $@3 compound_statement •
+    $default  reduce using rule 73 (expr)
 
-    $default  riduzione con la regola 18 (func_declaration)
 
+state 72
 
-State 78
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   74     | expr '-' expr .
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   78     | expr . AND expr
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   85     | expr . NE expr
 
-   23 compound_statement: scope_enter • statement_list scope_exit
+    $default  reduce using rule 74 (expr)
 
-    IF         shift e prosecuzione allo stato 83
-    FOR        shift e prosecuzione allo stato 84
-    RETURN     shift e prosecuzione allo stato 85
-    PRINT      shift e prosecuzione allo stato 86
-    READ       shift e prosecuzione allo stato 87
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 88
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '{'        shift e prosecuzione allo stato 76
-    '('        shift e prosecuzione allo stato 27
 
-    var_declaration       prosecuzione allo stato 89
-    declarator_list       prosecuzione allo stato 9
-    declarator            prosecuzione allo stato 10
-    var                   prosecuzione allo stato 90
-    compound_statement    prosecuzione allo stato 91
-    scope_enter           prosecuzione allo stato 78
-    statement_list        prosecuzione allo stato 92
-    statement             prosecuzione allo stato 93
-    expr_statement        prosecuzione allo stato 94
-    selection_statement   prosecuzione allo stato 95
-    iteration_statement   prosecuzione allo stato 96
-    return_statement      prosecuzione allo stato 97
-    printf_statement      prosecuzione allo stato 98
-    read_statement        prosecuzione allo stato 99
-    assignment_statement  prosecuzione allo stato 100
-    assignment            prosecuzione allo stato 101
-    expr                  prosecuzione allo stato 102
-    number                prosecuzione allo stato 30
-    func_call             prosecuzione allo stato 31
+state 73
 
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   75     | expr '*' expr .
+   76     | expr . '/' expr
+   78     | expr . AND expr
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   85     | expr . NE expr
 
-State 79
+    $default  reduce using rule 75 (expr)
 
-   16 func_declaration: FUNCTION ID '(' param_list ')' $@2 • compound_statement
 
-    '{'  shift e prosecuzione allo stato 76
+state 74
 
-    compound_statement  prosecuzione allo stato 103
-    scope_enter         prosecuzione allo stato 78
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   76     | expr '/' expr .
+   78     | expr . AND expr
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   85     | expr . NE expr
 
+    $default  reduce using rule 76 (expr)
 
-State 80
 
-   20 param_list: param ',' param_list •
+state 75
 
-    $default  riduzione con la regola 20 (param_list)
+   21 param: ID '[' ']' .
 
+    $default  reduce using rule 21 (param)
 
-State 81
 
-   97 args: expr ',' • args
+state 76
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
+   23 scope_enter: '{' .
 
-    var        prosecuzione allo stato 28
-    expr       prosecuzione allo stato 60
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
-    args       prosecuzione allo stato 104
+    $default  reduce using rule 23 (scope_enter)
 
 
-State 82
+state 77
 
-   94 func_call: ID '(' args ')' •
+   17 func_declaration: FUNCTION ID '(' ')' @3 compound_statement .
 
-    $default  riduzione con la regola 94 (func_call)
+    $default  reduce using rule 17 (func_declaration)
 
 
-State 83
+state 78
 
-   48 selection_statement: IF • if_cond THEN embedded_statement END
-   49                    | IF • if_cond THEN embedded_statement ELSE embedded_statement END
+   22 compound_statement: scope_enter . statement_list scope_exit
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
+    IF         shift, and go to state 83
+    FOR        shift, and go to state 84
+    RETURN     shift, and go to state 85
+    PRINT      shift, and go to state 86
+    READ       shift, and go to state 87
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 88
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '{'        shift, and go to state 76
+    '('        shift, and go to state 27
 
-    var        prosecuzione allo stato 28
-    if_cond    prosecuzione allo stato 105
-    expr       prosecuzione allo stato 106
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
+    var_declaration      go to state 89
+    declarator_list      go to state 9
+    declarator           go to state 10
+    var                  go to state 90
+    compound_statement   go to state 91
+    scope_enter          go to state 78
+    statement_list       go to state 92
+    statement            go to state 93
+    expr_statement       go to state 94
+    selection_statement  go to state 95
+    iteration_statement  go to state 96
+    return_statement     go to state 97
+    printf_statement     go to state 98
+    read_statement       go to state 99
+    assignment           go to state 13
+    expr                 go to state 100
+    number               go to state 30
+    func_call            go to state 31
 
 
-State 84
+state 79
 
-   51 iteration_statement: FOR • init ',' cond ',' update DO embedded_statement
+   15 func_declaration: FUNCTION ID '(' param_list ')' @2 . compound_statement
 
-    ID  shift e prosecuzione allo stato 15
+    '{'  shift, and go to state 76
 
-    $default  riduzione con la regola 53 (init)
+    compound_statement  go to state 101
+    scope_enter         go to state 78
 
-    var         prosecuzione allo stato 107
-    init        prosecuzione allo stato 108
-    assignment  prosecuzione allo stato 109
 
+state 80
 
-State 85
+   19 param_list: param ',' param_list .
 
-   59 return_statement: RETURN •
-   60                 | RETURN • expr
+    $default  reduce using rule 19 (param_list)
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
 
-    INT_NUM    [riduzione con la regola 59 (return_statement)]
-    FLOAT_NUM  [riduzione con la regola 59 (return_statement)]
-    ID         [riduzione con la regola 59 (return_statement)]
-    NOT        [riduzione con la regola 59 (return_statement)]
-    '-'        [riduzione con la regola 59 (return_statement)]
-    '('        [riduzione con la regola 59 (return_statement)]
-    $default   riduzione con la regola 59 (return_statement)
+state 81
 
-    var        prosecuzione allo stato 28
-    expr       prosecuzione allo stato 110
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
+   93 args: expr ',' . args
 
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-State 86
+    var        go to state 28
+    expr       go to state 60
+    number     go to state 30
+    func_call  go to state 31
+    args       go to state 102
 
-   61 printf_statement: PRINT • '(' format_string ')'
-   62                 | PRINT • '(' format_string ',' args ')'
-   63                 | PRINT • '(' ')'
 
-    '('  shift e prosecuzione allo stato 111
+state 82
 
+   90 func_call: ID '(' args ')' .
 
-State 87
+    $default  reduce using rule 90 (func_call)
 
-   64 read_statement: READ • '(' format_string ',' read_var_list ')'
-   65               | READ • '(' format_string ')'
-   66               | READ • '(' ')'
 
-    '('  shift e prosecuzione allo stato 112
+state 83
 
+   45 selection_statement: IF . if_cond THEN embedded_statement END
+   46                    | IF . if_cond THEN embedded_statement ELSE embedded_statement END
 
-State 88
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-    8 var_declaration: ID • declarator_list
-   13 var: ID •
-   14    | ID • '{' expr '}'
-   94 func_call: ID • '(' args ')'
-   95          | ID • '(' ')'
+    var        go to state 28
+    if_cond    go to state 103
+    expr       go to state 104
+    number     go to state 30
+    func_call  go to state 31
 
-    ID   shift e prosecuzione allo stato 15
-    '{'  shift e prosecuzione allo stato 16
-    '('  shift e prosecuzione allo stato 38
 
-    ID        [riduzione con la regola 13 (var)]
-    '{'       [riduzione con la regola 13 (var)]
-    '('       [riduzione con la regola 13 (var)]
-    $default  riduzione con la regola 13 (var)
+state 84
 
-    declarator_list  prosecuzione allo stato 17
-    declarator       prosecuzione allo stato 10
-    var              prosecuzione allo stato 11
-    assignment       prosecuzione allo stato 13
+   48 iteration_statement: FOR . init ',' cond ',' update DO embedded_statement
 
+    ID  shift, and go to state 15
 
-State 89
+    $default  reduce using rule 50 (init)
 
-   28 statement: var_declaration •
+    var         go to state 11
+    init        go to state 105
+    assignment  go to state 106
 
-    $default  riduzione con la regola 28 (statement)
 
+state 85
 
-State 90
+   56 return_statement: RETURN .
+   57                 | RETURN . expr
 
-   11 declarator: var •
-   73 assignment: var • '=' expr
-   74 expr: var •
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-    '='  shift e prosecuzione allo stato 20
+    INT_NUM    [reduce using rule 56 (return_statement)]
+    FLOAT_NUM  [reduce using rule 56 (return_statement)]
+    ID         [reduce using rule 56 (return_statement)]
+    NOT        [reduce using rule 56 (return_statement)]
+    '-'        [reduce using rule 56 (return_statement)]
+    '('        [reduce using rule 56 (return_statement)]
+    $default   reduce using rule 56 (return_statement)
 
-    IF         riduzione con la regola 11 (declarator)
-    IF         [riduzione con la regola 74 (expr)]
-    ELSE       riduzione con la regola 11 (declarator)
-    ELSE       [riduzione con la regola 74 (expr)]
-    FOR        riduzione con la regola 11 (declarator)
-    FOR        [riduzione con la regola 74 (expr)]
-    END        riduzione con la regola 11 (declarator)
-    END        [riduzione con la regola 74 (expr)]
-    RETURN     riduzione con la regola 11 (declarator)
-    RETURN     [riduzione con la regola 74 (expr)]
-    PRINT      riduzione con la regola 11 (declarator)
-    PRINT      [riduzione con la regola 74 (expr)]
-    READ       riduzione con la regola 11 (declarator)
-    READ       [riduzione con la regola 74 (expr)]
-    INT_NUM    riduzione con la regola 11 (declarator)
-    INT_NUM    [riduzione con la regola 74 (expr)]
-    FLOAT_NUM  riduzione con la regola 11 (declarator)
-    FLOAT_NUM  [riduzione con la regola 74 (expr)]
-    ID         riduzione con la regola 11 (declarator)
-    ID         [riduzione con la regola 74 (expr)]
-    AND        riduzione con la regola 74 (expr)
-    OR         riduzione con la regola 74 (expr)
-    NOT        riduzione con la regola 11 (declarator)
-    NOT        [riduzione con la regola 74 (expr)]
-    '>'        riduzione con la regola 74 (expr)
-    '<'        riduzione con la regola 74 (expr)
-    GE         riduzione con la regola 74 (expr)
-    LE         riduzione con la regola 74 (expr)
-    EQ         riduzione con la regola 74 (expr)
-    NE         riduzione con la regola 74 (expr)
-    '+'        riduzione con la regola 74 (expr)
-    '-'        riduzione con la regola 11 (declarator)
-    '-'        [riduzione con la regola 74 (expr)]
-    '*'        riduzione con la regola 74 (expr)
-    '/'        riduzione con la regola 74 (expr)
-    '{'        riduzione con la regola 11 (declarator)
-    '{'        [riduzione con la regola 74 (expr)]
-    '}'        riduzione con la regola 11 (declarator)
-    '}'        [riduzione con la regola 74 (expr)]
-    '('        riduzione con la regola 11 (declarator)
-    '('        [riduzione con la regola 74 (expr)]
-    $default   riduzione con la regola 11 (declarator)
+    var        go to state 28
+    expr       go to state 107
+    number     go to state 30
+    func_call  go to state 31
 
 
-State 91
+state 86
 
-   29 statement: compound_statement •
+   58 printf_statement: PRINT . '(' format_string ')'
+   59                 | PRINT . '(' format_string ',' args ')'
+   60                 | PRINT . '(' ')'
 
-    $default  riduzione con la regola 29 (statement)
+    '('  shift, and go to state 108
 
 
-State 92
+state 87
 
-   23 compound_statement: scope_enter statement_list • scope_exit
+   61 read_statement: READ . '(' format_string ',' read_var_list ')'
+   62               | READ . '(' format_string ')'
+   63               | READ . '(' ')'
 
-    '}'  shift e prosecuzione allo stato 113
+    '('  shift, and go to state 109
 
-    scope_exit  prosecuzione allo stato 114
 
+state 88
 
-State 93
+    8 var_declaration: ID . declarator_list
+   12 var: ID .
+   13    | ID . '{' expr '}'
+   90 func_call: ID . '(' args ')'
+   91          | ID . '(' ')'
 
-   26 statement_list: statement •
-   27               | statement • statement_list
+    ID   shift, and go to state 15
+    '{'  shift, and go to state 16
+    '('  shift, and go to state 38
 
-    IF         shift e prosecuzione allo stato 83
-    FOR        shift e prosecuzione allo stato 84
-    RETURN     shift e prosecuzione allo stato 85
-    PRINT      shift e prosecuzione allo stato 86
-    READ       shift e prosecuzione allo stato 87
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 88
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '{'        shift e prosecuzione allo stato 76
-    '('        shift e prosecuzione allo stato 27
+    ID        [reduce using rule 12 (var)]
+    '{'       [reduce using rule 12 (var)]
+    '('       [reduce using rule 12 (var)]
+    $default  reduce using rule 12 (var)
 
-    $default  riduzione con la regola 26 (statement_list)
+    declarator_list  go to state 17
+    declarator       go to state 10
+    var              go to state 11
+    assignment       go to state 13
 
-    var_declaration       prosecuzione allo stato 89
-    declarator_list       prosecuzione allo stato 9
-    declarator            prosecuzione allo stato 10
-    var                   prosecuzione allo stato 90
-    compound_statement    prosecuzione allo stato 91
-    scope_enter           prosecuzione allo stato 78
-    statement_list        prosecuzione allo stato 115
-    statement             prosecuzione allo stato 93
-    expr_statement        prosecuzione allo stato 94
-    selection_statement   prosecuzione allo stato 95
-    iteration_statement   prosecuzione allo stato 96
-    return_statement      prosecuzione allo stato 97
-    printf_statement      prosecuzione allo stato 98
-    read_statement        prosecuzione allo stato 99
-    assignment_statement  prosecuzione allo stato 100
-    assignment            prosecuzione allo stato 101
-    expr                  prosecuzione allo stato 102
-    number                prosecuzione allo stato 30
-    func_call             prosecuzione allo stato 31
 
+state 89
 
-State 94
+   27 statement: var_declaration .
 
-   30 statement: expr_statement •
+    $default  reduce using rule 27 (statement)
 
-    $default  riduzione con la regola 30 (statement)
 
+state 90
 
-State 95
+   69 assignment: var . '=' expr
+   70 expr: var .
 
-   31 statement: selection_statement •
+    '='  shift, and go to state 20
 
-    $default  riduzione con la regola 31 (statement)
+    $default  reduce using rule 70 (expr)
 
 
-State 96
+state 91
 
-   32 statement: iteration_statement •
+   28 statement: compound_statement .
 
-    $default  riduzione con la regola 32 (statement)
+    $default  reduce using rule 28 (statement)
 
 
-State 97
+state 92
 
-   33 statement: return_statement •
+   22 compound_statement: scope_enter statement_list . scope_exit
 
-    $default  riduzione con la regola 33 (statement)
+    '}'  shift, and go to state 110
 
+    scope_exit  go to state 111
 
-State 98
 
-   34 statement: printf_statement •
+state 93
 
-    $default  riduzione con la regola 34 (statement)
+   25 statement_list: statement .
+   26               | statement . statement_list
 
+    IF         shift, and go to state 83
+    FOR        shift, and go to state 84
+    RETURN     shift, and go to state 85
+    PRINT      shift, and go to state 86
+    READ       shift, and go to state 87
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 88
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '{'        shift, and go to state 76
+    '('        shift, and go to state 27
 
-State 99
+    $default  reduce using rule 25 (statement_list)
 
-   35 statement: read_statement •
+    var_declaration      go to state 89
+    declarator_list      go to state 9
+    declarator           go to state 10
+    var                  go to state 90
+    compound_statement   go to state 91
+    scope_enter          go to state 78
+    statement_list       go to state 112
+    statement            go to state 93
+    expr_statement       go to state 94
+    selection_statement  go to state 95
+    iteration_statement  go to state 96
+    return_statement     go to state 97
+    printf_statement     go to state 98
+    read_statement       go to state 99
+    assignment           go to state 13
+    expr                 go to state 100
+    number               go to state 30
+    func_call            go to state 31
 
-    $default  riduzione con la regola 35 (statement)
 
+state 94
 
-State 100
+   29 statement: expr_statement .
 
-   36 statement: assignment_statement •
+    $default  reduce using rule 29 (statement)
 
-    $default  riduzione con la regola 36 (statement)
 
+state 95
 
-State 101
+   30 statement: selection_statement .
 
-   12 declarator: assignment •
-   72 assignment_statement: assignment •
+    $default  reduce using rule 30 (statement)
 
-    IF         riduzione con la regola 12 (declarator)
-    IF         [riduzione con la regola 72 (assignment_statement)]
-    ELSE       riduzione con la regola 12 (declarator)
-    ELSE       [riduzione con la regola 72 (assignment_statement)]
-    FOR        riduzione con la regola 12 (declarator)
-    FOR        [riduzione con la regola 72 (assignment_statement)]
-    END        riduzione con la regola 12 (declarator)
-    END        [riduzione con la regola 72 (assignment_statement)]
-    RETURN     riduzione con la regola 12 (declarator)
-    RETURN     [riduzione con la regola 72 (assignment_statement)]
-    PRINT      riduzione con la regola 12 (declarator)
-    PRINT      [riduzione con la regola 72 (assignment_statement)]
-    READ       riduzione con la regola 12 (declarator)
-    READ       [riduzione con la regola 72 (assignment_statement)]
-    INT_NUM    riduzione con la regola 12 (declarator)
-    INT_NUM    [riduzione con la regola 72 (assignment_statement)]
-    FLOAT_NUM  riduzione con la regola 12 (declarator)
-    FLOAT_NUM  [riduzione con la regola 72 (assignment_statement)]
-    ID         riduzione con la regola 12 (declarator)
-    ID         [riduzione con la regola 72 (assignment_statement)]
-    NOT        riduzione con la regola 12 (declarator)
-    NOT        [riduzione con la regola 72 (assignment_statement)]
-    '-'        riduzione con la regola 12 (declarator)
-    '-'        [riduzione con la regola 72 (assignment_statement)]
-    '{'        riduzione con la regola 12 (declarator)
-    '{'        [riduzione con la regola 72 (assignment_statement)]
-    '}'        riduzione con la regola 12 (declarator)
-    '}'        [riduzione con la regola 72 (assignment_statement)]
-    '('        riduzione con la regola 12 (declarator)
-    '('        [riduzione con la regola 72 (assignment_statement)]
-    $default   riduzione con la regola 12 (declarator)
 
+state 96
 
-State 102
+   31 statement: iteration_statement .
 
-   47 expr_statement: expr •
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   82     | expr • AND expr
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   89     | expr • NE expr
+    $default  reduce using rule 31 (statement)
 
-    AND  shift e prosecuzione allo stato 42
-    OR   shift e prosecuzione allo stato 43
-    '>'  shift e prosecuzione allo stato 44
-    '<'  shift e prosecuzione allo stato 45
-    GE   shift e prosecuzione allo stato 46
-    LE   shift e prosecuzione allo stato 47
-    EQ   shift e prosecuzione allo stato 48
-    NE   shift e prosecuzione allo stato 49
-    '+'  shift e prosecuzione allo stato 50
-    '-'  shift e prosecuzione allo stato 51
-    '*'  shift e prosecuzione allo stato 52
-    '/'  shift e prosecuzione allo stato 53
 
-    '-'       [riduzione con la regola 47 (expr_statement)]
-    $default  riduzione con la regola 47 (expr_statement)
+state 97
 
+   32 statement: return_statement .
 
-State 103
+    $default  reduce using rule 32 (statement)
 
-   16 func_declaration: FUNCTION ID '(' param_list ')' $@2 compound_statement •
 
-    $default  riduzione con la regola 16 (func_declaration)
+state 98
 
+   33 statement: printf_statement .
 
-State 104
+    $default  reduce using rule 33 (statement)
 
-   97 args: expr ',' args •
 
-    $default  riduzione con la regola 97 (args)
+state 99
 
+   34 statement: read_statement .
 
-State 105
+    $default  reduce using rule 34 (statement)
 
-   48 selection_statement: IF if_cond • THEN embedded_statement END
-   49                    | IF if_cond • THEN embedded_statement ELSE embedded_statement END
 
-    THEN  shift e prosecuzione allo stato 116
+state 100
 
+   44 expr_statement: expr .
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   78     | expr . AND expr
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   85     | expr . NE expr
 
-State 106
+    OR   shift, and go to state 42
+    AND  shift, and go to state 43
+    '>'  shift, and go to state 44
+    '<'  shift, and go to state 45
+    NE   shift, and go to state 46
+    EQ   shift, and go to state 47
+    LE   shift, and go to state 48
+    GE   shift, and go to state 49
+    '+'  shift, and go to state 50
+    '-'  shift, and go to state 51
+    '*'  shift, and go to state 52
+    '/'  shift, and go to state 53
 
-   50 if_cond: expr •
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   82     | expr • AND expr
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   89     | expr • NE expr
+    '-'       [reduce using rule 44 (expr_statement)]
+    $default  reduce using rule 44 (expr_statement)
 
-    AND  shift e prosecuzione allo stato 42
-    OR   shift e prosecuzione allo stato 43
-    '>'  shift e prosecuzione allo stato 44
-    '<'  shift e prosecuzione allo stato 45
-    GE   shift e prosecuzione allo stato 46
-    LE   shift e prosecuzione allo stato 47
-    EQ   shift e prosecuzione allo stato 48
-    NE   shift e prosecuzione allo stato 49
-    '+'  shift e prosecuzione allo stato 50
-    '-'  shift e prosecuzione allo stato 51
-    '*'  shift e prosecuzione allo stato 52
-    '/'  shift e prosecuzione allo stato 53
 
-    $default  riduzione con la regola 50 (if_cond)
+state 101
 
+   15 func_declaration: FUNCTION ID '(' param_list ')' @2 compound_statement .
 
-State 107
+    $default  reduce using rule 15 (func_declaration)
 
-   73 assignment: var • '=' expr
 
-    '='  shift e prosecuzione allo stato 20
+state 102
 
+   93 args: expr ',' args .
 
-State 108
+    $default  reduce using rule 93 (args)
 
-   51 iteration_statement: FOR init • ',' cond ',' update DO embedded_statement
 
-    ','  shift e prosecuzione allo stato 117
+state 103
 
+   45 selection_statement: IF if_cond . THEN embedded_statement END
+   46                    | IF if_cond . THEN embedded_statement ELSE embedded_statement END
 
-State 109
+    THEN  shift, and go to state 113
 
-   52 init: assignment •
 
-    $default  riduzione con la regola 52 (init)
+state 104
 
+   47 if_cond: expr .
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   78     | expr . AND expr
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   85     | expr . NE expr
 
-State 110
+    OR   shift, and go to state 42
+    AND  shift, and go to state 43
+    '>'  shift, and go to state 44
+    '<'  shift, and go to state 45
+    NE   shift, and go to state 46
+    EQ   shift, and go to state 47
+    LE   shift, and go to state 48
+    GE   shift, and go to state 49
+    '+'  shift, and go to state 50
+    '-'  shift, and go to state 51
+    '*'  shift, and go to state 52
+    '/'  shift, and go to state 53
 
-   60 return_statement: RETURN expr •
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   82     | expr • AND expr
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   89     | expr • NE expr
+    $default  reduce using rule 47 (if_cond)
 
-    AND  shift e prosecuzione allo stato 42
-    OR   shift e prosecuzione allo stato 43
-    '>'  shift e prosecuzione allo stato 44
-    '<'  shift e prosecuzione allo stato 45
-    GE   shift e prosecuzione allo stato 46
-    LE   shift e prosecuzione allo stato 47
-    EQ   shift e prosecuzione allo stato 48
-    NE   shift e prosecuzione allo stato 49
-    '+'  shift e prosecuzione allo stato 50
-    '-'  shift e prosecuzione allo stato 51
-    '*'  shift e prosecuzione allo stato 52
-    '/'  shift e prosecuzione allo stato 53
 
-    '-'       [riduzione con la regola 60 (return_statement)]
-    $default  riduzione con la regola 60 (return_statement)
+state 105
 
+   48 iteration_statement: FOR init . ',' cond ',' update DO embedded_statement
 
-State 111
+    ','  shift, and go to state 114
 
-   61 printf_statement: PRINT '(' • format_string ')'
-   62                 | PRINT '(' • format_string ',' args ')'
-   63                 | PRINT '(' • ')'
 
-    STRING  shift e prosecuzione allo stato 118
-    ')'     shift e prosecuzione allo stato 119
+state 106
 
-    format_string  prosecuzione allo stato 120
+   49 init: assignment .
 
+    $default  reduce using rule 49 (init)
 
-State 112
 
-   64 read_statement: READ '(' • format_string ',' read_var_list ')'
-   65               | READ '(' • format_string ')'
-   66               | READ '(' • ')'
+state 107
 
-    STRING  shift e prosecuzione allo stato 118
-    ')'     shift e prosecuzione allo stato 121
+   57 return_statement: RETURN expr .
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   78     | expr . AND expr
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   85     | expr . NE expr
 
-    format_string  prosecuzione allo stato 122
+    OR   shift, and go to state 42
+    AND  shift, and go to state 43
+    '>'  shift, and go to state 44
+    '<'  shift, and go to state 45
+    NE   shift, and go to state 46
+    EQ   shift, and go to state 47
+    LE   shift, and go to state 48
+    GE   shift, and go to state 49
+    '+'  shift, and go to state 50
+    '-'  shift, and go to state 51
+    '*'  shift, and go to state 52
+    '/'  shift, and go to state 53
 
+    '-'       [reduce using rule 57 (return_statement)]
+    $default  reduce using rule 57 (return_statement)
 
-State 113
 
-   25 scope_exit: '}' •
+state 108
 
-    $default  riduzione con la regola 25 (scope_exit)
+   58 printf_statement: PRINT '(' . format_string ')'
+   59                 | PRINT '(' . format_string ',' args ')'
+   60                 | PRINT '(' . ')'
 
+    STRING  shift, and go to state 115
+    ')'     shift, and go to state 116
 
-State 114
+    format_string  go to state 117
 
-   23 compound_statement: scope_enter statement_list scope_exit •
 
-    $default  riduzione con la regola 23 (compound_statement)
+state 109
 
+   61 read_statement: READ '(' . format_string ',' read_var_list ')'
+   62               | READ '(' . format_string ')'
+   63               | READ '(' . ')'
 
-State 115
+    STRING  shift, and go to state 115
+    ')'     shift, and go to state 118
 
-   27 statement_list: statement statement_list •
+    format_string  go to state 119
 
-    $default  riduzione con la regola 27 (statement_list)
 
+state 110
 
-State 116
+   24 scope_exit: '}' .
 
-   48 selection_statement: IF if_cond THEN • embedded_statement END
-   49                    | IF if_cond THEN • embedded_statement ELSE embedded_statement END
+    $default  reduce using rule 24 (scope_exit)
 
-    IF         shift e prosecuzione allo stato 83
-    FOR        shift e prosecuzione allo stato 84
-    RETURN     shift e prosecuzione allo stato 85
-    PRINT      shift e prosecuzione allo stato 86
-    READ       shift e prosecuzione allo stato 87
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 88
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '{'        shift e prosecuzione allo stato 76
-    '('        shift e prosecuzione allo stato 27
 
-    var_declaration       prosecuzione allo stato 123
-    declarator_list       prosecuzione allo stato 9
-    declarator            prosecuzione allo stato 10
-    var                   prosecuzione allo stato 90
-    compound_statement    prosecuzione allo stato 124
-    scope_enter           prosecuzione allo stato 78
-    embedded_statement    prosecuzione allo stato 125
-    single_statement      prosecuzione allo stato 126
-    expr_statement        prosecuzione allo stato 127
-    selection_statement   prosecuzione allo stato 128
-    iteration_statement   prosecuzione allo stato 129
-    return_statement      prosecuzione allo stato 130
-    printf_statement      prosecuzione allo stato 131
-    read_statement        prosecuzione allo stato 132
-    assignment_statement  prosecuzione allo stato 133
-    assignment            prosecuzione allo stato 101
-    expr                  prosecuzione allo stato 102
-    number                prosecuzione allo stato 30
-    func_call             prosecuzione allo stato 31
+state 111
 
+   22 compound_statement: scope_enter statement_list scope_exit .
 
-State 117
+    $default  reduce using rule 22 (compound_statement)
 
-   51 iteration_statement: FOR init ',' • cond ',' update DO embedded_statement
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
+state 112
 
-    $default  riduzione con la regola 55 (cond)
+   26 statement_list: statement statement_list .
 
-    var        prosecuzione allo stato 28
-    cond       prosecuzione allo stato 134
-    expr       prosecuzione allo stato 135
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
+    $default  reduce using rule 26 (statement_list)
 
 
-State 118
+state 113
 
-   71 format_string: STRING •
+   45 selection_statement: IF if_cond THEN . embedded_statement END
+   46                    | IF if_cond THEN . embedded_statement ELSE embedded_statement END
 
-    $default  riduzione con la regola 71 (format_string)
+    IF         shift, and go to state 83
+    FOR        shift, and go to state 84
+    RETURN     shift, and go to state 85
+    PRINT      shift, and go to state 86
+    READ       shift, and go to state 87
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 88
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '{'        shift, and go to state 76
+    '('        shift, and go to state 27
 
+    var_declaration      go to state 120
+    declarator_list      go to state 9
+    declarator           go to state 10
+    var                  go to state 90
+    compound_statement   go to state 121
+    scope_enter          go to state 78
+    embedded_statement   go to state 122
+    single_statement     go to state 123
+    expr_statement       go to state 124
+    selection_statement  go to state 125
+    iteration_statement  go to state 126
+    return_statement     go to state 127
+    printf_statement     go to state 128
+    read_statement       go to state 129
+    assignment           go to state 13
+    expr                 go to state 100
+    number               go to state 30
+    func_call            go to state 31
 
-State 119
 
-   63 printf_statement: PRINT '(' ')' •
+state 114
 
-    $default  riduzione con la regola 63 (printf_statement)
+   48 iteration_statement: FOR init ',' . cond ',' update DO embedded_statement
 
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-State 120
+    $default  reduce using rule 52 (cond)
 
-   61 printf_statement: PRINT '(' format_string • ')'
-   62                 | PRINT '(' format_string • ',' args ')'
+    var        go to state 28
+    cond       go to state 130
+    expr       go to state 131
+    number     go to state 30
+    func_call  go to state 31
 
-    ','  shift e prosecuzione allo stato 136
-    ')'  shift e prosecuzione allo stato 137
 
+state 115
 
-State 121
+   68 format_string: STRING .
 
-   66 read_statement: READ '(' ')' •
+    $default  reduce using rule 68 (format_string)
 
-    $default  riduzione con la regola 66 (read_statement)
 
+state 116
 
-State 122
+   60 printf_statement: PRINT '(' ')' .
 
-   64 read_statement: READ '(' format_string • ',' read_var_list ')'
-   65               | READ '(' format_string • ')'
+    $default  reduce using rule 60 (printf_statement)
 
-    ','  shift e prosecuzione allo stato 138
-    ')'  shift e prosecuzione allo stato 139
 
+state 117
 
-State 123
+   58 printf_statement: PRINT '(' format_string . ')'
+   59                 | PRINT '(' format_string . ',' args ')'
 
-   39 single_statement: var_declaration •
+    ','  shift, and go to state 132
+    ')'  shift, and go to state 133
 
-    $default  riduzione con la regola 39 (single_statement)
 
+state 118
 
-State 124
+   63 read_statement: READ '(' ')' .
 
-   37 embedded_statement: compound_statement •
+    $default  reduce using rule 63 (read_statement)
 
-    $default  riduzione con la regola 37 (embedded_statement)
 
+state 119
 
-State 125
+   61 read_statement: READ '(' format_string . ',' read_var_list ')'
+   62               | READ '(' format_string . ')'
 
-   48 selection_statement: IF if_cond THEN embedded_statement • END
-   49                    | IF if_cond THEN embedded_statement • ELSE embedded_statement END
+    ','  shift, and go to state 134
+    ')'  shift, and go to state 135
 
-    ELSE  shift e prosecuzione allo stato 140
-    END   shift e prosecuzione allo stato 141
 
+state 120
 
-State 126
+   37 single_statement: var_declaration .
 
-   38 embedded_statement: single_statement •
+    $default  reduce using rule 37 (single_statement)
 
-    $default  riduzione con la regola 38 (embedded_statement)
 
+state 121
 
-State 127
+   35 embedded_statement: compound_statement .
 
-   40 single_statement: expr_statement •
+    $default  reduce using rule 35 (embedded_statement)
 
-    $default  riduzione con la regola 40 (single_statement)
 
+state 122
 
-State 128
+   45 selection_statement: IF if_cond THEN embedded_statement . END
+   46                    | IF if_cond THEN embedded_statement . ELSE embedded_statement END
 
-   41 single_statement: selection_statement •
+    ELSE  shift, and go to state 136
+    END   shift, and go to state 137
 
-    $default  riduzione con la regola 41 (single_statement)
 
+state 123
 
-State 129
+   36 embedded_statement: single_statement .
 
-   42 single_statement: iteration_statement •
+    $default  reduce using rule 36 (embedded_statement)
 
-    $default  riduzione con la regola 42 (single_statement)
 
+state 124
 
-State 130
+   38 single_statement: expr_statement .
 
-   43 single_statement: return_statement •
+    $default  reduce using rule 38 (single_statement)
 
-    $default  riduzione con la regola 43 (single_statement)
 
+state 125
 
-State 131
+   39 single_statement: selection_statement .
 
-   44 single_statement: printf_statement •
+    $default  reduce using rule 39 (single_statement)
 
-    $default  riduzione con la regola 44 (single_statement)
 
+state 126
 
-State 132
+   40 single_statement: iteration_statement .
 
-   45 single_statement: read_statement •
+    $default  reduce using rule 40 (single_statement)
 
-    $default  riduzione con la regola 45 (single_statement)
 
+state 127
 
-State 133
+   41 single_statement: return_statement .
 
-   46 single_statement: assignment_statement •
+    $default  reduce using rule 41 (single_statement)
 
-    $default  riduzione con la regola 46 (single_statement)
 
+state 128
 
-State 134
+   42 single_statement: printf_statement .
 
-   51 iteration_statement: FOR init ',' cond • ',' update DO embedded_statement
+    $default  reduce using rule 42 (single_statement)
 
-    ','  shift e prosecuzione allo stato 142
 
+state 129
 
-State 135
+   43 single_statement: read_statement .
 
-   54 cond: expr •
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   82     | expr • AND expr
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   89     | expr • NE expr
+    $default  reduce using rule 43 (single_statement)
 
-    AND  shift e prosecuzione allo stato 42
-    OR   shift e prosecuzione allo stato 43
-    '>'  shift e prosecuzione allo stato 44
-    '<'  shift e prosecuzione allo stato 45
-    GE   shift e prosecuzione allo stato 46
-    LE   shift e prosecuzione allo stato 47
-    EQ   shift e prosecuzione allo stato 48
-    NE   shift e prosecuzione allo stato 49
-    '+'  shift e prosecuzione allo stato 50
-    '-'  shift e prosecuzione allo stato 51
-    '*'  shift e prosecuzione allo stato 52
-    '/'  shift e prosecuzione allo stato 53
 
-    $default  riduzione con la regola 54 (cond)
+state 130
 
+   48 iteration_statement: FOR init ',' cond . ',' update DO embedded_statement
 
-State 136
+    ','  shift, and go to state 138
 
-   62 printf_statement: PRINT '(' format_string ',' • args ')'
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
+state 131
 
-    var        prosecuzione allo stato 28
-    expr       prosecuzione allo stato 60
-    number     prosecuzione allo stato 30
-    func_call  prosecuzione allo stato 31
-    args       prosecuzione allo stato 143
+   51 cond: expr .
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   78     | expr . AND expr
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   85     | expr . NE expr
 
+    OR   shift, and go to state 42
+    AND  shift, and go to state 43
+    '>'  shift, and go to state 44
+    '<'  shift, and go to state 45
+    NE   shift, and go to state 46
+    EQ   shift, and go to state 47
+    LE   shift, and go to state 48
+    GE   shift, and go to state 49
+    '+'  shift, and go to state 50
+    '-'  shift, and go to state 51
+    '*'  shift, and go to state 52
+    '/'  shift, and go to state 53
 
-State 137
+    $default  reduce using rule 51 (cond)
 
-   61 printf_statement: PRINT '(' format_string ')' •
 
-    $default  riduzione con la regola 61 (printf_statement)
+state 132
 
+   59 printf_statement: PRINT '(' format_string ',' . args ')'
 
-State 138
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-   64 read_statement: READ '(' format_string ',' • read_var_list ')'
+    var        go to state 28
+    expr       go to state 60
+    number     go to state 30
+    func_call  go to state 31
+    args       go to state 139
 
-    ID   shift e prosecuzione allo stato 15
-    '&'  shift e prosecuzione allo stato 144
 
-    var            prosecuzione allo stato 145
-    read_var_list  prosecuzione allo stato 146
+state 133
 
+   58 printf_statement: PRINT '(' format_string ')' .
 
-State 139
+    $default  reduce using rule 58 (printf_statement)
 
-   65 read_statement: READ '(' format_string ')' •
 
-    $default  riduzione con la regola 65 (read_statement)
+state 134
 
+   61 read_statement: READ '(' format_string ',' . read_var_list ')'
 
-State 140
+    ID   shift, and go to state 15
+    '&'  shift, and go to state 140
 
-   49 selection_statement: IF if_cond THEN embedded_statement ELSE • embedded_statement END
+    var            go to state 141
+    read_var_list  go to state 142
 
-    IF         shift e prosecuzione allo stato 83
-    FOR        shift e prosecuzione allo stato 84
-    RETURN     shift e prosecuzione allo stato 85
-    PRINT      shift e prosecuzione allo stato 86
-    READ       shift e prosecuzione allo stato 87
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 88
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '{'        shift e prosecuzione allo stato 76
-    '('        shift e prosecuzione allo stato 27
 
-    var_declaration       prosecuzione allo stato 123
-    declarator_list       prosecuzione allo stato 9
-    declarator            prosecuzione allo stato 10
-    var                   prosecuzione allo stato 90
-    compound_statement    prosecuzione allo stato 124
-    scope_enter           prosecuzione allo stato 78
-    embedded_statement    prosecuzione allo stato 147
-    single_statement      prosecuzione allo stato 126
-    expr_statement        prosecuzione allo stato 127
-    selection_statement   prosecuzione allo stato 128
-    iteration_statement   prosecuzione allo stato 129
-    return_statement      prosecuzione allo stato 130
-    printf_statement      prosecuzione allo stato 131
-    read_statement        prosecuzione allo stato 132
-    assignment_statement  prosecuzione allo stato 133
-    assignment            prosecuzione allo stato 101
-    expr                  prosecuzione allo stato 102
-    number                prosecuzione allo stato 30
-    func_call             prosecuzione allo stato 31
+state 135
 
+   62 read_statement: READ '(' format_string ')' .
 
-State 141
+    $default  reduce using rule 62 (read_statement)
 
-   48 selection_statement: IF if_cond THEN embedded_statement END •
 
-    $default  riduzione con la regola 48 (selection_statement)
+state 136
 
+   46 selection_statement: IF if_cond THEN embedded_statement ELSE . embedded_statement END
 
-State 142
+    IF         shift, and go to state 83
+    FOR        shift, and go to state 84
+    RETURN     shift, and go to state 85
+    PRINT      shift, and go to state 86
+    READ       shift, and go to state 87
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 88
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '{'        shift, and go to state 76
+    '('        shift, and go to state 27
 
-   51 iteration_statement: FOR init ',' cond ',' • update DO embedded_statement
+    var_declaration      go to state 120
+    declarator_list      go to state 9
+    declarator           go to state 10
+    var                  go to state 90
+    compound_statement   go to state 121
+    scope_enter          go to state 78
+    embedded_statement   go to state 143
+    single_statement     go to state 123
+    expr_statement       go to state 124
+    selection_statement  go to state 125
+    iteration_statement  go to state 126
+    return_statement     go to state 127
+    printf_statement     go to state 128
+    read_statement       go to state 129
+    assignment           go to state 13
+    expr                 go to state 100
+    number               go to state 30
+    func_call            go to state 31
 
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 24
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '('        shift e prosecuzione allo stato 27
 
-    $default  riduzione con la regola 58 (update)
+state 137
 
-    var         prosecuzione allo stato 148
-    update      prosecuzione allo stato 149
-    assignment  prosecuzione allo stato 150
-    expr        prosecuzione allo stato 151
-    number      prosecuzione allo stato 30
-    func_call   prosecuzione allo stato 31
+   45 selection_statement: IF if_cond THEN embedded_statement END .
 
+    $default  reduce using rule 45 (selection_statement)
 
-State 143
 
-   62 printf_statement: PRINT '(' format_string ',' args • ')'
+state 138
 
-    ')'  shift e prosecuzione allo stato 152
+   48 iteration_statement: FOR init ',' cond ',' . update DO embedded_statement
 
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 24
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '('        shift, and go to state 27
 
-State 144
+    $default  reduce using rule 55 (update)
 
-   67 read_var_list: '&' • var
-   69              | '&' • var ',' read_var_list
+    var         go to state 90
+    update      go to state 144
+    assignment  go to state 145
+    expr        go to state 146
+    number      go to state 30
+    func_call   go to state 31
 
-    ID  shift e prosecuzione allo stato 15
 
-    var  prosecuzione allo stato 153
+state 139
 
+   59 printf_statement: PRINT '(' format_string ',' args . ')'
 
-State 145
+    ')'  shift, and go to state 147
 
-   68 read_var_list: var •
-   70              | var • ',' read_var_list
 
-    ','  shift e prosecuzione allo stato 154
+state 140
 
-    $default  riduzione con la regola 68 (read_var_list)
+   64 read_var_list: '&' . var
+   66              | '&' . var ',' read_var_list
 
+    ID  shift, and go to state 15
 
-State 146
+    var  go to state 148
 
-   64 read_statement: READ '(' format_string ',' read_var_list • ')'
 
-    ')'  shift e prosecuzione allo stato 155
+state 141
 
+   65 read_var_list: var .
+   67              | var . ',' read_var_list
 
-State 147
+    ','  shift, and go to state 149
 
-   49 selection_statement: IF if_cond THEN embedded_statement ELSE embedded_statement • END
+    $default  reduce using rule 65 (read_var_list)
 
-    END  shift e prosecuzione allo stato 156
 
+state 142
 
-State 148
+   61 read_statement: READ '(' format_string ',' read_var_list . ')'
 
-   73 assignment: var • '=' expr
-   74 expr: var •
+    ')'  shift, and go to state 150
 
-    '='  shift e prosecuzione allo stato 20
 
-    $default  riduzione con la regola 74 (expr)
+state 143
 
+   46 selection_statement: IF if_cond THEN embedded_statement ELSE embedded_statement . END
 
-State 149
+    END  shift, and go to state 151
 
-   51 iteration_statement: FOR init ',' cond ',' update • DO embedded_statement
 
-    DO  shift e prosecuzione allo stato 157
+state 144
 
+   48 iteration_statement: FOR init ',' cond ',' update . DO embedded_statement
 
-State 150
+    DO  shift, and go to state 152
 
-   56 update: assignment •
 
-    $default  riduzione con la regola 56 (update)
+state 145
 
+   53 update: assignment .
 
-State 151
+    $default  reduce using rule 53 (update)
 
-   57 update: expr •
-   77 expr: expr • '+' expr
-   78     | expr • '-' expr
-   79     | expr • '*' expr
-   80     | expr • '/' expr
-   82     | expr • AND expr
-   83     | expr • OR expr
-   84     | expr • '>' expr
-   85     | expr • '<' expr
-   86     | expr • GE expr
-   87     | expr • LE expr
-   88     | expr • EQ expr
-   89     | expr • NE expr
 
-    AND  shift e prosecuzione allo stato 42
-    OR   shift e prosecuzione allo stato 43
-    '>'  shift e prosecuzione allo stato 44
-    '<'  shift e prosecuzione allo stato 45
-    GE   shift e prosecuzione allo stato 46
-    LE   shift e prosecuzione allo stato 47
-    EQ   shift e prosecuzione allo stato 48
-    NE   shift e prosecuzione allo stato 49
-    '+'  shift e prosecuzione allo stato 50
-    '-'  shift e prosecuzione allo stato 51
-    '*'  shift e prosecuzione allo stato 52
-    '/'  shift e prosecuzione allo stato 53
+state 146
 
-    $default  riduzione con la regola 57 (update)
+   54 update: expr .
+   73 expr: expr . '+' expr
+   74     | expr . '-' expr
+   75     | expr . '*' expr
+   76     | expr . '/' expr
+   78     | expr . AND expr
+   79     | expr . OR expr
+   80     | expr . '>' expr
+   81     | expr . '<' expr
+   82     | expr . GE expr
+   83     | expr . LE expr
+   84     | expr . EQ expr
+   85     | expr . NE expr
 
+    OR   shift, and go to state 42
+    AND  shift, and go to state 43
+    '>'  shift, and go to state 44
+    '<'  shift, and go to state 45
+    NE   shift, and go to state 46
+    EQ   shift, and go to state 47
+    LE   shift, and go to state 48
+    GE   shift, and go to state 49
+    '+'  shift, and go to state 50
+    '-'  shift, and go to state 51
+    '*'  shift, and go to state 52
+    '/'  shift, and go to state 53
 
-State 152
+    $default  reduce using rule 54 (update)
 
-   62 printf_statement: PRINT '(' format_string ',' args ')' •
 
-    $default  riduzione con la regola 62 (printf_statement)
+state 147
 
+   59 printf_statement: PRINT '(' format_string ',' args ')' .
 
-State 153
+    $default  reduce using rule 59 (printf_statement)
 
-   67 read_var_list: '&' var •
-   69              | '&' var • ',' read_var_list
 
-    ','  shift e prosecuzione allo stato 158
+state 148
 
-    $default  riduzione con la regola 67 (read_var_list)
+   64 read_var_list: '&' var .
+   66              | '&' var . ',' read_var_list
 
+    ','  shift, and go to state 153
 
-State 154
+    $default  reduce using rule 64 (read_var_list)
 
-   70 read_var_list: var ',' • read_var_list
 
-    ID   shift e prosecuzione allo stato 15
-    '&'  shift e prosecuzione allo stato 144
+state 149
 
-    var            prosecuzione allo stato 145
-    read_var_list  prosecuzione allo stato 159
+   67 read_var_list: var ',' . read_var_list
 
+    ID   shift, and go to state 15
+    '&'  shift, and go to state 140
 
-State 155
+    var            go to state 141
+    read_var_list  go to state 154
 
-   64 read_statement: READ '(' format_string ',' read_var_list ')' •
 
-    $default  riduzione con la regola 64 (read_statement)
+state 150
 
+   61 read_statement: READ '(' format_string ',' read_var_list ')' .
 
-State 156
+    $default  reduce using rule 61 (read_statement)
 
-   49 selection_statement: IF if_cond THEN embedded_statement ELSE embedded_statement END •
 
-    $default  riduzione con la regola 49 (selection_statement)
+state 151
 
+   46 selection_statement: IF if_cond THEN embedded_statement ELSE embedded_statement END .
 
-State 157
+    $default  reduce using rule 46 (selection_statement)
 
-   51 iteration_statement: FOR init ',' cond ',' update DO • embedded_statement
 
-    IF         shift e prosecuzione allo stato 83
-    FOR        shift e prosecuzione allo stato 84
-    RETURN     shift e prosecuzione allo stato 85
-    PRINT      shift e prosecuzione allo stato 86
-    READ       shift e prosecuzione allo stato 87
-    INT_NUM    shift e prosecuzione allo stato 22
-    FLOAT_NUM  shift e prosecuzione allo stato 23
-    ID         shift e prosecuzione allo stato 88
-    NOT        shift e prosecuzione allo stato 25
-    '-'        shift e prosecuzione allo stato 26
-    '{'        shift e prosecuzione allo stato 76
-    '('        shift e prosecuzione allo stato 27
+state 152
 
-    var_declaration       prosecuzione allo stato 123
-    declarator_list       prosecuzione allo stato 9
-    declarator            prosecuzione allo stato 10
-    var                   prosecuzione allo stato 90
-    compound_statement    prosecuzione allo stato 124
-    scope_enter           prosecuzione allo stato 78
-    embedded_statement    prosecuzione allo stato 160
-    single_statement      prosecuzione allo stato 126
-    expr_statement        prosecuzione allo stato 127
-    selection_statement   prosecuzione allo stato 128
-    iteration_statement   prosecuzione allo stato 129
-    return_statement      prosecuzione allo stato 130
-    printf_statement      prosecuzione allo stato 131
-    read_statement        prosecuzione allo stato 132
-    assignment_statement  prosecuzione allo stato 133
-    assignment            prosecuzione allo stato 101
-    expr                  prosecuzione allo stato 102
-    number                prosecuzione allo stato 30
-    func_call             prosecuzione allo stato 31
+   48 iteration_statement: FOR init ',' cond ',' update DO . embedded_statement
 
+    IF         shift, and go to state 83
+    FOR        shift, and go to state 84
+    RETURN     shift, and go to state 85
+    PRINT      shift, and go to state 86
+    READ       shift, and go to state 87
+    INT_NUM    shift, and go to state 22
+    FLOAT_NUM  shift, and go to state 23
+    ID         shift, and go to state 88
+    NOT        shift, and go to state 25
+    '-'        shift, and go to state 26
+    '{'        shift, and go to state 76
+    '('        shift, and go to state 27
 
-State 158
+    var_declaration      go to state 120
+    declarator_list      go to state 9
+    declarator           go to state 10
+    var                  go to state 90
+    compound_statement   go to state 121
+    scope_enter          go to state 78
+    embedded_statement   go to state 155
+    single_statement     go to state 123
+    expr_statement       go to state 124
+    selection_statement  go to state 125
+    iteration_statement  go to state 126
+    return_statement     go to state 127
+    printf_statement     go to state 128
+    read_statement       go to state 129
+    assignment           go to state 13
+    expr                 go to state 100
+    number               go to state 30
+    func_call            go to state 31
 
-   69 read_var_list: '&' var ',' • read_var_list
 
-    ID   shift e prosecuzione allo stato 15
-    '&'  shift e prosecuzione allo stato 144
+state 153
 
-    var            prosecuzione allo stato 145
-    read_var_list  prosecuzione allo stato 161
+   66 read_var_list: '&' var ',' . read_var_list
 
+    ID   shift, and go to state 15
+    '&'  shift, and go to state 140
 
-State 159
+    var            go to state 141
+    read_var_list  go to state 156
 
-   70 read_var_list: var ',' read_var_list •
 
-    $default  riduzione con la regola 70 (read_var_list)
+state 154
 
+   67 read_var_list: var ',' read_var_list .
 
-State 160
+    $default  reduce using rule 67 (read_var_list)
 
-   51 iteration_statement: FOR init ',' cond ',' update DO embedded_statement •
 
-    $default  riduzione con la regola 51 (iteration_statement)
+state 155
 
+   48 iteration_statement: FOR init ',' cond ',' update DO embedded_statement .
 
-State 161
+    $default  reduce using rule 48 (iteration_statement)
 
-   69 read_var_list: '&' var ',' read_var_list •
 
-    $default  riduzione con la regola 69 (read_var_list)
+state 156
+
+   66 read_var_list: '&' var ',' read_var_list .
+
+    $default  reduce using rule 66 (read_var_list)
