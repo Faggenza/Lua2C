@@ -40,7 +40,8 @@ enum TYPE type;
 %token  BOOL
 %token  <s> INT_NUM  FLOAT_NUM
 %token  <s> ID
-%left   AND OR NOT
+%left   AND OR 
+%right  NOT
 %left   '>' '<' GE LE EQ NE 
 %left   '+' '-' '*' '/'
 %right  '='
@@ -52,7 +53,7 @@ enum TYPE type;
 %type <ast> return_statement expr_statement func_call args format_string printf_statement  if_cond
 %type <ast> declarator_list declarator
 %type <ast> func_declaration param_list param compound_statement statement_list statement
-%type <ast> read_statement read_var_list iteration_statement init cond update selection_statement
+%type <ast> read_statement read_var_list read_var iteration_statement init cond update selection_statement
 %type <ast> embedded_statement single_statement
 //%type <t> type
 
@@ -84,13 +85,12 @@ declarator_list
 
 declarator
 	: var  
-	| assignment
 	;
 
 
 var
-    : ID                                                            { $$ = new_variable(VAR_T, $1, NULL); }
-    | ID '{' expr '}'                                               { $$ = new_variable(VAR_T, $1, $3); check_array($3); }
+    : ID                                                          { $$ = new_variable(VAR_T, $1, NULL); }
+    | ID '{' expr '}'                                             { $$ = new_variable(VAR_T, $1, $3); check_array($3); }
     ;
 
 func_declaration
@@ -209,10 +209,13 @@ read_statement
     ;
 
 read_var_list
-    : '&' var                                                       { check_var_reference($2); by_reference($2); $$ = $2; }
-    | var                                                           { check_var_reference($1); $$ = $1; }
-    | '&' var ',' read_var_list                                    { check_var_reference($2); by_reference($2); $$ = link_AstNode($2, $4); }
-    | var ','   read_var_list                                      { check_var_reference($1); link_AstNode($1, $3); }
+    : read_var                                                     { $$ = $1; }
+    | read_var ',' read_var_list                                   { $$ = link_AstNode($1, $3); }
+    ;
+
+read_var
+    : '&' var                                                      { check_var_reference($2); by_reference($2); $$ = $2; }
+    | var                                                          { check_var_reference($1); $$ = $1; }
     ;
 
 format_string
@@ -220,7 +223,7 @@ format_string
     ;
 
 assignment_statement
-    : assignment                                                    { $$ = $1; eval_expr_type($1); }
+    : var '=' expr                                                 { $$ = new_expression(EXPR_T, ASS_T, $1, $3); eval_expr_type($$); }
     ;
 
 assignment
@@ -228,24 +231,24 @@ assignment
     ;
 
 expr
-    : var                                                           { $$ = $1; check_var_reference($1); }
+    : var                                                          { $$ = $1; check_var_reference($1); }
     | number
     | func_call
-    | expr '+' expr                                                 { $$ = new_expression(EXPR_T, ADD_T, $1, $3); }
-    | expr '-' expr                                                 { $$ = new_expression(EXPR_T, SUB_T, $1, $3); }
-    | expr '*' expr                                                 { $$ = new_expression(EXPR_T, MUL_T, $1, $3); }
-    | expr '/' expr                                                 { $$ = new_expression(EXPR_T, DIV_T, $1, $3); check_division($3); }
-    | NOT expr                                                      { $$ = new_expression(EXPR_T, NOT_T, NULL, $2); }
-    | expr AND expr                                                 { $$ = new_expression(EXPR_T, AND_T, $1, $3); }
-    | expr OR expr                                                  { $$ = new_expression(EXPR_T, OR_T, $1, $3); }
-    | expr '>' expr                                                 { $$ = new_expression(EXPR_T, G_T, $1, $3); }
-    | expr '<' expr                                                 { $$ = new_expression(EXPR_T, L_T, $1, $3); }
-    | expr GE expr                                                  { $$ = new_expression(EXPR_T, GE_T, $1, $3); }
-    | expr LE expr                                                  { $$ = new_expression(EXPR_T, LE_T, $1, $3); }
-    | expr EQ expr                                                  { $$ = new_expression(EXPR_T, EQ_T, $1, $3); }
-    | expr NE expr                                                  { $$ = new_expression(EXPR_T, NE_T, $1, $3); }
-    | '(' expr ')'                                                  { $$ = new_expression(EXPR_T, PAR_T, NULL, $2); }
-    | '-' expr %prec MINUS                                          { $$ = new_expression(EXPR_T, NEG_T, NULL, $2); }
+    | expr '+' expr                                                { $$ = new_expression(EXPR_T, ADD_T, $1, $3); }
+    | expr '-' expr                                                { $$ = new_expression(EXPR_T, SUB_T, $1, $3); }
+    | expr '*' expr                                                { $$ = new_expression(EXPR_T, MUL_T, $1, $3); }
+    | expr '/' expr                                                { $$ = new_expression(EXPR_T, DIV_T, $1, $3); check_division($3); }
+    | NOT expr                                                     { $$ = new_expression(EXPR_T, NOT_T, NULL, $2); }
+    | expr AND expr                                                { $$ = new_expression(EXPR_T, AND_T, $1, $3); }
+    | expr OR expr                                                 { $$ = new_expression(EXPR_T, OR_T, $1, $3); }
+    | expr '>' expr                                                { $$ = new_expression(EXPR_T, G_T, $1, $3); }
+    | expr '<' expr                                                { $$ = new_expression(EXPR_T, L_T, $1, $3); }
+    | expr GE expr                                                 { $$ = new_expression(EXPR_T, GE_T, $1, $3); }
+    | expr LE expr                                                 { $$ = new_expression(EXPR_T, LE_T, $1, $3); }
+    | expr EQ expr                                                 { $$ = new_expression(EXPR_T, EQ_T, $1, $3); }
+    | expr NE expr                                                 { $$ = new_expression(EXPR_T, NE_T, $1, $3); }
+    | '(' expr ')'                                                 { $$ = $2; }
+    | '-' expr %prec MINUS                                         { $$ = new_expression(EXPR_T, NEG_T, NULL, $2); }
     ;
 
 number
@@ -254,8 +257,8 @@ number
     ;
 
 func_call
-    : ID '(' args ')'                                               { $$ = new_func_call(FCALL_T, $1, $3); check_fcall($1, $3); }
-    | ID '(' ')'                                                    { $$ = new_func_call(FCALL_T, $1, NULL); check_fcall($1, NULL); }
+    : ID '(' args ')'                                             { $$ = new_func_call(FCALL_T, $1, $3); check_fcall($1, $3); }
+    | ID '(' ')'                                                  { $$ = new_func_call(FCALL_T, $1, NULL); check_fcall($1, NULL); }
     ;
 
 args
