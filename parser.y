@@ -24,7 +24,7 @@ enum TYPE type;
 
 %}
 
-%define parse.error verbose
+%error-verbose
 
 %union {
     char* s;
@@ -46,9 +46,10 @@ enum TYPE type;
 %right  '='
 %right MINUS
 
+/*%define parse.error verbose*/
 %expect 1 /* conflitto shift/reduce (else) , bison lo risolve scegliendo shift */
 
-%type <ast> number var var_declaration global_declaration_list global_declaration  expr assignment_statement assignment
+%type <ast> number var var_declaration global_declaration_list global_declaration  expr  assignment  //assignment_statement
 %type <ast> return_statement expr_statement func_call args format_string printf_statement  if_cond
 %type <ast> declarator_list declarator
 %type <ast> func_declaration param_list param compound_statement statement_list statement
@@ -83,9 +84,11 @@ declarator_list
 	;
 
 declarator
-	: var  
-	| assignment
-	;
+	//: var
+	//| assignment
+
+	: assignment
+
 
 
 var
@@ -136,7 +139,7 @@ statement
     | return_statement
     | printf_statement                                              { fmt_flag = 1; }
     | read_statement                                               { fmt_flag = 1; }
-    | assignment_statement
+    //| assignment_statement
     ;
 
 
@@ -153,7 +156,7 @@ single_statement
     | return_statement
     | printf_statement                                              { fmt_flag = 1; }
     | read_statement                                               { fmt_flag = 1; }
-    | assignment_statement
+    //| assignment_statement
     ;
 
 expr_statement
@@ -219,10 +222,10 @@ format_string
     : STRING                                                        { $$ = new_value(VAL_T, STRING_T, $1); }
     ;
 
-assignment_statement
+/*assignment_statement
     : assignment                                                    { $$ = $1; eval_expr_type($1); }
     ;
-
+*/
 assignment
     : var '=' expr                                                  { $$ = new_expression(EXPR_T, ASS_T, $1, $3); }
     ;
