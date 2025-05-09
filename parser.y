@@ -24,7 +24,10 @@ enum TYPE type;
 
 %}
 
-%error-verbose
+//%error-verbose
+%define parse.error verbose
+
+%expect 2 /* conflitto shift/reduce (- per ruturn o expr_statement) , bison lo risolve scegliendo shift */
 
 %union {
     char* s;
@@ -33,74 +36,57 @@ enum TYPE type;
 }
 
 %token  IF ELSE THEN FOR DO END RETURN
-%token  <t>  FUNCTION
+%token  <t> FUNCTION
 %token  <s> PRINT READ 
 %token  NIL
 %token  <s> STRING
 %token  BOOL
-%token  <s> INT_NUM  FLOAT_NUM
-%token  <s> ID
-%left   AND OR NOT
+%left   AND OR
 %left   '>' '<' GE LE EQ NE 
-%left   '+' '-' '*' '/'
+%left   '+' '-'        // Questi sono operatori binari con la stessa precedenza
+%left   '*' '/'        // Operatori moltiplicativi con precedenza maggiore
+%right  NOT
 %right  '='
-%right MINUS
+%right UMINUS       // Precedenza più alta per il meno unario
 
-/*%define parse.error verbose*/
-%expect 1 /* conflitto shift/reduce (else) , bison lo risolve scegliendo shift */
+// Aggiungi direttiva di precedenza per discriminare i due casi
+%nonassoc LOWER_THAN_EXPR
+%nonassoc EXPR_START
 
-%type <ast> number var var_declaration global_declaration_list global_declaration  expr  assignment  //assignment_statement
-%type <ast> return_statement expr_statement func_call args format_string printf_statement  if_cond
-%type <ast> declarator_list declarator
-%type <ast> func_declaration param_list param compound_statement statement_list statement
-%type <ast> read_statement read_var_list iteration_statement init cond update selection_statement
-%type <ast> embedded_statement single_statement
+// Indica i token che possono iniziare un'espressione
+%nonassoc <s> INT_NUM FLOAT_NUM ID
+%nonassoc '('
+
+%type <ast> number global_statement_list global_statement expr  assignment
+%type <ast> return_statement expr_statement func_call args print_statement  if_cond
+%type <ast> statement_list statement
+%type <ast> name
+%type <ast> func_definition param_list param chunk format_string
+%type <ast> iteration_statement init cond update selection_statement
 //%type <t> type
 
 %%
 
 program
-    : { scope_enter(); } global_declaration_list                   { root = $2; scope_exit(); }
+    : global_statement_list                                         { root = $1; }         
     ;
 
-global_declaration_list
-    : global_declaration 
-    | global_declaration global_declaration_list                    { $$ = link_AstNode($1, $2); }
+
+global_statement_list
+    : global_statement
+    | global_statement global_statement_list                        { $$ = link_AstNode($1, $2); }
     ;
 
-global_declaration
-    : var_declaration
-    | func_declaration                                              { check_main($1); }
+global_statement
+    : assignment
+    | func_definition
     ;
 
-var_declaration
-	: declarator_list               /*TODO:check_type*/             { $$ = new_declaration(DECL_T, $1); fill_symtab(current_symtab, $$, -1, VARIABLE); }  
-    | ID declarator_list                                            { $$ = new_error(ERROR_NODE_T); yyerror(error_string_format("Unknown type name: " BOLD "%s" RESET, $1 )); }
-    ;
-
-declarator_list
-	: declarator
-	| declarator ',' declarator_list                                { $$ = link_AstNode($1, $3); }
-	;
-
-declarator
-	//: var
-	//| assignment
-
-	: assignment
-
-
-
-var
-    : ID                                                            { $$ = new_variable(VAR_T, $1, NULL); }
-    | ID '{' expr '}'                                               { $$ = new_variable(VAR_T, $1, $3); check_array($3); }
-    ;
-
-func_declaration
+func_definition
     : FUNCTION ID '(' param_list ')'                                { param_list = $4; insert_sym(current_symtab, $2, $1, FUNCTION, $4, yylineno, line); } 
-            compound_statement      /*TODO:remove type function*/   { $$ = new_func_def(FDEF_T, $1, $2, $4, $7); check_func_return($1, $7); }
+            chunk   END     /*TODO:remove type function*/                { $$ = new_func_def(FDEF_T, $1, $2, $4, $7); check_func_return($1, $7); }
     | FUNCTION ID '(' ')'                                           { ret_type = $1; insert_sym(current_symtab, $2, $1, FUNCTION, NULL, yylineno, line); } 
-            compound_statement                                      { $$ = new_func_def(FDEF_T, $1, $2, NULL, $6); check_func_return($1, $6); }
+            chunk   END                                      { $$ = new_func_def(FDEF_T, $1, $2, NULL, $6); check_func_return($1, $6); }
     ;
 
 param_list
@@ -109,63 +95,44 @@ param_list
     ;
 
 param
-    : ID                                                            { $$ = new_declaration(DECL_T, new_variable(VAR_T, $1, NULL)); }
-    | ID '[' ']'                                                    { $$ = new_declaration(DECL_T, new_variable(VAR_T, $1, new_value(VAL_T, INT_T, "0"))); }
+    : ID                                                            { $$ = new_declaration(DECL_T, new_nameiable(VAR_T, $1, NULL)); }
+    //elemento di un array
+    | ID '[' ']'                                                    { $$ = new_declaration(DECL_T, new_nameiable(VAR_T, $1, new_value(VAL_T, INT_T, "0"))); }
     ;
 
-compound_statement
-    : scope_enter statement_list scope_exit                         { $$ = $2; }
+
+assignment
+    : ID '=' expr                                                  { $$ = new_expression(EXPR_T, ASS_T, $1, $3); }
     ;
 
-scope_enter
-    : '{'                                                           { scope_enter(); }
-    ;
-
-scope_exit
-    : '}'                                                           { scope_exit(); }
+chunk
+    : statement_list                                               { $$ = $1; }
     ;
 
 statement_list
     : statement   
-    | statement statement_list                                      { $$ = link_AstNode($1, $2); }
+    | statement_list statement                                      { $$ = link_AstNode($1, $2); }
     ;
 
 statement
-    : var_declaration
-    | compound_statement
+    : assignment
     | expr_statement
     | selection_statement
     | iteration_statement
     | return_statement
-    | printf_statement                                             { fmt_flag = 1; }
-    | read_statement                                               { fmt_flag = 1; }
+    | print_statement                                             { fmt_flag = 1; }
+//    | read_statement                                               { fmt_flag = 1; }
     //| assignment_statement
     ;
 
-
-embedded_statement
-    : compound_statement
-    | single_statement
-    ;
-
-single_statement
-    : var_declaration                                               { yyerror("embedded statement cannot be a declaration"); }
-    | expr_statement
-    | selection_statement
-    | iteration_statement
-    | return_statement
-    | printf_statement                                              { fmt_flag = 1; }
-    | read_statement                                               { fmt_flag = 1; }
-    //| assignment_statement
-    ;
 
 expr_statement
     : expr                                                          { eval_expr_type($1); $$ = check_expr_statement($1); }
     ;
 
 selection_statement
-    : IF  if_cond THEN embedded_statement END                              { $$ = new_if(IF_T, $2, $4, NULL); }
-    | IF  if_cond THEN embedded_statement ELSE embedded_statement END      { $$ = new_if(IF_T, $2, $4, $6); }
+    : IF  if_cond THEN chunk END                              { $$ = new_if(IF_T, $2, $4, NULL); }
+    | IF  if_cond THEN chunk ELSE chunk END                   { $$ = new_if(IF_T, $2, $4, $6); }
     ;
 
 if_cond
@@ -173,11 +140,10 @@ if_cond
     ;
 
 iteration_statement
-    : FOR init ',' cond ',' update DO embedded_statement       { $$ = new_for(FOR_T, $2, $4, $6, $8); scope_exit(); }
+    : FOR init ',' cond ',' update DO chunk END               { $$ = new_for(FOR_T, $2, $4, $6, $8); scope_exit(); }
     ;
 
-init
-    //non posso usare una variabile già esistente 
+init 
     : assignment                                                    { scope_enter(); $$ = new_declaration(DECL_T, $1); fill_symtab(current_symtab, $$, -1, VARIABLE); } 
     | /* empty */                                                   { scope_enter(); $$ = NULL; }
     ;
@@ -194,66 +160,62 @@ update
     ;
     
 return_statement
-    : RETURN                                                        { $$ = new_return(RETURN_T, NULL); check_return(NULL); }
-    | RETURN expr                                                   { $$ = new_return(RETURN_T, $2); check_return($2); }
+    : RETURN %prec LOWER_THAN_EXPR                                 { $$ = new_return(RETURN_T, NULL); check_return(NULL); }
+    | RETURN expr                                                  { $$ = new_return(RETURN_T, $2); check_return($2); }
     ;
 
-printf_statement
+print_statement
     : PRINT '(' format_string ')'                                   { $$ = new_func_call(FCALL_T, $1, $3); check_format_string($3, NULL, PRINT_T); }
     | PRINT '(' format_string ',' args ')'                          { $$ = new_func_call(FCALL_T, $1, link_AstNode($3,$5)); check_format_string($3, $5, PRINT_T); }
     | PRINT '(' ')'                                                 { $$ = new_error(ERROR_NODE_T); yyerror("too few arguments to function" BOLD " print" RESET); }
     ;
 
-
-read_statement
-    : READ '(' format_string ',' read_var_list ')'                { check_format_string($3, $5, READ_T); $$ = new_func_call(FCALL_T, $1, link_AstNode($3, $5)); }
-    | READ '(' format_string ')'                                   { check_format_string($3, NULL, READ_T); $$ = new_func_call(FCALL_T, $1, $3); }
-    | READ '(' ')'                                                 { $$ = new_error(ERROR_NODE_T); yyerror("too few arguments to function" BOLD " read" RESET); }
-    ;
-
-read_var_list
-    : '&' var                                                       { check_var_reference($2); by_reference($2); $$ = $2; }
-    | var                                                           { check_var_reference($1); $$ = $1; }
-    | '&' var ',' read_var_list                                    { check_var_reference($2); by_reference($2); $$ = link_AstNode($2, $4); }
-    | var ','   read_var_list                                      { check_var_reference($1); link_AstNode($1, $3); }
-    ;
+//da controllare read Lua
+//read_statement
+//    : READ '(' format_string ',' read_name_list ')'                { check_format_string($3, $5, READ_T); $$ = new_func_call(FCALL_T, $1, link_AstNode($3, $5)); }
+//    | READ '(' format_string ')'                                   { check_format_string($3, NULL, READ_T); $$ = new_func_call(FCALL_T, $1, $3); }
+//    | READ '(' ')'                                                 { $$ = new_error(ERROR_NODE_T); yyerror("too few arguments to function" BOLD " read" RESET); }
+//    ;
+//
+//read_name_list
+//    : '&' name                                                       { check_var_reference($2); by_reference($2); $$ = $2; }
+//    | name                                                           { check_var_reference($1); $$ = $1; }
+//    | '&' name ',' read_var_list                                    { check_var_reference($2); by_reference($2); $$ = link_AstNode($2, $4); }
+//    | name ','   read_var_list                                      { check_var_reference($1); link_AstNode($1, $3); }
+//    ;
 
 format_string
     : STRING                                                        { $$ = new_value(VAL_T, STRING_T, $1); }
     ;
 
-/*assignment_statement
-    : assignment                                                    { $$ = $1; eval_expr_type($1); }
-    ;
-*/
-assignment
-    : var '=' expr                                                  { $$ = new_expression(EXPR_T, ASS_T, $1, $3); }
-    ;
-
 expr
-    : var                                                           { $$ = $1; check_var_reference($1); }
+    : name                                           
     | number
     | func_call
-    | expr '+' expr                                                 { $$ = new_expression(EXPR_T, ADD_T, $1, $3); }
-    | expr '-' expr                                                 { $$ = new_expression(EXPR_T, SUB_T, $1, $3); }
-    | expr '*' expr                                                 { $$ = new_expression(EXPR_T, MUL_T, $1, $3); }
-    | expr '/' expr                                                 { $$ = new_expression(EXPR_T, DIV_T, $1, $3); check_division($3); }
-    | NOT expr                                                      { $$ = new_expression(EXPR_T, NOT_T, NULL, $2); }
-    | expr AND expr                                                 { $$ = new_expression(EXPR_T, AND_T, $1, $3); }
-    | expr OR expr                                                  { $$ = new_expression(EXPR_T, OR_T, $1, $3); }
-    | expr '>' expr                                                 { $$ = new_expression(EXPR_T, G_T, $1, $3); }
-    | expr '<' expr                                                 { $$ = new_expression(EXPR_T, L_T, $1, $3); }
-    | expr GE expr                                                  { $$ = new_expression(EXPR_T, GE_T, $1, $3); }
-    | expr LE expr                                                  { $$ = new_expression(EXPR_T, LE_T, $1, $3); }
-    | expr EQ expr                                                  { $$ = new_expression(EXPR_T, EQ_T, $1, $3); }
-    | expr NE expr                                                  { $$ = new_expression(EXPR_T, NE_T, $1, $3); }
-    | '(' expr ')'                                                  { $$ = new_expression(EXPR_T, PAR_T, NULL, $2); }
-    | '-' expr %prec MINUS                                          { $$ = new_expression(EXPR_T, NEG_T, NULL, $2); }
+    | expr '+' expr                                                 { $$ = new_expression(expr_t, add_t, $1, $3); }
+    | expr '-' expr                                                 { $$ = new_expression(expr_t, sub_t, $1, $3); }
+    | expr '*' expr                                                 { $$ = new_expression(expr_t, mul_t, $1, $3); }
+    | expr '/' expr                                                 { $$ = new_expression(expr_t, div_t, $1, $3); check_division($3); }
+    | NOT expr                                                      { $$ = new_expression(expr_t, not_t, null, $2); }
+    | expr AND expr                                                 { $$ = new_expression(expr_t, and_t, $1, $3); }
+    | expr OR expr                                                  { $$ = new_expression(expr_t, or_t, $1, $3); }
+    | expr '>' expr                                                 { $$ = new_expression(expr_t, g_t, $1, $3); }
+    | expr '<' expr                                                 { $$ = new_expression(expr_t, l_t, $1, $3); }
+    | expr GE expr                                                  { $$ = new_expression(expr_t, ge_t, $1, $3); }
+    | expr LE expr                                                  { $$ = new_expression(expr_t, le_t, $1, $3); }
+    | expr EQ expr                                                  { $$ = new_expression(expr_t, eq_t, $1, $3); }
+    | expr NE expr                                                  { $$ = new_expression(expr_t, ne_t, $1, $3); }
+    | '(' expr ')'                                                  { $$ = new_expression(expr_t, par_t, null, $2); }
+    | '-' expr %prec UMINUS                                          { $$ = new_expression(expr_t, neg_t, null, $2); }
+    ;
+
+name
+    : ID                                                          { $$ = $1; check_var_reference($1); }
     ;
 
 number
-    : INT_NUM                                                       { $$ = new_value(VAL_T, INT_T, $1); }
-    | FLOAT_NUM                                                     { $$ = new_value(VAL_T, FLOAT_T, $1); }
+    : INT_NUM                                                       { $$ = new_value(val_t, int_t, $1); }
+    | FLOAT_NUM                                                     { $$ = new_value(val_t, float_t, $1); }
     ;
 
 func_call
@@ -265,6 +227,7 @@ args
     : expr
     | expr ',' args                                                 { $$ = link_AstNode($1, $3); }
     ;
+
 
 %%
 
@@ -316,7 +279,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    // inizializzazione variabili globali
+    // inizializzazione nameiabili globali
     error_num = 0;
     current_scope_lvl = 0;
     current_symtab = NULL;
@@ -354,7 +317,7 @@ void scope_enter() {
 }
 
 /* Chiude uno scope. Eventualmente effettua il print della Symbol Table.
-   Verifica che le variabili dichiarate all'interno dello scope siano utilizzate
+   Verifica che le nameiabili dichiarate all'interno dello scope siano utilizzate
 */
 void scope_exit() {
     if(print_symtab_flag)
@@ -367,31 +330,31 @@ void scope_exit() {
 
 
 /* Usata per inserire uno o più simboli all'interno della Symbol Table. 
-   Usata per 1 - Dichiarazione di variabili
-             2 - Dichiarazione di variabili con assegnazione
+   Usata per 1 - Dichiarazione di nameiabili
+             2 - Dichiarazione di nameiabili con assegnazione
              3 - Parametri di una funzione
 */
 void fill_symtab(struct symlist * syml, struct AstNode *n, enum TYPE type, enum sym_type sym_type){
     /*  syml = puntatore alla ST dello scope corrente
         n = puntatore all'Ast node
         type = tipo di dato (int, float, ...)
-        sym_type = tipo di simbolo (in questo caso può essere solo parametro o variabile)
+        sym_type = tipo di simbolo (in questo caso può essere solo parametro o nameiabile)
     */
     while(n){      
         if(n -> nodetype == VAR_T) {
-            insert_sym(syml, n -> node.var -> name, type, sym_type, NULL, yylineno, line);
-            if(n -> node.var -> array_dim){
+            insert_sym(syml, n -> node.name -> name, type, sym_type, NULL, yylineno, line);
+            if(n -> node.name -> array_dim){
                 /* se è un array (c'è array dim nel nodo ast), modifico il flag nella ST*/
-                struct symbol *s = find_sym(syml, n -> node.var -> name);
+                struct symbol *s = find_sym(syml, n -> node.name -> name);
                 s -> array_flag = 1;
             }
         }else if(n -> nodetype == EXPR_T){
             /* Dichiarazioni con assegnazione, in questo caso EXPR_T sarà sempre un'assegnazione */
-            insert_sym(syml, n -> node.expr -> l -> node.var -> name, type, sym_type, NULL, yylineno, line);
-            if(n -> node.expr -> l -> node.var -> array_dim){
+            insert_sym(syml, n -> node.expr -> l -> node.name -> name, type, sym_type, NULL, yylineno, line);
+            if(n -> node.expr -> l -> node.name -> array_dim){
                 /* se è un array (c'è array dim nel nodo ast), modifico il flag nella ST*/
                 yyerror("invalid array initializer");
-                struct symbol *s = find_sym(syml, n -> node.expr -> l -> node.var -> name);
+                struct symbol *s = find_sym(syml, n -> node.expr -> l -> node.name -> name);
                 s -> array_flag = 1;
             }
             /*  controllo sulla correttezza dell'assegnazione */
@@ -400,7 +363,7 @@ void fill_symtab(struct symlist * syml, struct AstNode *n, enum TYPE type, enum 
             /* il primo nodo passato sarà sempre di tipo DECL_T da cui verrà estratto type  
             e per essere usato anche nei casi successivi */
             type = n -> node.decl -> type;
-            fill_symtab(syml, n -> node.decl -> var, type, sym_type);
+            fill_symtab(syml, n -> node.decl -> name, type, sym_type);
         } 
 
         n = n -> next;
