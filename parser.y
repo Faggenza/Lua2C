@@ -137,7 +137,7 @@ statement
     | selection_statement
     | iteration_statement
     | return_statement
-    | printf_statement                                              { fmt_flag = 1; }
+    | printf_statement                                             { fmt_flag = 1; }
     | read_statement                                               { fmt_flag = 1; }
     //| assignment_statement
     ;
