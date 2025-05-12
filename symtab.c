@@ -157,33 +157,3 @@ void check_usage(struct symlist *syml)
         }
     }
 }
-
-// Aggiungere la funzione convert_var_type
-const char *convert_var_type(enum LUA_TYPE type)
-{
-    switch (type)
-    {
-    case NIL_T:
-        return "nil";
-    case BOOLEAN_T:
-        return "boolean";
-    case NUMBER_T:
-        return "number";
-    case INT_T:
-        return "integer";
-    case FLOAT_T:
-        return "float";
-    case STRING_T:
-        return "string";
-    case FUNCTION_T:
-        return "function";
-    case TABLE_T:
-        return "table";
-    case USERDATA_T:
-        return "userdata";
-    case ERROR_T:
-        return "error";
-    default:
-        return "unknown";
-    }
-}

@@ -5,6 +5,7 @@
 #include "semantic.h"
 #include "symtab.h"
 #include "global.h"
+#include "pretty.h"
 
 extern int yylex();
 extern FILE *yyin;

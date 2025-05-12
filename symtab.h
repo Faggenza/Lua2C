@@ -1,6 +1,6 @@
 #include "uthash.h"
 #include "ast.h"
-
+#include "pretty.h"
 // Tipi di simboli
 enum sym_type
 {
@@ -43,5 +43,3 @@ void check_usage(struct symlist *syml);
 void insert_sym(struct symlist *syml, char *name, enum LUA_TYPE type, enum sym_type sym_type, struct AstNode *pl, int lineno, char *line);
 struct symbol *find_sym(struct symlist *syml, char *name);
 void remove_sym(struct symlist *syml, struct symbol *s);
-
-const char *convert_var_type(enum LUA_TYPE type);

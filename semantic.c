@@ -125,50 +125,6 @@ int eval_array_dim(struct AstNode *expr)
     }
 }
 
-/* Convertire un tipo di espressione in una stringa */
-const char *convert_expr_type(enum EXPRESSION_TYPE expr_type)
-{
-    switch (expr_type)
-    {
-    case ADD_T:
-        return "+";
-    case SUB_T:
-        return "-";
-    case MUL_T:
-        return "*";
-    case DIV_T:
-        return "/";
-    case NOT_T:
-        return "not";
-    case AND_T:
-        return "and";
-    case OR_T:
-        return "or";
-    case G_T:
-        return ">";
-    case GE_T:
-        return ">=";
-    case L_T:
-        return "<";
-    case LE_T:
-        return "<=";
-    case EQ_T:
-        return "==";
-    case NE_T:
-        return "~=";
-    case ASS_T:
-        return "=";
-    case NEG_T:
-        return "-";
-    case PAR_T:
-        return "()";
-    case CONCAT_T:
-        return "..";
-    default:
-        return "unknown";
-    }
-}
-
 /* Funzione per formattare messaggi di errore */
 char *error_string_format(char *format, ...)
 {

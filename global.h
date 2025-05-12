@@ -12,10 +12,10 @@
 
 extern char *filename;
 extern int error_num;
-extern int main_flag; // package
-extern int fmt_flag;  // import "fmt"
-
+extern int main_flag;  // package
+extern int fmt_flag;   // import "fmt"
 int current_scope_lvl; // indica il livello dello scope corrente
+
 struct symlist *current_symtab;
 
 /* funzioni per la gestione degli errori */

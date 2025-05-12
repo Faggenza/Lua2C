@@ -1,5 +1,5 @@
 #include "ast.h"
-
+#include "pretty.h"
 /* Types of built-in functions */
 enum FUNC_TYPE
 {
@@ -22,9 +22,6 @@ struct complex_type
 void check_array(struct AstNode *dim);
 int check_array_dim(struct AstNode *expr);
 int eval_array_dim(struct AstNode *expr);
-
-/* Utility functions */
-const char *convert_expr_type(enum EXPRESSION_TYPE expr_type);
 
 /* Function checks */
 void check_fcall(char *name, struct AstNode *args);
