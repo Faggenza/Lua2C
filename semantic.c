@@ -8,6 +8,22 @@
 
 int div_by_zero; // flag che indica se ho una divisione per in eval_array_dim
 
+enum LUA_TYPE eval_bool(char *t)
+{
+    switch (t[0])
+    {
+    case 't':
+        return TRUE_T;
+        break;
+    case 'f':
+        return FALSE_T;
+        break;
+    default:
+        return ERROR_T;
+        break;
+    }
+}
+
 /* Controlla la correttezza della dimensione o indice di un array */
 void check_array(struct AstNode *dim)
 {

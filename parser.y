@@ -43,22 +43,21 @@ void check_var_reference(struct AstNode *var);
     int t;
 }
 
-%token  INT_NUM FLOAT_NUM TRUE FALSE
+%token  INT_NUM FLOAT_NUM
 %token  IF ELSE THEN FOR DO END RETURN
 %token  FUNCTION
 %token  <s> PRINT READ 
 %token  NIL
-%token  <s> STRING
+%token  <s> STRING BOOL
 %left   AND OR
-%left   '>' '<' GE LE EQ NE 
-%left   '+' '-'        // Questi sono operatori binari con la stessa precedenza
+%left   '>' '<' GE LE EQ NE
+%left   '+' '-'        // Operatori binari con stessa precedenza
 %left   '*' '/'        // Operatori moltiplicativi con precedenza maggiore
 %right  NOT
 %right  '='
-%right UMINUS       // Precedenza più alta per il meno unario
-
-// Aggiungi direttiva di precedenza per discriminare i due casi
-%nonassoc LOWER_THAN_EXPR
+%precedence LOWER_THAN_EXPR  // Precedenza bassa per return senza expr
+%precedence FORMAT_STRING    // Precedenza specifica per format string
+%precedence UMINUS          // Precedenza alta per il meno unario
 %nonassoc EXPR_START
 
 // Indica i token che possono iniziare un'espressione
@@ -67,10 +66,10 @@ void check_var_reference(struct AstNode *var);
 %nonassoc '('
 
 %type <ast> number global_statement_list global_statement expr  assignment
-%type <ast> return_statement expr_statement func_call args print_statement  if_cond
+%type <ast> return_statement expr_statement func_call args if_cond //print_statement 
 %type <ast> statement_list statement
 %type <ast> name
-%type <ast> func_definition param_list param chunk format_string
+%type <ast> func_definition param_list param chunk 
 %type <ast> iteration_statement init cond update selection_statement
 //%type <t> type
 
@@ -135,14 +134,14 @@ statement
     | selection_statement
     | iteration_statement
     | return_statement
-    | print_statement                                             { fmt_flag = 1; }
+//    | print_statement                                             { fmt_flag = 1; }
 //    | read_statement                                               { fmt_flag = 1; }
     //| assignment_statement
     ;
 
 
 expr_statement
-    : expr                                                          
+    : expr %prec LOWER_THAN_EXPR                                                        
         { $$ = check_expr_statement($1); }
     ;
 
@@ -181,16 +180,20 @@ update
 return_statement
     : RETURN %prec LOWER_THAN_EXPR                                 
         { $$ = new_return(RETURN_T, NULL); }
-    | RETURN expr                                                  
+    | RETURN expr %prec LOWER_THAN_EXPR                                                                             
         { $$ = new_return(RETURN_T, $2); }
     ;
 
-print_statement
-    : PRINT '(' args ')'                                   
-        { $$ = new_func_call(FCALL_T, new_variable(VAR_T, $1, NULL), $3); }
-    | PRINT '(' format_string ',' args ')'                          { $$ = new_func_call(FCALL_T, new_variable(VAR_T, $1, NULL), link_AstNode($3,$5)); check_format_string($3, $5, PRINT_T); }
-    | PRINT '(' ')'                                                 { $$ = new_error(ERROR_NODE_T); yyerror("too few arguments to function" BOLD " print" RESET); }
-    ;
+//print_statement
+//    : PRINT '(' args ')'                                   
+//        { $$ = new_func_call(FCALL_T, new_variable(VAR_T, $1, NULL), $3); }
+//    | PRINT '(' STRING ',' args ')'                          
+//        { $$ = new_func_call(FCALL_T, new_variable(VAR_T, $1, NULL), 
+//            link_AstNode(new_value(VAL_T, STRING_T, $3), $5)); 
+//        check_format_string(new_value(VAL_T, STRING_T, $3), $5, PRINT_T); }
+//    | PRINT '(' ')'                                                 
+//        { $$ = new_error(ERROR_NODE_T); yyerror("too few arguments to function" BOLD " print" RESET); }
+//    ;
 
 //da controllare read Lua
 //read_statement
@@ -206,14 +209,12 @@ print_statement
 //    | name ','   read_var_list                                      { check_var_reference($1); link_AstNode($1, $3); }
 //    ;
 
-format_string
-    : STRING                                                        { $$ = new_value(VAL_T, STRING_T, $1); }
-    ;
-
 expr
     : name                                           
     | number
     | func_call
+    | STRING                                                        { $$ = new_value(VAL_T, STRING_T, $1); }
+    | BOOL                                                          { $$ = new_value(VAL_T, eval_bool($1), $1); }
     | expr '+' expr                                                 { $$ = new_expression(EXPR_T, ADD_T, $1, $3); }
     | expr '-' expr                                                 { $$ = new_expression(EXPR_T, SUB_T, $1, $3); }
     | expr '*' expr                                                 { $$ = new_expression(EXPR_T, MUL_T, $1, $3); }

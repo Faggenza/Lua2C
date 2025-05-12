@@ -2,6 +2,7 @@
 
 %x COMMENT
 %x DQUOTE
+%x SQUOTE
 
 %{
 #include "parser.tab.h"
@@ -11,6 +12,7 @@
 
 char *line;
 void copy_line();
+char string_buf[230000]; // Max Lua string length
 
 %}
 
@@ -21,8 +23,8 @@ void copy_line();
     /* commenti */
 
 "--[["                      { BEGIN COMMENT; }
-<COMMENT>[^\]]*             { } /* Match any characters except ] */
-<COMMENT>"]"[^\]]*          { } /* Match ] followed by non-] characters */
+<COMMENT>[^\]]*             { /* Match non-closing bracket chars */ }
+<COMMENT>\][^\]]*           { /* Match ] followed by non-] chars */ }
 <COMMENT>"]]"               { BEGIN INITIAL; }
 <COMMENT><<EOF>>            { yyerror("unterminated comment"); BEGIN INITIAL; }
 
@@ -31,14 +33,20 @@ void copy_line();
 ("--".*)                    { }
 
     /* stringhe */
+\"\"                     { yylval.s = strdup(""); return STRING; }
+\'\'                     { yylval.s = strdup(""); return STRING; }
 
-\"\"                     { yylval.s = ""; return STRING; }
-
-\"                        { BEGIN DQUOTE; }
-<DQUOTE>([^"'\\\n]|\\.)*     { yylval.s = strdup(yytext); return STRING; }
-<DQUOTE>\"                { BEGIN INITIAL; }
+\"                        { BEGIN DQUOTE; string_buf[0] = '\0'; }
+<DQUOTE>([^"\\\n]|\\.)+   { strcat(string_buf, yytext); }
+<DQUOTE>\"                { BEGIN INITIAL; yylval.s = strdup(string_buf); return STRING; }
 <DQUOTE>\n |
 <DQUOTE><<EOF>>             { yyerror("missing terminating \" character"); BEGIN INITIAL; }
+
+\'                        { BEGIN SQUOTE; string_buf[0] = '\0'; }
+<SQUOTE>([^'\\\n]|\\.)+   { strcat(string_buf, yytext); }
+<SQUOTE>\'                { BEGIN INITIAL; yylval.s = strdup(string_buf); return STRING; }
+<SQUOTE>\n |
+<SQUOTE><<EOF>>             { yyerror("missing terminating ' character"); BEGIN INITIAL; }
 
     /* costanti numeriche */
 
@@ -59,7 +67,8 @@ void copy_line();
 "do"            { return DO; }
 "else"          { return ELSE; }
 "end"           { return END; }
-"false"         { return FALSE; }
+"false"         { yylval.s = strdup(yytext); return BOOL; }
+"true"          { yylval.s = strdup(yytext); return BOOL; }
 "for"           { return FOR; }
 "function"      { return FUNCTION; }
 "if"            { return IF; }
@@ -68,7 +77,6 @@ void copy_line();
 "or"            { return OR; }
 "return"        { return RETURN; }
 "then"          { return THEN; }
-"true"          { return TRUE; }
 
 
     /* identificatori */

@@ -42,6 +42,7 @@ void check_format_string(struct AstNode *format_string, struct AstNode *args, en
 
 /* Expression checks */
 struct complex_type eval_expr_type(struct AstNode *expr);
+enum LUA_TYPE eval_bool(char *t);
 void check_cond(enum LUA_TYPE type);
 void check_binary_op(enum EXPRESSION_TYPE op, struct AstNode *left, struct AstNode *right);
 void check_division(struct AstNode *expr);

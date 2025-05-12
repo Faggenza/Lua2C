@@ -6,6 +6,8 @@ enum LUA_TYPE
 {
     NIL_T,
     BOOLEAN_T,
+    TRUE_T,
+    FALSE_T,
     NUMBER_T,
     INT_T,
     FLOAT_T,
