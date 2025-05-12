@@ -14,7 +14,8 @@ d = "Double quoted string"
 e = true
 f = false
 --Nil
---g = nil
+g = nil
+
 --Tables
 --h = {1, 2, 3}
 --i = {a = 1, b = 2}

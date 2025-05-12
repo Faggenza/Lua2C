@@ -35,7 +35,7 @@ void check_var_reference(struct AstNode *var);
 //%error-verbose
 %define parse.error verbose
 
-%expect 2 /* conflitto shift/reduce (- per ruturn o expr_statement) , bison lo risolve scegliendo shift */
+%expect 3 /* conflitto shift/reduce (- per ruturn o expr_statement) , bison lo risolve scegliendo shift */
 
 %union {
     char* s;
@@ -55,8 +55,7 @@ void check_var_reference(struct AstNode *var);
 %left   '*' '/'        // Operatori moltiplicativi con precedenza maggiore
 %right  NOT
 %right  '='
-%precedence LOWER_THAN_EXPR  // Precedenza bassa per return senza expr
-%precedence FORMAT_STRING    // Precedenza specifica per format string
+%precedence LOWEST  // Precedenza bassa per return senza expr
 %precedence UMINUS          // Precedenza alta per il meno unario
 %nonassoc EXPR_START
 
@@ -141,7 +140,7 @@ statement
 
 
 expr_statement
-    : expr %prec LOWER_THAN_EXPR                                                        
+    : expr %prec LOWEST                                                        
         { $$ = check_expr_statement($1); }
     ;
 
@@ -178,9 +177,9 @@ update
     ;
     
 return_statement
-    : RETURN %prec LOWER_THAN_EXPR                                 
+    : RETURN %prec LOWEST                                 
         { $$ = new_return(RETURN_T, NULL); }
-    | RETURN expr %prec LOWER_THAN_EXPR                                                                             
+    | RETURN expr %prec LOWEST                                 
         { $$ = new_return(RETURN_T, $2); }
     ;
 
@@ -214,6 +213,7 @@ expr
     | number
     | func_call
     | STRING                                                        { $$ = new_value(VAL_T, STRING_T, $1); }
+    | NIL                                                           { $$ = new_value(VAL_T, NIL_T, NULL); }
     | BOOL                                                          { $$ = new_value(VAL_T, eval_bool($1), $1); }
     | expr '+' expr                                                 { $$ = new_expression(EXPR_T, ADD_T, $1, $3); }
     | expr '-' expr                                                 { $$ = new_expression(EXPR_T, SUB_T, $1, $3); }
