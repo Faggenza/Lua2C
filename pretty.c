@@ -260,3 +260,37 @@ char *convert_var_type(enum LUA_TYPE type)
         return "unknown";
     }
 }
+
+/* Funzione per convertire il tipo di nodo */
+// usata per debug
+char * convert_node_type(int t) {
+    switch(t) {
+    case EXPR_T:
+        return "expr node";
+    case IF_T:
+        return "if node";
+    case VAL_T:
+        return "val node";
+    case VAR_T:
+        return "var node";
+    case DECL_T:
+        return "decl node";
+    case RETURN_T:
+        return "ret node";
+    case FCALL_T:
+        return "func call node";
+    case FDEF_T:
+        return "func def node";
+    case FOR_T:
+        return "for node";
+    }
+}
+
+/* Funzione per convertire gli identificatori delle funzioni per I/O */
+char * convert_func_name(char *name){
+    if (!strcmp("printf", name))
+        return "fmt.Printf";
+    if (!strcmp("scanf", name))
+        return "fmt.Scanf";
+    return name;
+}
