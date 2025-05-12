@@ -1,3 +1,6 @@
+#ifndef PRETTY_H
+#define PRETTY_H
+
 #include <stdio.h>
 #include "ast.h"
 /* Funzioni per il print dell'Ast */
@@ -11,3 +14,5 @@ char *convert_expr_type(enum EXPRESSION_TYPE expr_type);
 char *convert_var_type(enum LUA_TYPE type);
 char *convert_node_type(enum NODE_TYPE nodetype);
 char *convert_func_name(char *name);
+
+#endif

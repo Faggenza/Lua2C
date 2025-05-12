@@ -1,3 +1,6 @@
+#ifndef SYMTAB_H
+#define SYMTAB_H
+
 #include "uthash.h"
 #include "ast.h"
 #include "pretty.h"
@@ -43,3 +46,5 @@ void check_usage(struct symlist *syml);
 void insert_sym(struct symlist *syml, char *name, enum LUA_TYPE type, enum sym_type sym_type, struct AstNode *pl, int lineno, char *line);
 struct symbol *find_sym(struct symlist *syml, char *name);
 void remove_sym(struct symlist *syml, struct symbol *s);
+
+#endif

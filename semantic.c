@@ -125,19 +125,6 @@ int eval_array_dim(struct AstNode *expr)
     }
 }
 
-/* Funzione per formattare messaggi di errore */
-char *error_string_format(char *format, ...)
-{
-    static char buffer[1024];
-    va_list args;
-
-    va_start(args, format);
-    vsnprintf(buffer, sizeof(buffer), format, args);
-    va_end(args);
-
-    return buffer;
-}
-
 /* Evaluate expression type - in Lua this means inferring the runtime type */
 struct complex_type eval_expr_type(struct AstNode *expr)
 {

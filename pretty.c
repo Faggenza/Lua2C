@@ -1,4 +1,3 @@
-
 #include "pretty.h"
 #include "global.h"
 #include <stdlib.h>
@@ -69,7 +68,15 @@ void print_node(struct AstNode *n)
         }
         break;
     case FCALL_T:
-        printf("%s(", n->node.fcall->name);
+        if (n->node.fcall->func_expr->nodetype == VAR_T)
+        {
+            printf("%s(", n->node.fcall->func_expr->node.var->name);
+        }
+        else
+        {
+            print_node(n->node.fcall->func_expr);
+            printf("(");
+        }
         if (n->node.fcall->args)
         {
             print_list(n->node.fcall->args);
@@ -285,6 +292,10 @@ char *convert_node_type(enum NODE_TYPE t)
         return "func def node";
     case FOR_T:
         return "for node";
+    case ERROR_NODE_T:
+        return "error node";
+    default:
+        return "unknown node";
     }
 }
 
@@ -296,4 +307,10 @@ char *convert_func_name(char *name)
     if (!strcmp("scanf", name))
         return "fmt.Scanf";
     return name;
+}
+
+void translate(struct AstNode *root)
+{
+    printf("// Generated Lua to C parse tree\n");
+    print_ast(root);
 }
