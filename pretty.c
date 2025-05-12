@@ -263,8 +263,10 @@ char *convert_var_type(enum LUA_TYPE type)
 
 /* Funzione per convertire il tipo di nodo */
 // usata per debug
-char * convert_node_type(int t) {
-    switch(t) {
+char *convert_node_type(enum NODE_TYPE t)
+{
+    switch (t)
+    {
     case EXPR_T:
         return "expr node";
     case IF_T:
@@ -287,7 +289,8 @@ char * convert_node_type(int t) {
 }
 
 /* Funzione per convertire gli identificatori delle funzioni per I/O */
-char * convert_func_name(char *name){
+char *convert_func_name(char *name)
+{
     if (!strcmp("printf", name))
         return "fmt.Printf";
     if (!strcmp("scanf", name))
