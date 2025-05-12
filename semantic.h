@@ -1,51 +1,51 @@
-#ifndef SEMANTIC_H
-#define SEMANTIC_H
-
 #include "ast.h"
 
-/* Tipo di funzione built-in */
-enum FUNC_TYPE {
-    PRINTF_T,
-    SCANF_T
+/* Types of built-in functions */
+enum FUNC_TYPE
+{
+    PRINT_T,
+    READ_T
 };
 
-/* Tipo complesso usato per eval_expr_type */
-struct complex_type{
-    enum TYPE type;
-    enum KIND{
-        V,
-        N
-    }kind;
+/* Complex type for expression evaluation */
+struct complex_type
+{
+    enum LUA_TYPE type;
+    enum
+    {
+        DYNAMIC, // Value determined at runtime
+        CONSTANT // Value known at compile time
+    } kind;
 };
 
-/* Funzioni di controllo per le funzioni */
-void check_fcall(char * name, struct AstNode *args);
-void check_return(struct AstNode *expr);
-void check_func_return(enum TYPE type, struct AstNode *code);
-int check_if_return(struct AstNode *tmp);
-void check_main(struct AstNode *fdecl);
-
-/* Funzioni di controllo per gli array */
+/* Array checking functions */
 void check_array(struct AstNode *dim);
 int check_array_dim(struct AstNode *expr);
 int eval_array_dim(struct AstNode *expr);
 
-/* Funzione per impostare l'utilizzo delle variabili nello scope */
+/* Utility functions */
+const char *convert_expr_type(enum EXPRESSION_TYPE expr_type);
+
+/* Function checks */
+void check_fcall(char *name, struct AstNode *args);
+void check_func_return(enum LUA_TYPE type, struct AstNode *stmt_list);
+void check_return(struct AstNode *expr);
+void check_main_chunk(struct AstNode *chunk);
+
+/* Table-related checks */
+void check_table_access(struct AstNode *table, struct AstNode *key);
+int eval_constant_expr(struct AstNode *expr);
+
+/* Variable checks */
 void check_var_reference(struct AstNode *var);
+void check_var_assignment(struct AstNode *var, struct AstNode *expr);
 
-/* Funzioni di controllo per format string */
-char* replace_format(char *string, char *old, char *new);
-struct AstNode * extract_format_specifier(struct AstNode *format_string, enum FUNC_TYPE f_type);
-void check_format_string(struct AstNode* format_string, struct AstNode* args, enum FUNC_TYPE f_type);
+/* Format string functions */
+void check_format_string(struct AstNode *format_string, struct AstNode *args, enum FUNC_TYPE f_type);
 
-/* Funzioni di controllo per le espressioni */
-struct complex_type eval_expr_type (struct AstNode *expr);
-struct complex_type eval_comparison_op_type(struct complex_type l, struct complex_type r, enum EXPRESSION_TYPE expr_type);
-struct complex_type eval_arithmetic_op_type(struct complex_type l, struct complex_type r);
-struct complex_type eval_ass_op(struct complex_type l, struct complex_type r, struct AstNode *r_node);
-void check_cond(enum TYPE type);
-struct AstNode * check_expr_statement(struct AstNode *expr);
-float eval_constant_expr(struct AstNode *expr);
+/* Expression checks */
+struct complex_type eval_expr_type(struct AstNode *expr);
+void check_cond(enum LUA_TYPE type);
+void check_binary_op(enum EXPRESSION_TYPE op, struct AstNode *left, struct AstNode *right);
 void check_division(struct AstNode *expr);
-float check_const_truncated(struct AstNode * expr );
-#endif
+struct AstNode *check_expr_statement(struct AstNode *expr);

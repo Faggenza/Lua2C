@@ -7,6 +7,7 @@
 #include "parser.tab.h"
 #include <string.h>
 #include <stdarg.h>
+#include "global.h"
 
 char *line;
 void copy_line();
@@ -55,27 +56,20 @@ void copy_line();
     /* keyword */
 
 "and"           { return AND; }
-"break"         { return BREAK; }
 "do"            { return DO; }
 "else"          { return ELSE; }
-"elseif"        { return ELSEIF; }
 "end"           { return END; }
 "false"         { return FALSE; }
 "for"           { return FOR; }
 "function"      { return FUNCTION; }
-"goto"          { return GOTO; }
 "if"            { return IF; }
-"in"            { return IN; }
-"local"         { return LOCAL; }
 "nil"           { return NIL; }
 "not"           { return NOT; }
 "or"            { return OR; }
-"repeat"        { return REPEAT; }
 "return"        { return RETURN; }
 "then"          { return THEN; }
 "true"          { return TRUE; }
-"until"         { return UNTIL; }
-"while"         { return WHILE; }
+
 
     /* identificatori */
 

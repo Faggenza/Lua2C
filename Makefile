@@ -1,4 +1,4 @@
 all:
 	bison -d -v parser.y
 	flex scanner.l
-	gcc -o parser.out parser.tab.c lex.yy.c -lfl
+	gcc symtab.c semantic.c ast.c parser.tab.c lex.yy.c -lfl -o compier
