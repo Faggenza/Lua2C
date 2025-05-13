@@ -77,11 +77,13 @@ struct ifNode
 // Struttura del nodo for
 struct forNode
 {
-    struct AstNode *init;
-    struct AstNode *cond;
-    struct AstNode *update;
-    struct AstNode *stmt;
+    char* varname;              // variabile del for (i)
+    struct AstNode* start;      // valore iniziale (1)
+    struct AstNode* end;        // valore finale (10)
+    struct AstNode* step;       // step (opzionale, può essere NULL)
+    struct AstNode* stmt;       // corpo del ciclo
 };
+
 
 // Struttura del nodo while
 struct whileNode
@@ -179,8 +181,8 @@ struct AstNode *new_declaration(enum NODE_TYPE nodetype, struct AstNode *var, st
 struct AstNode *new_return(enum NODE_TYPE nodetype, struct AstNode *expr);
 struct AstNode *new_func_call(enum NODE_TYPE nodetype, struct AstNode *func_expr, struct AstNode *args);
 struct AstNode *new_func_def(enum NODE_TYPE nodetype, char *name, struct AstNode *params, struct AstNode *code);
-struct AstNode *new_for(enum NODE_TYPE nodetype, struct AstNode *init, struct AstNode *cond, struct AstNode *update, struct AstNode *stmt);
 struct AstNode *new_while(enum NODE_TYPE nodetype, struct AstNode *cond, struct AstNode *body);
+struct AstNode *new_for(enum NODE_TYPE nodetype, char *varname, struct AstNode *start, struct AstNode *end, struct AstNode *step, struct AstNode *stmt);
 struct AstNode *new_if(enum NODE_TYPE nodetype, struct AstNode *cond, struct AstNode *body, struct AstNode *else_body);
 struct AstNode *new_table(enum NODE_TYPE nodetype, struct AstNode *fields);
 struct AstNode *new_table_field(enum NODE_TYPE nodetype, struct AstNode *key, struct AstNode *value);

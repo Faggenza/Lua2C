@@ -149,14 +149,15 @@ struct AstNode *new_func_def(enum NODE_TYPE nodetype, char *name, struct AstNode
 }
 
 /* Crea un nodo for */
-struct AstNode *new_for(enum NODE_TYPE nodetype, struct AstNode *init, struct AstNode *cond, struct AstNode *update, struct AstNode *stmt)
+struct AstNode *new_for(enum NODE_TYPE nodetype, char *varname, struct AstNode *start, struct AstNode *end, struct AstNode *step, struct AstNode *stmt)
 {
     struct forNode *forn = malloc(sizeof(struct forNode));
     struct AstNode *node = malloc(sizeof(struct AstNode));
 
-    forn->init = init;
-    forn->cond = cond;
-    forn->update = update;
+    forn->varname = varname;
+    forn->start = start;
+    forn->end = end;
+    forn->step = step;
     forn->stmt = stmt;
 
     node->nodetype = nodetype;

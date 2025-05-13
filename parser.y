@@ -68,8 +68,8 @@ void check_var_reference(struct AstNode *var);
 %type <ast> return_statement expr_statement func_call args if_cond //print_statement 
 %type <ast> statement_list statement
 %type <ast> name
-%type <ast> func_definition param_list param chunk 
-%type <ast> iteration_statement init cond update selection_statement
+%type <ast> func_definition param_list param chunk
+%type <ast> iteration_statement start end step selection_statement
 //%type <t> type
 
 %%
@@ -87,6 +87,10 @@ global_statement_list
 global_statement
     : assignment
     | func_definition
+    | selection_statement
+    | iteration_statement
+    | expr_statement
+    | return_statement
     ;
 
 func_definition
@@ -155,27 +159,26 @@ if_cond
     ;
 
 iteration_statement
-    : FOR init ',' cond ',' update DO chunk END               { $$ = new_for(FOR_T, $2, $4, $6, $8); scope_exit(); }
+    : FOR ID '=' start ',' end step DO chunk END               { $$ = new_for(FOR_T, $2, $4, $6, $7, $9); scope_exit(); }
     ;
 
-init 
-    : assignment                                                    
+start
+    : expr
         { scope_enter(); $$ = new_declaration(DECL_T, $1, NULL); fill_symtab(current_symtab, $$, 0, VARIABLE); }
-    | /* empty */                                                   
+    | /* empty */
         { scope_enter(); $$ = NULL; }
     ;
 
-cond
+end
     : expr                                                          { check_cond(eval_expr_type($1).type); $$ = $1; }
     | /* empty */                                                   { $$ = NULL; }
     ;
 
-update
-    : assignment                                                    { eval_expr_type($1); $$ = $1; }
-    | expr                                                          { eval_expr_type($1); $$ = check_expr_statement($1); }
-    | /* empty */                                                   { $$ = NULL; } 
+step
+    : ',' expr                                                    { eval_expr_type($2); $$ = $2; }
+    | /* empty */                                                   { $$ = NULL; }
     ;
-    
+
 return_statement
     : RETURN %prec LOWEST                                 
         { $$ = new_return(RETURN_T, NULL); }

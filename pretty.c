@@ -96,20 +96,19 @@ void print_node(struct AstNode *n)
         printf("}\n\n");
         break;
     case FOR_T:
-        printf("for(");
-        if (n->node.forn->init)
-            print_node(n->node.forn->init);
-        printf("; ");
-        if (n->node.forn->cond)
-            print_node(n->node.forn->cond);
-        printf("; ");
-        if (n->node.forn->update)
-            print_node(n->node.forn->update);
-        printf(") {\n");
+        printf("for %s = ", n->node.forn->varname);
+        print_node(n->node.forn->start);
+        printf(", ");
+        print_node(n->node.forn->end);
+        if (n->node.forn->step) {
+            printf(", ");
+            print_node(n->node.forn->step);
+        }
+        printf(" do\n");
         print_ast(n->node.forn->stmt);
         depth--;
         print_tab(depth);
-        printf("}\n");
+        printf("end\n");
         break;
     case IF_T:
         printf("if(");
