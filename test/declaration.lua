@@ -25,9 +25,9 @@ p = {{1, 2}, {3, 4}}    -- nested tables
 q = {}                  -- empty table
 
 -- Functions
--- r = function(x, y)      -- anonymous function
---   return x + y
--- end
+r = function(x, y)      -- anonymous function
+   return x + y
+ end
 
 function s(x, y)        -- named function
   somma = "ciao"
@@ -37,6 +37,6 @@ end
 --result = s(2,4)         -- function call
 
 
--- function u(x, y)        -- multiple return values
---   return x, y, x+y
--- end
+function u(x, y)        -- multiple return values
+   return x, y, x+y
+end

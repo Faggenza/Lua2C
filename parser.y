@@ -24,7 +24,7 @@ int print_symtab_flag = 0;
 int print_ast_flag = 0;
 void print_usage();
 
-enum LUA_TYPE type;
+// enum LUA_TYPE type;
 
 void print_ast(struct AstNode *root);
 void translate(struct AstNode *root);
@@ -32,10 +32,9 @@ void check_var_reference(struct AstNode *var);
 
 %}
 
-//%error-verbose
 %define parse.error verbose
 
-%expect 4 /* conflitto shift/reduce (- per ruturn) , bison lo risolve scegliendo shift */
+// %expect 7 /* conflitto shift/reduce (- per ruturn) , bison lo risolve scegliendo shift */
 
 %union {
     char* s;
@@ -43,38 +42,39 @@ void check_var_reference(struct AstNode *var);
     int t;
 }
 
-%token  INT_NUM FLOAT_NUM
+%token <s> INT_NUM FLOAT_NUM
 %token  IF ELSE THEN FOR DO END RETURN
 %token  FUNCTION
-%token  <s> PRINT READ 
-%token  <s> STRING BOOL NIL
-%left   AND OR
-%left   '>' '<' GE LE EQ NE
-%left   '+' '-'        // Operatori binari con stessa precedenza
-%left   '*' '/'        // Operatori moltiplicativi con precedenza maggiore
-%right  NOT
+%token <s> PRINT READ
+%token <s> STRING BOOL NIL
 %right  '='
-%precedence LOWEST  // Precedenza bassa per return senza expr
-%precedence UMINUS          // Precedenza alta per il meno unario
-%nonassoc EXPR_START
+%left   OR
+%left   AND
+%left   '>' '<' GE LE EQ NE
+%left   '+' '-'
+%left   '*' '/'
+%right  NOT
+%precedence UMINUS // Per il meno unario
+%precedence LOWEST // Livello di precedenza più basso, usato con %prec
+// %nonassoc EXPR_START
 
 // Indica i token che possono iniziare un'espressione
-%nonassoc <s> INT_NUM FLOAT_NUM
+// %nonassoc <s> INT_NUM FLOAT_NUM
 %nonassoc <s> ID
 %nonassoc '('
 
 %type <ast> number global_statement_list global_statement expr  assignment
-%type <ast> return_statement expr_statement func_call args if_cond 
+%type <ast> return_statement func_call args if_cond //expr_statement
 %type <ast> statement_list statement
 %type <ast> name
 %type <ast> func_definition param_list param table_field table_list chunk
-%type <ast> iteration_statement start end step selection_statement print_statement print_var
+%type <ast> iteration_statement start_expr end_expr step selection_statement optional_expr_list
 //%type <t> type
 
 %%
 
 program
-    : { scope_enter(); } global_statement_list                        { root = $2; scope_exit(); }         
+    : { scope_enter(); } global_statement_list                        { root = $2; scope_exit(); }
     ;
 
 
@@ -88,30 +88,34 @@ global_statement
     | func_definition
     | selection_statement
     | iteration_statement
-    | expr_statement
+    | func_call         //expr_statement
     | return_statement
     ;
 
 func_definition
-    : FUNCTION ID '(' param_list ')'                                
-        { param_list = $4; /* No type checking needed */ } 
-            chunk   END                                      
+    : FUNCTION ID '(' param_list ')'
+        { param_list = $4; /* No type checking needed */ }
+            chunk   END
         { $$ = new_func_def(FDEF_T, $2, $4, $7); }
-    | FUNCTION ID '(' ')'                                           
-        { /* No return type needed */ } 
-            chunk   END                                      
+    | FUNCTION ID '(' ')'
+        { /* No return type needed */ }
+            chunk   END
         { $$ = new_func_def(FDEF_T, $2, NULL, $6); }
+    | name '=' FUNCTION  '(' param_list ')'
+        { param_list = $5; /* No type checking needed */ }
+            chunk   END
+        { $$ = new_func_def(FDEF_T, NULL, $5, $8); }
     ;
 
 param_list
-    : param  
+    : param
     | param ',' param_list                                          { $$ = link_AstNode($1, $3); }
     ;
 
 param
-    : ID                                                            
+    : ID
         { $$ = new_variable(VAR_T, $1, NULL); }
-    | STRING                                                            
+    | STRING
         { $$ = new_value(VAL_T, STRING_T, $1); }
     | BOOL                                                           { $$ = new_value(VAL_T, eval_bool($1), $1); }
     | NIL                                                            { $$ = new_value(VAL_T, NIL_T, NULL); }
@@ -128,21 +132,21 @@ table_list
     ;
 
 table_field
-    : ID 
+    : ID
         { $$ = new_table_field(TABLE_FIELD_T, new_variable(VAR_T, $1, NULL), NULL); }
     | ID '=' expr
         { $$ = new_table_field(TABLE_FIELD_T, new_variable(VAR_T, $1, NULL), $3); }
-    | INT_NUM                                                       
+    | INT_NUM
         { $$ = new_table_field(TABLE_FIELD_T, new_value(VAL_T, INT_NUM, $1), NULL); }
-    | FLOAT_NUM                                                     
+    | FLOAT_NUM
         { $$ = new_table_field(TABLE_FIELD_T, new_value(VAL_T, FLOAT_NUM, $1), NULL); }
     | '{' table_list '}'
         { $$ = new_table(TABLE_T, $2); }
-    | /* empty */                                                 
+    | /* empty */
         { $$ = new_table_field(TABLE_FIELD_T, NULL, NULL); }
-    
+
 assignment
-    : name '=' expr                                                 
+    : name '=' expr
         { $$ = new_expression(EXPR_T, ASS_T, $1, $3); fill_symtab(current_symtab, $$, eval_expr_type($3).type, VARIABLE); }
     ;
 
@@ -151,26 +155,27 @@ chunk
     ;
 
 statement_list
-    : statement   
+    : statement
     | statement_list statement                                      { $$ = link_AstNode($1, $2); }
     ;
 
 statement
     : assignment
-    | expr_statement
+    | func_call                     //expr_statement
     | selection_statement
     | iteration_statement
     | return_statement
 //    | print_statement                                             { fmt_flag = 1; }
-//    | read_statement                                               { fmt_flag = 1; }
-    //| assignment_statement
+//    | read_statement                                              { fmt_flag = 1; }
+//    | assignment_statement
     ;
 
-
+/*
 expr_statement
-    : expr %prec LOWEST                                                        
+    : expr %prec LOWEST
         { $$ = check_expr_statement($1); }
     ;
+*/
 
 selection_statement
     : IF  if_cond THEN chunk END                              { $$ = new_if(IF_T, $2, $4, NULL); }
@@ -178,22 +183,22 @@ selection_statement
     ;
 
 if_cond
-    : expr                                                          
+    : expr
         { $$ = $1; scope_enter();}
     ;
 
 iteration_statement
-    : FOR ID '=' start ',' end step DO chunk END               { $$ = new_for(FOR_T, $2, $4, $6, $7, $9); }
+    : FOR ID '=' start_expr ',' end_expr step DO chunk END               { $$ = new_for(FOR_T, $2, $4, $6, $7, $9); }
     ;
 
-start
+start_expr
     : expr
         { scope_enter(); $$ = new_declaration(DECL_T, $1, NULL); fill_symtab(current_symtab, $$, 0, VARIABLE); }
     | /* empty */
         { scope_enter(); $$ = NULL; }
     ;
 
-end
+end_expr
     : expr                                                          { check_cond(eval_expr_type($1).type); $$ = $1; scope_exit(); }
     | /* empty */                                                   { $$ = NULL; }
     ;
@@ -204,12 +209,16 @@ step
     ;
 
 return_statement
-    : RETURN %prec LOWEST                                 
-        { $$ = new_return(RETURN_T, NULL); }
-    | RETURN expr %prec LOWEST                                 
-        { $$ = new_return(RETURN_T, $2); }
+    : RETURN optional_expr_list
+      { $$ = new_return(RETURN_T, $2); }
     ;
 
+optional_expr_list
+    : /* empty */ { $$ = NULL; } %prec LOWEST
+    | args        { $$ = $1; } %prec LOWEST
+    ;
+
+/*
 print_statement
     : PRINT '(' args ')'
         { $$ = new_func_call(FCALL_T, new_variable(VAR_T, $1, NULL), $3); }
@@ -220,7 +229,7 @@ print_statement
     | PRINT '(' ')'
         { $$ = new_error(ERROR_NODE_T); yyerror("too few arguments to function" BOLD " print" RESET); }
     ;
-
+*/
 //da controllare read Lua
 //read_statement
 //    : READ '(' format_string ',' read_name_list ')'                { check_format_string($3, $5, READ_T); $$ = new_func_call(FCALL_T, $1, link_AstNode($3, $5)); }
@@ -236,7 +245,7 @@ print_statement
 //    ;
 
 expr
-    : name                                           
+    : name
     | number
     | func_call
     | STRING                                                        { $$ = new_value(VAL_T, STRING_T, $1); }
@@ -261,14 +270,14 @@ expr
     ;
 
 name
-    : ID                                                          
+    : ID
         { $$ = new_variable(VAR_T, $1, NULL); }
     ;
 
 number
-    : INT_NUM                                                       
+    : INT_NUM
         { $$ = new_value(VAL_T, INT_NUM, $1); }
-    | FLOAT_NUM                                                     
+    | FLOAT_NUM
         { $$ = new_value(VAL_T, FLOAT_NUM, $1); }
     ;
 
@@ -278,13 +287,9 @@ func_call
     ;
 
 args
-    : print_var
-    | print_var ',' args                                                 { $$ = link_AstNode($1, $3); }
+    : expr
+    | expr ',' args                                                 { $$ = link_AstNode($1, $3); }
     ;
-
-print_var
-    : ID                                                           { $$ = new_variable(VAR_T, $1, NULL); }
-    | STRING                                                       { $$ = new_value(VAL_T, STRING_T, $1); }
 
 %%
 
@@ -342,28 +347,28 @@ int main(int argc, char **argv) {
     current_symtab = NULL;
 
     if(yyparse() == 0) {
-        
+
         if(print_ast_flag)
-            print_ast(root); 
+            print_ast(root);
         if(error_num == 0){
 
             translate(root);
         }
     }
-    
+
     fclose(yyin);
 }
 
 
-/* Apre un nuovo scope. Se lo scope è quello di una funzione vi aggiunge 
-   eventuali parametri, presenti in param_list, e il tipo di ritorno della funzione 
+/* Apre un nuovo scope. Se lo scope è quello di una funzione vi aggiunge
+   eventuali parametri, presenti in param_list, e il tipo di ritorno della funzione
 */
 void scope_enter() {
-    current_symtab = create_symtab(current_scope_lvl, current_symtab); 
+    current_symtab = create_symtab(current_scope_lvl, current_symtab);
     current_scope_lvl++;
 
-    if(param_list) { 
-        fill_symtab(current_symtab, param_list, -1, PARAMETER); 
+    if(param_list) {
+        fill_symtab(current_symtab, param_list, -1, PARAMETER);
         param_list = NULL;
     }
 
@@ -379,20 +384,20 @@ void scope_enter() {
 void scope_exit() {
     if(print_symtab_flag)
         print_symtab(current_symtab);
-    check_usage(current_symtab); 
-    current_symtab = delete_symtab(current_symtab); 
+    check_usage(current_symtab);
+    current_symtab = delete_symtab(current_symtab);
     current_scope_lvl--;
 }
 
 
 
-/* Usata per inserire uno o più simboli all'interno della Symbol Table. 
+/* Usata per inserire uno o più simboli all'interno della Symbol Table.
    Usata per 1 - Dichiarazione di variabili con assegnazione
              2 - Parametri di una funzione
 */
 void fill_symtab(struct symlist * syml, struct AstNode *n, enum LUA_TYPE type, enum sym_type sym_type) {
     if (!n) return;
-    
+
     switch (n->nodetype) {
         case VAR_T:
             insert_sym(syml, n->node.var->name, type, sym_type, NULL, yylineno, line);
@@ -409,7 +414,7 @@ void fill_symtab(struct symlist * syml, struct AstNode *n, enum LUA_TYPE type, e
 }
 
 /*  Funzione richiamata in caso si usi il flag --help o -h.
-    Mostra a schermo l'uso del transpilatore 
+    Mostra a schermo l'uso del transpilatore
 */
 void print_usage(){
     printf("Usage: ./compiler [options] file  \n");
