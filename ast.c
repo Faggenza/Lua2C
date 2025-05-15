@@ -201,7 +201,7 @@ struct AstNode *new_if(enum NODE_TYPE nodetype, struct AstNode *cond, struct Ast
 }
 
 /* Crea un nodo tabella */
-/*
+
 struct AstNode *new_table(enum NODE_TYPE nodetype, struct AstNode *fields)
 {
     struct table *t = malloc(sizeof(struct table));
@@ -215,9 +215,9 @@ struct AstNode *new_table(enum NODE_TYPE nodetype, struct AstNode *fields)
 
     return node;
 }
-*/
+
 /* Crea un nodo campo di tabella */
-/*struct AstNode *new_table_field(enum NODE_TYPE nodetype, struct AstNode *key, struct AstNode *value)
+struct AstNode *new_table_field(enum NODE_TYPE nodetype, struct AstNode *key, struct AstNode *value)
 {
     struct tableField *field = malloc(sizeof(struct tableField));
     struct AstNode *node = malloc(sizeof(struct AstNode));
@@ -231,7 +231,7 @@ struct AstNode *new_table(enum NODE_TYPE nodetype, struct AstNode *fields)
 
     return node;
 }
-*/
+
 /* Crea un nodo errore */
 struct AstNode *new_error(enum NODE_TYPE nodetype)
 {

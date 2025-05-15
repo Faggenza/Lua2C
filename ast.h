@@ -26,6 +26,7 @@ enum NODE_TYPE
     VAR_T,
     DECL_T,
     TABLE_ACCESS_T,
+    TABLE_FIELD_T,
     RETURN_T,
     FCALL_T,
     FDEF_T,
@@ -77,13 +78,12 @@ struct ifNode
 // Struttura del nodo for
 struct forNode
 {
-    char* varname;              // variabile del for (i)
-    struct AstNode* start;      // valore iniziale (1)
-    struct AstNode* end;        // valore finale (10)
-    struct AstNode* step;       // step (opzionale, può essere NULL)
-    struct AstNode* stmt;       // corpo del ciclo
+    char *varname;         // variabile del for (i)
+    struct AstNode *start; // valore iniziale (1)
+    struct AstNode *end;   // valore finale (10)
+    struct AstNode *step;  // step (opzionale, può essere NULL)
+    struct AstNode *stmt;  // corpo del ciclo
 };
-
 
 // Struttura del nodo while
 struct whileNode
@@ -166,8 +166,8 @@ struct AstNode
         struct returnNode *ret;
         struct funcCall *fcall;
         struct funcDef *fdef;
-        // struct table *table;
-        // struct tableField *tfield;
+        struct table *table;
+        struct tableField *tfield;
     } node;
 
     struct AstNode *next;

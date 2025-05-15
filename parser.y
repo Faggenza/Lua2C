@@ -35,7 +35,7 @@ void check_var_reference(struct AstNode *var);
 //%error-verbose
 %define parse.error verbose
 
-%expect 3 /* conflitto shift/reduce (- per ruturn o expr_statement) , bison lo risolve scegliendo shift */
+%expect 4 /* conflitto shift/reduce (- per ruturn) , bison lo risolve scegliendo shift */
 
 %union {
     char* s;
@@ -47,8 +47,7 @@ void check_var_reference(struct AstNode *var);
 %token  IF ELSE THEN FOR DO END RETURN
 %token  FUNCTION
 %token  <s> PRINT READ 
-%token  NIL
-%token  <s> STRING BOOL
+%token  <s> STRING BOOL NIL
 %left   AND OR
 %left   '>' '<' GE LE EQ NE
 %left   '+' '-'        // Operatori binari con stessa precedenza
@@ -68,7 +67,7 @@ void check_var_reference(struct AstNode *var);
 %type <ast> return_statement expr_statement func_call args if_cond //print_statement 
 %type <ast> statement_list statement
 %type <ast> name
-%type <ast> func_definition param_list param chunk
+%type <ast> func_definition param_list param table_field table_list chunk
 %type <ast> iteration_statement start end step selection_statement
 //%type <t> type
 
@@ -112,11 +111,36 @@ param_list
 param
     : ID                                                            
         { $$ = new_variable(VAR_T, $1, NULL); }
-    //elemento di un array
-    | ID '[' ']'                                                    { $$ = new_declaration(DECL_T, new_variable(VAR_T, $1, new_value(VAL_T, INT_T, "0")), NULL); }
+    | STRING                                                            
+        { $$ = new_value(VAL_T, STRING_T, $1); }
+    | BOOL                                                           { $$ = new_value(VAL_T, eval_bool($1), $1); }
+    | NIL                                                            { $$ = new_value(VAL_T, NIL_T, NULL); }
+    //| number                                                         { $$ = new_value(VAL_T, INT_NUM, $1); }
+    | ID '=' number                                                  { $$ = new_declaration(DECL_T, new_variable(VAR_T, $1, NULL), $3); }
+    | ID '=' STRING                                                  { $$ = new_declaration(DECL_T, new_variable(VAR_T, $1, NULL), new_value(VAL_T, STRING_T, $3)); }
+    | ID '=' BOOL                                                    { $$ = new_declaration(DECL_T, new_variable(VAR_T, $1, NULL), new_value(VAL_T, eval_bool($3), $3)); }
+    | ID '=' NIL                                                     { $$ = new_declaration(DECL_T, new_variable(VAR_T, $1, NULL), new_value(VAL_T, NIL_T, NULL)); }
     ;
 
+table_list
+    : table_field
+    | table_field ',' table_list                                    { $$ = link_AstNode($1, $3); }
+    ;
 
+table_field
+    : ID 
+        { $$ = new_table_field(TABLE_FIELD_T, new_variable(VAR_T, $1, NULL), NULL); }
+    | ID '=' expr
+        { $$ = new_table_field(TABLE_FIELD_T, new_variable(VAR_T, $1, NULL), $3); }
+    | INT_NUM                                                       
+        { $$ = new_table_field(TABLE_FIELD_T, new_value(VAL_T, INT_NUM, $1), NULL); }
+    | FLOAT_NUM                                                     
+        { $$ = new_table_field(TABLE_FIELD_T, new_value(VAL_T, FLOAT_NUM, $1), NULL); }
+    | '{' table_list '}'
+        { $$ = new_table(TABLE_T, $2); }
+    | /* empty */                                                 
+        { $$ = new_table_field(TABLE_FIELD_T, NULL, NULL); }
+    
 assignment
     : name '=' expr                                                 
         { $$ = new_expression(EXPR_T, ASS_T, $1, $3); }
@@ -216,8 +240,9 @@ expr
     | number
     | func_call
     | STRING                                                        { $$ = new_value(VAL_T, STRING_T, $1); }
-    | NIL                                                           { $$ = new_value(VAL_T, NIL_T, NULL); }
+    | NIL                                                           { $$ = new_value(VAL_T, NIL_T, NULL);  }
     | BOOL                                                          { $$ = new_value(VAL_T, eval_bool($1), $1); }
+    | '{' table_list '}'                                            { $$ = new_table(TABLE_T, $2); }
     | expr '+' expr                                                 { $$ = new_expression(EXPR_T, ADD_T, $1, $3); }
     | expr '-' expr                                                 { $$ = new_expression(EXPR_T, SUB_T, $1, $3); }
     | expr '*' expr                                                 { $$ = new_expression(EXPR_T, MUL_T, $1, $3); }
