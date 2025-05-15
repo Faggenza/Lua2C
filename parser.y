@@ -64,7 +64,7 @@ void check_var_reference(struct AstNode *var);
 %nonassoc '('
 
 %type <ast> number global_statement_list global_statement expr  assignment
-%type <ast> return_statement expr_statement func_call args if_cond //print_statement 
+%type <ast> return_statement expr_statement func_call args if_cond 
 %type <ast> statement_list statement
 %type <ast> name
 %type <ast> func_definition param_list param table_field table_list chunk
@@ -74,7 +74,7 @@ void check_var_reference(struct AstNode *var);
 %%
 
 program
-    : global_statement_list                                         { root = $1; }         
+    : { scope_enter(); } global_statement_list                        { root = $2; scope_exit(); }         
     ;
 
 
@@ -143,7 +143,7 @@ table_field
     
 assignment
     : name '=' expr                                                 
-        { $$ = new_expression(EXPR_T, ASS_T, $1, $3); }
+        { $$ = new_expression(EXPR_T, ASS_T, $1, $3); fill_symtab(current_symtab, $$, eval_expr_type($3).type, VARIABLE); }
     ;
 
 chunk
@@ -174,16 +174,16 @@ expr_statement
 
 selection_statement
     : IF  if_cond THEN chunk END                              { $$ = new_if(IF_T, $2, $4, NULL); }
-    | IF  if_cond THEN chunk ELSE chunk END                   { $$ = new_if(IF_T, $2, $4, $6); }
+    | IF  if_cond THEN chunk ELSE chunk END                   { $$ = new_if(IF_T, $2, $4, $6);}
     ;
 
 if_cond
     : expr                                                          
-        { $$ = $1; }
+        { $$ = $1; scope_enter();}
     ;
 
 iteration_statement
-    : FOR ID '=' start ',' end step DO chunk END               { $$ = new_for(FOR_T, $2, $4, $6, $7, $9); scope_exit(); }
+    : FOR ID '=' start ',' end step DO chunk END               { $$ = new_for(FOR_T, $2, $4, $6, $7, $9); }
     ;
 
 start
@@ -194,7 +194,7 @@ start
     ;
 
 end
-    : expr                                                          { check_cond(eval_expr_type($1).type); $$ = $1; }
+    : expr                                                          { check_cond(eval_expr_type($1).type); $$ = $1; scope_exit(); }
     | /* empty */                                                   { $$ = NULL; }
     ;
 
@@ -240,7 +240,7 @@ expr
     | number
     | func_call
     | STRING                                                        { $$ = new_value(VAL_T, STRING_T, $1); }
-    | NIL                                                           { $$ = new_value(VAL_T, NIL_T, NULL);  }
+    | NIL                                                           { $$ = new_value(VAL_T, NIL_T, NULL); }
     | BOOL                                                          { $$ = new_value(VAL_T, eval_bool($1), $1); }
     | '{' table_list '}'                                            { $$ = new_table(TABLE_T, $2); }
     | expr '+' expr                                                 { $$ = new_expression(EXPR_T, ADD_T, $1, $3); }
@@ -387,9 +387,8 @@ void scope_exit() {
 
 
 /* Usata per inserire uno o più simboli all'interno della Symbol Table. 
-   Usata per 1 - Dichiarazione di variabili
-             2 - Dichiarazione di variabili con assegnazione
-             3 - Parametri di una funzione
+   Usata per 1 - Dichiarazione di variabili con assegnazione
+             2 - Parametri di una funzione
 */
 void fill_symtab(struct symlist * syml, struct AstNode *n, enum LUA_TYPE type, enum sym_type sym_type) {
     if (!n) return;
@@ -406,12 +405,11 @@ void fill_symtab(struct symlist * syml, struct AstNode *n, enum LUA_TYPE type, e
         case DECL_T:
             fill_symtab(syml, n->node.decl->var, type, sym_type);
             break;
-        // Altri casi...
     }
 }
 
 /*  Funzione richiamata in caso si usi il flag --help o -h.
-    Mostra a schermo l'uso del compilatore 
+    Mostra a schermo l'uso del transpilatore 
 */
 void print_usage(){
     printf("Usage: ./compiler [options] file  \n");

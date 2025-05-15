@@ -4,7 +4,8 @@
         "text_encoding": "cpp",
         "typeindex": "cpp",
         "typeinfo": "cpp",
-        "ast.h": "c"
+        "ast.h": "c",
+        "symtab.h": "c"
     },
     "makefile.configureOnOpen": false
 }
