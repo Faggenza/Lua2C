@@ -68,7 +68,7 @@ void check_var_reference(struct AstNode *var);
 %type <ast> statement_list statement
 %type <ast> name
 %type <ast> func_definition param_list param table_field table_list chunk
-%type <ast> iteration_statement start end step selection_statement
+%type <ast> iteration_statement start end step selection_statement print_statement print_var
 //%type <t> type
 
 %%
@@ -210,16 +210,16 @@ return_statement
         { $$ = new_return(RETURN_T, $2); }
     ;
 
-//print_statement
-//    : PRINT '(' args ')'                                   
-//        { $$ = new_func_call(FCALL_T, new_variable(VAR_T, $1, NULL), $3); }
-//    | PRINT '(' STRING ',' args ')'                          
-//        { $$ = new_func_call(FCALL_T, new_variable(VAR_T, $1, NULL), 
-//            link_AstNode(new_value(VAL_T, STRING_T, $3), $5)); 
-//        check_format_string(new_value(VAL_T, STRING_T, $3), $5, PRINT_T); }
-//    | PRINT '(' ')'                                                 
-//        { $$ = new_error(ERROR_NODE_T); yyerror("too few arguments to function" BOLD " print" RESET); }
-//    ;
+print_statement
+    : PRINT '(' args ')'
+        { $$ = new_func_call(FCALL_T, new_variable(VAR_T, $1, NULL), $3); }
+    | PRINT '(' STRING ',' args ')'
+        { $$ = new_func_call(FCALL_T, new_variable(VAR_T, $1, NULL),
+            link_AstNode(new_value(VAL_T, STRING_T, $3), $5));
+        check_format_string(new_value(VAL_T, STRING_T, $3), $5, PRINT_T); }
+    | PRINT '(' ')'
+        { $$ = new_error(ERROR_NODE_T); yyerror("too few arguments to function" BOLD " print" RESET); }
+    ;
 
 //da controllare read Lua
 //read_statement
@@ -278,10 +278,13 @@ func_call
     ;
 
 args
-    : expr
-    | expr ',' args                                                 { $$ = link_AstNode($1, $3); }
+    : print_var
+    | print_var ',' args                                                 { $$ = link_AstNode($1, $3); }
     ;
 
+print_var
+    : ID                                                           { $$ = new_variable(VAR_T, $1, NULL); }
+    | STRING                                                       { $$ = new_value(VAL_T, STRING_T, $1); }
 
 %%
 
