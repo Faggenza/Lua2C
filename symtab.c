@@ -152,7 +152,7 @@ void check_usage(struct symlist *syml)
     {
         if (s->sym_type == VARIABLE && s->used_flag == 0)
         {
-            yyerror(error_string_format("variable " BOLD "%s" RESET " declared but not used", s->name));
+            yywarning(error_string_format("variable " BOLD "%s" RESET " declared but not used", s->name));
             yynote(error_string_format("declaration of " BOLD "%s" RESET " was here", s->name), s->lineno, s->line);
         }
     }
