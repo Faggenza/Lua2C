@@ -24,8 +24,6 @@ int print_symtab_flag = 0;
 int print_ast_flag = 0;
 void print_usage();
 
-// enum LUA_TYPE type;
-
 void print_ast(struct AstNode *root);
 void translate(struct AstNode *root);
 void check_var_reference(struct AstNode *var);
@@ -33,8 +31,6 @@ void check_var_reference(struct AstNode *var);
 %}
 
 %define parse.error verbose
-
-// %expect 7 /* conflitto shift/reduce (- per ruturn) , bison lo risolve scegliendo shift */
 
 %union {
     char* s;
@@ -47,6 +43,7 @@ void check_var_reference(struct AstNode *var);
 %token  FUNCTION
 %token <s> PRINT READ
 %token <s> STRING BOOL NIL
+
 %right  '='
 %left   OR
 %left   AND
@@ -54,12 +51,10 @@ void check_var_reference(struct AstNode *var);
 %left   '+' '-'
 %left   '*' '/'
 %right  NOT
+
 %precedence UMINUS // Per il meno unario
 %precedence LOWEST // Livello di precedenza più basso, usato con %prec
-// %nonassoc EXPR_START
 
-// Indica i token che possono iniziare un'espressione
-// %nonassoc <s> INT_NUM FLOAT_NUM
 %nonassoc <s> ID
 %nonassoc '('
 
@@ -69,7 +64,6 @@ void check_var_reference(struct AstNode *var);
 %type <ast> name
 %type <ast> func_definition param_list param table_field table_list chunk
 %type <ast> iteration_statement start_expr end_expr step selection_statement optional_expr_list
-//%type <t> type
 
 %%
 
@@ -88,7 +82,7 @@ global_statement
     | func_definition
     | selection_statement
     | iteration_statement
-    | func_call         //expr_statement
+    | func_call
     | return_statement
     ;
 
@@ -119,7 +113,6 @@ param
         { $$ = new_value(VAL_T, STRING_T, $1); }
     | BOOL                                                           { $$ = new_value(VAL_T, eval_bool($1), $1); }
     | NIL                                                            { $$ = new_value(VAL_T, NIL_T, NULL); }
-    //| number                                                         { $$ = new_value(VAL_T, INT_NUM, $1); }
     | ID '=' number                                                  { $$ = new_declaration(DECL_T, new_variable(VAR_T, $1, NULL), $3); }
     | ID '=' STRING                                                  { $$ = new_declaration(DECL_T, new_variable(VAR_T, $1, NULL), new_value(VAL_T, STRING_T, $3)); }
     | ID '=' BOOL                                                    { $$ = new_declaration(DECL_T, new_variable(VAR_T, $1, NULL), new_value(VAL_T, eval_bool($3), $3)); }
@@ -161,21 +154,12 @@ statement_list
 
 statement
     : assignment
-    | func_call                     //expr_statement
+    | func_call
     | selection_statement
     | iteration_statement
     | return_statement
-//    | print_statement                                             { fmt_flag = 1; }
 //    | read_statement                                              { fmt_flag = 1; }
-//    | assignment_statement
     ;
-
-/*
-expr_statement
-    : expr %prec LOWEST
-        { $$ = check_expr_statement($1); }
-    ;
-*/
 
 selection_statement
     : IF  if_cond THEN chunk END                              { $$ = new_if(IF_T, $2, $4, NULL); }
@@ -205,7 +189,7 @@ end_expr
 
 step
     : ',' expr                                                    { eval_expr_type($2); $$ = $2; }
-    | /* empty */                                                   { $$ = NULL; }
+    | /* empty */                                                 { $$ = NULL; }
     ;
 
 return_statement
@@ -218,18 +202,6 @@ optional_expr_list
     | args        { $$ = $1; } %prec LOWEST
     ;
 
-/*
-print_statement
-    : PRINT '(' args ')'
-        { $$ = new_func_call(FCALL_T, new_variable(VAR_T, $1, NULL), $3); }
-    | PRINT '(' STRING ',' args ')'
-        { $$ = new_func_call(FCALL_T, new_variable(VAR_T, $1, NULL),
-            link_AstNode(new_value(VAL_T, STRING_T, $3), $5));
-        check_format_string(new_value(VAL_T, STRING_T, $3), $5, PRINT_T); }
-    | PRINT '(' ')'
-        { $$ = new_error(ERROR_NODE_T); yyerror("too few arguments to function" BOLD " print" RESET); }
-    ;
-*/
 //da controllare read Lua
 //read_statement
 //    : READ '(' format_string ',' read_name_list ')'                { check_format_string($3, $5, READ_T); $$ = new_func_call(FCALL_T, $1, link_AstNode($3, $5)); }
@@ -247,7 +219,6 @@ print_statement
 expr
     : name
     | number
-    | func_call
     | STRING                                                        { $$ = new_value(VAL_T, STRING_T, $1); }
     | NIL                                                           { $$ = new_value(VAL_T, NIL_T, NULL); }
     | BOOL                                                          { $$ = new_value(VAL_T, eval_bool($1), $1); }
