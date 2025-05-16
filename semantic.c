@@ -145,6 +145,7 @@ int eval_array_dim(struct AstNode *expr)
 struct complex_type eval_expr_type(struct AstNode *expr)
 {
     struct complex_type result;
+    result.kind = DYNAMIC; // Default a dinamico per Lua
 
     if (!expr)
     {
@@ -161,15 +162,49 @@ struct complex_type eval_expr_type(struct AstNode *expr)
         return result;
 
     case VAR_T:
-        /* In Lua, variables can hold any type */
-        result.type = expr->node.var ? DYNAMIC : NIL_T;
-        result.kind = DYNAMIC;
+        // Per 'io.read' stesso (non una chiamata), non è un valore che ha un tipo semplice.
+        // Ma se è una variabile normale, il suo tipo è dinamico.
+        if (strcmp(expr->node.var->name, "io.read") == 0) {
+            result.type = FUNCTION_T; // "io.read" si riferisce a una funzione
+        } else {
+            // Cerca nella symbol table per un tipo più specifico se possibile,
+            // altrimenti DYNAMIC. Per Lua, è generalmente DYNAMIC.
+            // struct symbol* sym = find_symtab...; if (sym) result.type = sym->type;
+            result.type = USERDATA_T; // Placeholder per tipo sconosciuto/dinamico di variabile
+        }
         return result;
 
     case FCALL_T:
-        /* Function calls can return any type in Lua */
-        result.type = DYNAMIC;
-        result.kind = DYNAMIC;
+        if (expr->node.fcall->func_expr->nodetype == VAR_T &&
+            strcmp(expr->node.fcall->func_expr->node.var->name, "io.read") == 0) {
+            // Tipo di ritorno specifico per io.read
+            struct AstNode* fcall_args = expr->node.fcall->args;
+            if (fcall_args == NULL) { // io.read() -> string (default "*l")
+                result.type = STRING_T;
+            } else {
+                // Basato sul primo formato (semplificazione)
+                if (fcall_args->nodetype == VAL_T) {
+                    if (fcall_args->node.val->val_type == STRING_T) {
+                        const char* fmt = fcall_args->node.val->string_val;
+                        if (strcmp(fmt, "*n") == 0) {
+                            result.type = NUMBER_T; // Potrebbe essere INT_T o FLOAT_T
+                        } else { // "*l", "*a", "*L"
+                            result.type = STRING_T;
+                        }
+                    } else if (fcall_args->node.val->val_type == INT_T || fcall_args->node.val->val_type == FLOAT_T) {
+                        result.type = STRING_T; // io.read(N) legge N bytes come stringa
+                    } else {
+                        result.type = ERROR_T; // Formato non valido (già segnalato)
+                    }
+                } else {
+                    result.type = ERROR_T; // Argomento non letterale, tipo sconosciuto a compile-time
+                }
+            }
+            } else {
+                // Per altre chiamate di funzione, il tipo di ritorno è generalmente dinamico
+                // o deve essere cercato nella symbol table se la funzione è definita.
+                result.type = USERDATA_T; // Placeholder per tipo di ritorno generico/dinamico
+            }
         return result;
 
     case EXPR_T:
@@ -269,13 +304,72 @@ struct AstNode *check_expr_statement(struct AstNode *expr)
 }
 
 /* Check function call */
-void check_fcall(char *name, struct AstNode *args)
-{
+//void check_fcall(char *name, struct AstNode *args)
+// {
     /* In Lua, function calls are much more flexible than in C */
     /* Check only if function exists - no parameter type checking */
 
     /* We could check for standard library functions or user-defined ones */
     /* For now, this is a simplified check */
+// }
+
+void check_fcall(struct AstNode *func_expr, struct AstNode *args) {
+    if (func_expr->nodetype == VAR_T &&
+        strcmp(func_expr->node.var->name, "io.read") == 0) {
+        // È una chiamata a io.read
+        struct AstNode* current_arg = args;
+        int arg_count = 0;
+        if (current_arg != NULL) { // Se ci sono argomenti
+            arg_count = 1; // Iniziamo a contare
+            // Per semplicità, consideriamo solo il primo argomento per i controlli dettagliati.
+            // Lua permette più argomenti, che portano a più valori di ritorno.
+
+            if (current_arg->nodetype == VAL_T) {
+                if (current_arg->node.val->val_type == STRING_T) {
+                    const char* fmt = current_arg->node.val->string_val;
+                    if (strcmp(fmt, "*n") == 0 || strcmp(fmt, "*l") == 0 ||
+                        strcmp(fmt, "*a") == 0 || strcmp(fmt, "*L") == 0) {
+                        // Formato stringa valido
+                    } else {
+                        // In Lua, io.read("qualsiasi_stringa_non_formato") è un errore runtime.
+                        // Qui potremmo essere più restrittivi.
+                        yyerror("io.read: argument must be a format string or a number");
+                    }
+                } else if (current_arg->node.val->val_type == INT_T || current_arg->node.val->val_type == FLOAT_T) {
+                    // Formato numerico (numero di byte da leggere)
+                    if (current_arg->node.val->val_type == FLOAT_T) {
+                        yywarning("io.read: numeric format is float, will be treated as integer");
+                    }
+                    // Potresti aggiungere un controllo se è negativo: atof(current_arg->node.val->string_val) < 0
+                } else {
+                    yyerror("io.read: argument must be a format string or a number");
+                }
+            } else {
+                // L'argomento di io.read (se presente) deve essere una costante stringa o numerica
+                // per questa analisi statica.
+                yyerror("io.read: argument must be a literal format string or number");
+            }
+
+            if (current_arg->next != NULL) {
+                yywarning("io.read: multiple arguments provided. Translation to C might only support the first or be complex.");
+                // Qui potresti iterare su current_arg->next per controllare anche gli altri,
+                // ma la gestione di ritorni multipli è il vero problema per la traduzione.
+            }
+        }
+        // Se arg_count == 0 (cioè args è NULL), è io.read() che è valido (default "*l").
+
+    } else if (func_expr->nodetype == VAR_T) {
+        // Chiamata a una funzione normale (es. f())
+        // Qui puoi cercare func_expr->node.var->name nella symbol table,
+        // controllare i parametri, etc. come facevi prima con check_fcall(char* name, ...)
+        // struct symbol* func_sym = find_symtab(current_symtab, func_expr->node.var->name);
+        // if (!func_sym) { yyerror("call to undefined function '%s'", func_expr->node.var->name); }
+        // ... ecc.
+    } else {
+        // Chiamata a qualcosa che non è un ID semplice (es. (get_func())() )
+        // Questo è più complesso e potrebbe non essere supportato ora.
+        yywarning("calling a complex expression as a function is not fully checked yet");
+    }
 }
 
 /* Check returned values */

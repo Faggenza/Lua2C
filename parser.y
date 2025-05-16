@@ -26,8 +26,30 @@ void print_usage();
 
 void print_ast(struct AstNode *root);
 void translate(struct AstNode *root);
-void check_var_reference(struct AstNode *var);
+// void check_var_reference(struct AstNode *var);
+void check_fcall(struct AstNode *func_expr, struct AstNode *args);
 
+// Funzione helper per creare l'identificatore per io.read e liberare le stringhe originali
+static struct AstNode* new_io_read_identifier_node(char* ns_token, char* func_token) {
+    if (strcmp(ns_token, "io") == 0 && strcmp(func_token, "read") == 0) {
+        char* full_name = malloc(strlen(ns_token) + 1 + strlen(func_token) + 1);
+        if (!full_name) { /* Gestione errore malloc */ perror("malloc failed for io.read id"); exit(EXIT_FAILURE); }
+        sprintf(full_name, "%s.%s", ns_token, func_token);
+
+        // new_variable assegna direttamente il puntatore 'full_name'.
+        // 'full_name' sarà quindi gestito (eventualmente liberato) insieme al nodo AST.
+        struct AstNode* var_node = new_variable(VAR_T, full_name, NULL);
+
+        free(ns_token); // Libera la stringa strdup-pata dal lexer per "io"
+        free(func_token); // Libera la stringa strdup-pata dal lexer per "read"
+        return var_node;
+    }
+    // Se non è "io.read", è un errore per questa implementazione semplificata
+    yyerror(error_string_format("Unsupported table member access: %s.%s. Only 'io.read' is supported.", ns_token, func_token));
+    free(ns_token);
+    free(func_token);
+    return new_error(ERROR_NODE_T); // Ritorna un nodo errore
+}
 %}
 
 %define parse.error verbose
@@ -41,8 +63,8 @@ void check_var_reference(struct AstNode *var);
 %token <s> INT_NUM FLOAT_NUM
 %token  IF ELSE THEN FOR DO END RETURN
 %token  FUNCTION
-%token <s> PRINT READ
 %token <s> STRING BOOL NIL
+%token DOT
 
 %right  '='
 %left   OR
@@ -61,7 +83,7 @@ void check_var_reference(struct AstNode *var);
 %type <ast> number global_statement_list global_statement expr  assignment
 %type <ast> return_statement func_call args if_cond //expr_statement
 %type <ast> statement_list statement
-%type <ast> name
+%type <ast> name_or_ioread
 %type <ast> func_definition param_list param table_field table_list chunk
 %type <ast> iteration_statement start_expr end_expr step selection_statement optional_expr_list
 
@@ -95,7 +117,7 @@ func_definition
         { /* No return type needed */ }
             chunk   END
         { $$ = new_func_def(FDEF_T, $2, NULL, $6); }
-    | name '=' FUNCTION  '(' param_list ')'
+    | name_or_ioread '=' FUNCTION  '(' param_list ')'
         { param_list = $5; /* No type checking needed */ }
             chunk   END
         { $$ = new_func_def(FDEF_T, NULL, $5, $8); }
@@ -139,7 +161,7 @@ table_field
         { $$ = new_table_field(TABLE_FIELD_T, NULL, NULL); }
 
 assignment
-    : name '=' expr
+    : name_or_ioread '=' expr
         { $$ = new_expression(EXPR_T, ASS_T, $1, $3); fill_symtab(current_symtab, $$, eval_expr_type($3).type, VARIABLE); }
     ;
 
@@ -202,22 +224,8 @@ optional_expr_list
     | args        { $$ = $1; } %prec LOWEST
     ;
 
-//da controllare read Lua
-//read_statement
-//    : READ '(' format_string ',' read_name_list ')'                { check_format_string($3, $5, READ_T); $$ = new_func_call(FCALL_T, $1, link_AstNode($3, $5)); }
-//    | READ '(' format_string ')'                                   { check_format_string($3, NULL, READ_T); $$ = new_func_call(FCALL_T, $1, $3); }
-//    | READ '(' ')'                                                 { $$ = new_error(ERROR_NODE_T); yyerror("too few arguments to function" BOLD " read" RESET); }
-//    ;
-//
-//read_name_list
-//    : '&' name                                                       { check_var_reference($2); by_reference($2); $$ = $2; }
-//    | name                                                           { check_var_reference($1); $$ = $1; }
-//    | '&' name ',' read_var_list                                    { check_var_reference($2); by_reference($2); $$ = link_AstNode($2, $4); }
-//    | name ','   read_var_list                                      { check_var_reference($1); link_AstNode($1, $3); }
-//    ;
-
 expr
-    : name
+    : name_or_ioread
     | number
     | STRING                                                        { $$ = new_value(VAL_T, STRING_T, $1); }
     | NIL                                                           { $$ = new_value(VAL_T, NIL_T, NULL); }
@@ -240,10 +248,15 @@ expr
     | '-' expr %prec UMINUS                                         { $$ = new_expression(EXPR_T, NEG_T, NULL, $2); }
     ;
 
-name
-    : ID
-        { $$ = new_variable(VAR_T, $1, NULL); }
+name_or_ioread
+    : ID { $$ = new_variable(VAR_T, $1, NULL); }
+    | ID DOT ID { $$ = new_io_read_identifier_node($1, $3); } // Usa la funzione helper
     ;
+
+// name
+//     : ID
+//         { $$ = new_variable(VAR_T, $1, NULL); }
+//     ;
 
 number
     : INT_NUM
@@ -253,8 +266,14 @@ number
     ;
 
 func_call
-    : ID '(' args ')'                                               { $$ = new_func_call(FCALL_T, new_variable(VAR_T, $1, NULL), $3); check_fcall($1, $3); }
-    | ID '(' ')'                                                    { $$ = new_func_call(FCALL_T, new_variable(VAR_T, $1, NULL), NULL); check_fcall($1, NULL); }
+    : name_or_ioread '(' args ')' { // name_or_ioread può essere 'ID' o 'io.read'
+                                     $$ = new_func_call(FCALL_T, $1, $3);
+                                     check_fcall($1, $3); // Chiamata alla funzione di controllo semantico
+                                   }
+    | name_or_ioread '(' ')'      {
+                                     $$ = new_func_call(FCALL_T, $1, NULL);
+                                     check_fcall($1, NULL);
+                                   }
     ;
 
 args

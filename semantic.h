@@ -24,7 +24,8 @@ int check_array_dim(struct AstNode *expr);
 int eval_array_dim(struct AstNode *expr);
 
 /* Function checks */
-void check_fcall(char *name, struct AstNode *args);
+//void check_fcall(char *name, struct AstNode *args);
+void semantic_check_fcall(struct AstNode *func_expr, struct AstNode *args);
 void check_func_return(enum LUA_TYPE type, struct AstNode *stmt_list);
 void check_return(struct AstNode *expr);
 void check_main_chunk(struct AstNode *chunk);

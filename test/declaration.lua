@@ -10,7 +10,7 @@ e = 'Single quoted string\n'
 f = "Double quoted string\t"
 i = ""                  -- empty string
 
--- Boolean 
+-- Boolean
 j = true
 k = false
 
@@ -23,6 +23,7 @@ n = {a = 1, b = 2}      -- dictionary-like table
 o = {1, 2, 3, a = 4}    -- mixed table
 p = {{1, 2}, {3, 4}}    -- nested tables
 q = {}                  -- empty table
+
 
 -- Functions
 r = function(x, y)      -- anonymous function

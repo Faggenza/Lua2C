@@ -114,6 +114,7 @@ char string_buf[230000]; // Max Lua string length
 ";" |
 "," |
 "&"                         { return yytext[0]; }
+"."                         { return DOT; }
 
     /* spazi e tabulazioni */
 
