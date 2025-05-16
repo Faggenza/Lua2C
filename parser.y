@@ -81,7 +81,7 @@ static struct AstNode* new_io_read_identifier_node(char* ns_token, char* func_to
 %nonassoc '('
 
 %type <ast> number global_statement_list global_statement expr  assignment
-%type <ast> return_statement func_call args if_cond //expr_statement
+%type <ast> return_statement func_call args if_cond 
 %type <ast> statement_list statement
 %type <ast> name_or_ioread
 %type <ast> func_definition param_list param table_field table_list chunk
@@ -374,7 +374,7 @@ void scope_enter() {
 void scope_exit() {
     if(print_symtab_flag)
         print_symtab(current_symtab);
-    check_usage(current_symtab);
+    //check_usage(current_symtab);
     current_symtab = delete_symtab(current_symtab);
     current_scope_lvl--;
 }
