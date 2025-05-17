@@ -86,6 +86,7 @@ static struct AstNode* new_io_read_identifier_node(char* ns_token, char* func_to
 %type <ast> name_or_ioread
 %type <ast> func_definition param_list param table_field table_list chunk
 %type <ast> iteration_statement start_expr end_expr step selection_statement optional_expr_list
+%type <ast> primary_expr
 
 %%
 
@@ -180,7 +181,6 @@ statement
     | selection_statement
     | iteration_statement
     | return_statement
-//    | read_statement                                              { fmt_flag = 1; }
     ;
 
 selection_statement
@@ -224,18 +224,13 @@ optional_expr_list
     | args        { $$ = $1; } %prec LOWEST
     ;
 
-expr
-    : name_or_ioread
-    | number
-    | STRING                                                        { $$ = new_value(VAL_T, STRING_T, $1); }
-    | NIL                                                           { $$ = new_value(VAL_T, NIL_T, NULL); }
-    | BOOL                                                          { $$ = new_value(VAL_T, eval_bool($1), $1); }
-    | '{' table_list '}'                                            { $$ = new_table(TABLE_T, $2); }
+expr  // Definizione di base per le espressioni, costruisce sulla precedenza
+    : primary_expr
     | expr '+' expr                                                 { $$ = new_expression(EXPR_T, ADD_T, $1, $3); }
     | expr '-' expr                                                 { $$ = new_expression(EXPR_T, SUB_T, $1, $3); }
     | expr '*' expr                                                 { $$ = new_expression(EXPR_T, MUL_T, $1, $3); }
     | expr '/' expr                                                 { $$ = new_expression(EXPR_T, DIV_T, $1, $3); check_division($3); }
-    | NOT expr                                                      { $$ = new_expression(EXPR_T, NOT_T, NULL, $2); }
+    | NOT primary_expr                                              { $$ = new_expression(EXPR_T, NOT_T, NULL, $2); }
     | expr AND expr                                                 { $$ = new_expression(EXPR_T, AND_T, $1, $3); }
     | expr OR expr                                                  { $$ = new_expression(EXPR_T, OR_T, $1, $3); }
     | expr '>' expr                                                 { $$ = new_expression(EXPR_T, G_T, $1, $3); }
@@ -244,8 +239,18 @@ expr
     | expr LE expr                                                  { $$ = new_expression(EXPR_T, LE_T, $1, $3); }
     | expr EQ expr                                                  { $$ = new_expression(EXPR_T, EQ_T, $1, $3); }
     | expr NE expr                                                  { $$ = new_expression(EXPR_T, NE_T, $1, $3); }
-    | '(' expr ')'                                                  { $$ = new_expression(EXPR_T, PAR_T, NULL, $2); }
-    | '-' expr %prec UMINUS                                         { $$ = new_expression(EXPR_T, NEG_T, NULL, $2); }
+    | '-' primary_expr %prec UMINUS                                 { $$ = new_expression(EXPR_T, NEG_T, NULL, $2); }
+    ;
+
+primary_expr  // Espressioni "atomiche" o che non sono operatori binari/unari di livello superiore
+    : name_or_ioread           { $$ = $1; }
+    | number                   { $$ = $1; }
+    | STRING                   { $$ = new_value(VAL_T, STRING_T, $1); }
+    | NIL                      { $$ = new_value(VAL_T, NIL_T, NULL); }
+    | BOOL                     { $$ = new_value(VAL_T, eval_bool($1), $1); }
+    | '{' table_list '}'       { $$ = new_table(TABLE_T, $2); }
+    | func_call                { $$ = $1; }
+    | '(' expr ')'             { $$ = new_expression(EXPR_T, PAR_T, NULL, $2); }
     ;
 
 name_or_ioread
@@ -253,16 +258,11 @@ name_or_ioread
     | ID DOT ID { $$ = new_io_read_identifier_node($1, $3); } // Usa la funzione helper
     ;
 
-// name
-//     : ID
-//         { $$ = new_variable(VAR_T, $1, NULL); }
-//     ;
-
 number
     : INT_NUM
-        { $$ = new_value(VAL_T, INT_NUM, $1); }
+        { $$ = new_value(VAL_T, INT_T, $1); }
     | FLOAT_NUM
-        { $$ = new_value(VAL_T, FLOAT_NUM, $1); }
+        { $$ = new_value(VAL_T, FLOAT_T, $1); }
     ;
 
 func_call
