@@ -173,7 +173,7 @@ void print_ast(struct AstNode *n)
 
         if (n->nodetype != FDEF_T && n->nodetype != FOR_T && n->nodetype != IF_T)
         {
-            printf(";\n");
+            printf("\n");
         }
 
         n = n->next;
