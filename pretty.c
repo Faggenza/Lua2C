@@ -30,10 +30,6 @@ void print_node(struct AstNode *n)
         }
         break;
     case VAR_T:
-        if (n->node.var->by_reference)
-        {
-            printf("&");
-        }
         printf("%s", n->node.var->name);
         if (n->node.var->table_key)
         {
@@ -100,7 +96,8 @@ void print_node(struct AstNode *n)
         print_node(n->node.forn->start);
         printf(", ");
         print_node(n->node.forn->end);
-        if (n->node.forn->step) {
+        if (n->node.forn->step)
+        {
             printf(", ");
             print_node(n->node.forn->step);
         }
@@ -130,6 +127,29 @@ void print_node(struct AstNode *n)
         else
         {
             printf("\n");
+        }
+        break;
+    case TABLE_T:
+        printf("{");
+        if (n->node.table->fields)
+        {
+            print_list(n->node.table->fields);
+        }
+        printf("}");
+        break;
+    case TABLE_FIELD_T:
+        if (n->node.tfield->key)
+        {
+            print_node(n->node.tfield->key);
+            if (n->node.tfield->value != NULL)
+            {
+                printf(" = ");
+                print_node(n->node.tfield->value);
+            }
+        }
+        else
+        {
+            printf("nil");
         }
         break;
     case ERROR_NODE_T:

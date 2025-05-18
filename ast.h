@@ -13,7 +13,6 @@ enum LUA_TYPE
     FLOAT_T,
     STRING_T,
     FUNCTION_T,
-    TABLE_T,
     USERDATA_T,
     ERROR_T
 };
@@ -24,9 +23,9 @@ enum NODE_TYPE
     EXPR_T,
     VAL_T,
     VAR_T,
-    DECL_T,
-    TABLE_ACCESS_T,
+    TABLE_T,
     TABLE_FIELD_T,
+    DECL_T,
     RETURN_T,
     FCALL_T,
     FDEF_T,

@@ -5,7 +5,18 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "ast.h": "c",
-        "symtab.h": "c"
+        "symtab.h": "c",
+        "charconv": "c",
+        "expected": "c",
+        "optional": "c",
+        "format": "c",
+        "ratio": "c",
+        "system_error": "c",
+        "array": "c",
+        "functional": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "utility": "c"
     },
     "makefile.configureOnOpen": false
 }
