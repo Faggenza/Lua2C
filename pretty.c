@@ -331,5 +331,5 @@ char *convert_func_name(char *name)
 void translate(struct AstNode *root)
 {
     printf("// Generated Lua to C parse tree\n");
-    print_ast(root);
+    // print_ast(root);
 }
