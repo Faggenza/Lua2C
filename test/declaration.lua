@@ -27,15 +27,15 @@ q = {}                  -- empty table
 
 -- Functions
 r = function(x, y)      -- anonymous function
-   return x + y
+   return x * y
  end
 
 function s(x, y)        -- named function
   somma = "ciao"
-  return x * y
+  return x , y
 end
 
---result = s(2,4)         -- function call
+-- --result = s(2,4)         -- function call
 
 
 function u(x, y)        -- multiple return values
