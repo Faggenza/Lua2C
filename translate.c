@@ -83,10 +83,25 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
         case NIL_T:
             fprintf(output_fp, "NULL");
             break;
+        case TRUE_T:
+             fprintf(output_fp, "true");
+             break;
+        case FALSE_T:
+             fprintf(output_fp, "false");
+             break;
         default:
             // Per gli altri tipi, comprende int, float e boolean
             fprintf(output_fp, "%s", n->node.val->string_val);
             break;
+        }
+        break;
+    case VAR_T:
+        if (n->node.var && n->node.var->name) {
+            fprintf(output_fp, "%s", n->node.var->name);
+            // Qui non dichiariamo il tipo, assumiamo sia già stata dichiarata
+            // o che il contesto (es. chiamata a funzione) non richieda il tipo.
+        } else {
+            fprintf(output_fp, "/* null_variable_name */");
         }
         break;
     case EXPR_T:
@@ -171,34 +186,57 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
             translate_node(n->node.expr->r, current_scope);
         }
         break;
+    case IF_T:
+        fprintf(output_fp, "if (");
+        translate_node(n->node.ifn->cond, current_scope);
+        fprintf(output_fp, ") {\n");
+
+        translate_depth++; // Aumenta l'indentazione per il blocco 'then'
+        translate_ast(n->node.ifn->body);
+        translate_depth--; // Ripristina l'indentazione
+
+        translate_tab(); // Indenta per la '}' di chiusura del 'then'
+        fprintf(output_fp, "}");
+
+        if (n->node.ifn->else_body) {
+            fprintf(output_fp, " else {\n");
+            translate_depth++;
+            translate_ast(n->node.ifn->else_body);
+            translate_depth--;
+            translate_tab();
+            fprintf(output_fp, "}");
+        }
+        fprintf(output_fp, "\n"); // Newline dopo l'intera struttura if/else
+        break;
+    case RETURN_T:
+        fprintf(output_fp, "return");
+        if (n->node.ret->expr) {
+            fprintf(output_fp, " ");
+            translate_node(n->node.ret->expr, current_scope);
+            if (n->node.ret->expr->next) {
+                fprintf(output_fp, " /* Lua multiple return values not directly supported in C, only first value translated */");
+            }
+        }
+        break;
     default:
         fprintf(output_fp, "/* unknown expression */");
         break;
     }
 }
 
-/* Funzione per tradurre l'Ast */
+/* Funzione per tradurre l'Ast (lista di statement) */
 void translate_ast(struct AstNode *n)
 {
     while (n)
     {
-        if (n->nodetype != DECL_T)
-        {
-            translate_tab(translate_depth);
-        }
-        if (n->nodetype == FDEF_T || n->nodetype == FOR_T || n->nodetype == IF_T)
-        {
-            scope_lvl++;
-            translate_depth++;
-        }
+        translate_tab(); // Stampa l'indentazione per lo statement corrente (SENZA argomenti, usa la globale translate_depth)
 
-        translate_node(n, root_symtab);
+        translate_node(n, root_symtab); // Traduce il nodo corrente
 
-        if (n->nodetype != DECL_T && n->nodetype != FDEF_T && n->nodetype != FOR_T && n->nodetype != IF_T)
+        if (n->nodetype != FDEF_T && n->nodetype != FOR_T && n->nodetype != IF_T )
         {
             fprintf(output_fp, ";\n");
         }
-
         n = n->next;
     }
 }

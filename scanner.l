@@ -97,7 +97,7 @@ char string_buf[230000]; // Max Lua string length
     /* operatori di confronto */
 
 ">" |
-"<"                         { return yytext[0]; }                    
+"<"                         { return yytext[0]; }
 ">="                        { return GE; }
 "<="                        { return LE; }
 "=="                        { return EQ; }
@@ -132,10 +132,10 @@ void copy_line() {
         free(line);
     }
 
-    line = malloc(sizeof(char) * (yyleng + 1)); 
-    strcpy(line, yytext); 
+    line = malloc(sizeof(char) * (yyleng + 1));
+    strcpy(line, yytext);
     // restituisce la linea al buffer di input per matcharlo con le regole successive
-    yyless(0); 
+    yyless(0);
 }
 
 /* Printa gli errori sullo standard error e mantiene un contatore degli errori */
