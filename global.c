@@ -5,9 +5,9 @@
 char *filename = NULL;
 int error_num = 0;
 int main_flag = 0;
-int fmt_flag = 0;                      // import "fmt"
-int current_scope_lvl = 0;             // indica il livello dello scope corrente
+int current_scope_lvl = 1;             // indica il livello dello scope corrente
 struct symlist *current_symtab = NULL; // tabella corrente
+struct symlist *root_symtab = NULL;    // puntatore alla symbol table globale (scope più esterno)
 
 /* Funzione di supporto alle funzioni per il print di errori, warning e note,
     prende come parametro una format string e un numero variabile di argomenti

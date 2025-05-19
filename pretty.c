@@ -317,13 +317,3 @@ char *convert_node_type(enum NODE_TYPE t)
         return "unknown node";
     }
 }
-
-/* Funzione per convertire gli identificatori delle funzioni per I/O */
-char *convert_func_name(char *name)
-{
-    if (!strcmp("printf", name))
-        return "fmt.Printf";
-    if (!strcmp("scanf", name))
-        return "fmt.Scanf";
-    return name;
-}

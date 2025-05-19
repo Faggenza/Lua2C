@@ -330,7 +330,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    // inizializzazione nameiabili globali
+    // inizializzazione variabili globali
     error_num = 0;
     current_scope_lvl = 0;
     current_symtab = NULL;
@@ -354,6 +354,10 @@ int main(int argc, char **argv) {
 */
 void scope_enter() {
     current_symtab = create_symtab(current_scope_lvl, current_symtab);
+    // La prima volta che entriamo in uno scope, salviamo il puntatore alla tabella globale
+    if (root_symtab == NULL) {
+        root_symtab = current_symtab;
+    }
     current_scope_lvl++;
 
     if(param_list) {
@@ -368,13 +372,14 @@ void scope_enter() {
 }
 
 /* Chiude uno scope. Eventualmente effettua il print della Symbol Table.
-   Verifica che le nameiabili dichiarate all'interno dello scope siano utilizzate
+   Verifica che le variabili dichiarate all'interno dello scope siano utilizzate
 */
 void scope_exit() {
     if(print_symtab_flag)
         print_symtab(current_symtab);
     //check_usage(current_symtab);
-    current_symtab = delete_symtab(current_symtab);
+    
+    current_symtab = current_symtab->next;
     current_scope_lvl--;
 }
 

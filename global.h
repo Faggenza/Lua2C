@@ -13,9 +13,9 @@
 extern char *filename;
 extern int error_num;
 extern int main_flag;
-extern int fmt_flag;          // import "fmt"
 extern int current_scope_lvl; // indica il livello dello scope corrente
 extern struct symlist *current_symtab;
+extern struct symlist *root_symtab; // puntatore alla symbol table globale (scope più esterno)
 
 /* funzioni per la gestione degli errori */
 void yyerror(const char *s);
