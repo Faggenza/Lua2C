@@ -30,9 +30,9 @@ const char *lua_type_to_c_string(enum LUA_TYPE type)
     case FALSE_T:
         return "bool";
     case NIL_T:
-        return "/* nil_val_in_c */ void*"; // da vedere
+        return "void*";
     case FUNCTION_T:
-        return "/* func_ptr_t */ void*";
+        return "/* func_ptr_t */ void*"; // da indicare i tipi di ritorno
     // case USERDATA_T: return "/* userdata_t */ void*";
     case NUMBER_T:
         return "double";
@@ -89,27 +89,6 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
             break;
         }
         break;
-    case VAR_T:
-        // Cerca il simbolo nella symbol table corrente e stampa il tipo
-        if (n->node.var && n->node.var->name)
-        {
-            struct symbol *sym = find_symtab(current_scope, n->node.var->name);
-            if (sym)
-            {
-                // Se stiamo dichiarando la variabile, stampa il tipo
-                fprintf(output_fp, "%s %s", lua_type_to_c_string(sym->type), n->node.var->name);
-            }
-            else
-            {
-                // Se il simbolo non è trovato, usa il nome della variabile senza tipo
-                fprintf(output_fp, "%s", n->node.var->name);
-            }
-        }
-        else
-        {
-            fprintf(output_fp, "/* null variable */");
-        }
-        break;
     case EXPR_T:
         if (n->node.expr->expr_type == PAR_T)
         {
@@ -138,24 +117,48 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
             // Per le assegnazioni, tratta il lato sinistro in modo speciale
             if (n->node.expr->l && n->node.expr->l->nodetype == VAR_T)
             {
+                char *varname = n->node.expr->l->node.var->name;
+
                 // Controlla se la variabile è già stata dichiarata
                 struct symbol *sym = find_symtab(current_scope, n->node.expr->l->node.var->name);
                 if (sym)
                 {
-                    // Se è già dichiarata, stampa solo il nome
-                    fprintf(output_fp, "%s", n->node.expr->l->node.var->name);
+                    // Se è già stata vista prima, è un'assegnazione e non una dichiarazione
+                    // Qui includiamo il tipo solo alla prima assegnazione
+                    if (sym->used_flag == 0)
+                    {
+                        // Prima volta che vediamo questa variabile in un'assegnazione
+                        fprintf(output_fp, "%s %s", lua_type_to_c_string(sym->type), varname);
+                        // Segna la variabile come usata
+                        sym->used_flag = 1;
+                    }
+                    else
+                    {
+                        // Variabile già usata, solo nome
+                        fprintf(output_fp, "%s", varname);
+                    }
                 }
                 else
                 {
-                    // Se è la prima dichiarazione, aggiungi il tipo
+                    // È la prima dichiarazione, aggiungi il tipo
                     enum LUA_TYPE type = eval_expr_type(n->node.expr->r).type;
-                    fprintf(output_fp, "%s %s", lua_type_to_c_string(type),
-                            n->node.expr->l->node.var->name);
+                    fprintf(output_fp, "%s %s", lua_type_to_c_string(type), varname);
+
+                    // Aggiungi il simbolo alla tabella simboli durante la traduzione
+                    if (current_scope)
+                    {
+                        insert_sym(current_scope, varname, type, VARIABLE, NULL, 0, "");
+                        sym = find_symtab(current_scope, varname);
+                        if (sym)
+                        {
+                            sym->used_flag = 1; // Mark as used
+                        }
+                    }
                 }
             }
             else
             {
-                translate_node(n->node.expr->l, current_scope);
+                fprintf(output_fp, "/* unknown variable */");
             }
             fprintf(output_fp, " = ");
             translate_node(n->node.expr->r, current_scope);
