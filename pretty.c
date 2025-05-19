@@ -129,7 +129,7 @@ void print_node(struct AstNode *n)
             printf("\n");
         }
         break;
-    case TABLE_T:
+    case TABLE_NODE_T:
         printf("{");
         if (n->node.table->fields)
         {
@@ -264,8 +264,10 @@ char *convert_var_type(enum LUA_TYPE type)
     {
     case NIL_T:
         return "nil";
-    case BOOLEAN_T:
-        return "boolean";
+    case TRUE_T:
+        return "true";
+    case FALSE_T:
+        return "false";
     case NUMBER_T:
         return "number";
     case INT_T:

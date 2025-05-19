@@ -91,25 +91,17 @@ void insert_sym(struct symlist *syml, char *name, enum LUA_TYPE type, enum sym_t
 
     s = find_sym(syml, name);
 
-    if (s)
-    {
-        yyerror(error_string_format(BOLD "%s" RESET " redeclared in this scope", name));
-        yynote(error_string_format("previous declaration of " BOLD "%s" RESET " was here", name), s->lineno, s->line);
-    }
-    else
-    {
-        s = malloc(sizeof(struct symbol));
-        s->name = name;
-        s->type = type;
-        s->sym_type = sym_type;
-        s->pl = pl;
-        s->lineno = lineno;
-        s->line = strdup(line);
-        s->used_flag = 0;
-        s->array_flag = 0;
+    s = malloc(sizeof(struct symbol));
+    s->name = name;
+    s->type = type;
+    s->sym_type = sym_type;
+    s->pl = pl;
+    s->lineno = lineno;
+    s->line = strdup(line);
+    s->used_flag = 0;
+    s->array_flag = 0;
 
-        HASH_ADD_STR(syml->symtab, name, s);
-    }
+    HASH_ADD_STR(syml->symtab, name, s);
 }
 
 /* Ricerca di un simbolo nello scope corrente */

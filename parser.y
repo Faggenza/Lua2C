@@ -111,17 +111,17 @@ global_statement
 
 func_definition
     : FUNCTION ID '(' param_list ')'
-        { param_list = $4; /* No type checking needed */ }
+        { scope_enter(); param_list = $4; }
             chunk   END
-        { $$ = new_func_def(FDEF_T, $2, $4, $7); }
+        { $$ = new_func_def(FDEF_T, $2, $4, $7); scope_exit(); }
     | FUNCTION ID '(' ')'
-        { /* No return type needed */ }
+        { scope_enter(); param_list = NULL;}
             chunk   END
-        { $$ = new_func_def(FDEF_T, $2, NULL, $6); }
+        { $$ = new_func_def(FDEF_T, $2, NULL, $6); scope_exit(); }
     | name_or_ioread '=' FUNCTION  '(' param_list ')'
-        { param_list = $5; /* No type checking needed */ }
+        { scope_enter(); param_list = $5; }
             chunk   END
-        { $$ = new_func_def(FDEF_T, NULL, $5, $8); }
+        { $$ = new_func_def(FDEF_T, NULL, $5, $8); scope_exit(); }
     ;
 
 param_list
@@ -157,7 +157,7 @@ table_field
     | FLOAT_NUM
         { $$ = new_table_field(TABLE_FIELD_T, new_value(VAL_T, FLOAT_NUM, $1), NULL); }
     | '{' table_list '}'
-        { $$ = new_table(TABLE_T, $2); }
+        { $$ = new_table(TABLE_NODE_T, $2); }
     | /* empty */
         { $$ = new_table_field(TABLE_FIELD_T, NULL, NULL); }
 
@@ -190,7 +190,7 @@ selection_statement
 
 if_cond
     : expr
-        { $$ = $1; scope_enter();}
+        { $$ = $1; }
     ;
 
 iteration_statement
@@ -199,13 +199,13 @@ iteration_statement
 
 start_expr
     : expr
-        { scope_enter(); $$ = new_declaration(DECL_T, $1, NULL); fill_symtab(current_symtab, $$, 0, VARIABLE); }
+        { $$ = new_declaration(DECL_T, $1, NULL); fill_symtab(current_symtab, $$, 0, VARIABLE); }
     | /* empty */
-        { scope_enter(); $$ = NULL; }
+        {$$ = NULL; }
     ;
 
 end_expr
-    : expr                                                          { check_cond(eval_expr_type($1).type); $$ = $1; scope_exit(); }
+    : expr                                                          { check_cond(eval_expr_type($1).type); $$ = $1; }
     | /* empty */                                                   { $$ = NULL; }
     ;
 
@@ -248,7 +248,7 @@ primary_expr  // Espressioni "atomiche" o che non sono operatori binari/unari di
     | STRING                   { $$ = new_value(VAL_T, STRING_T, $1); }
     | NIL                      { $$ = new_value(VAL_T, NIL_T, NULL); }
     | BOOL                     { $$ = new_value(VAL_T, eval_bool($1), $1); }
-    | '{' table_list '}'       { $$ = new_table(TABLE_T, $2); }
+    | '{' table_list '}'       { $$ = new_table(TABLE_NODE_T, $2); }
     | func_call                { $$ = $1; }
     | '(' expr ')'             { $$ = new_expression(EXPR_T, PAR_T, NULL, $2); }
     ;
