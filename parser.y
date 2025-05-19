@@ -6,6 +6,7 @@
 #include "symtab.h"
 #include "global.h"
 #include "pretty.h"
+#include "translate.h"
 
 extern int yylex();
 extern FILE *yyin;
@@ -24,8 +25,6 @@ int print_symtab_flag = 0;
 int print_ast_flag = 0;
 void print_usage();
 
-void print_ast(struct AstNode *root);
-void translate(struct AstNode *root);
 // void check_var_reference(struct AstNode *var);
 void check_fcall(struct AstNode *func_expr, struct AstNode *args);
 

@@ -245,12 +245,6 @@ struct complex_type eval_expr_type(struct AstNode *expr)
             /* Parentheses preserve type */
             return eval_expr_type(expr->node.expr->r);
 
-        case CONCAT_T:
-            /* String concatenation */
-            result.type = STRING_T;
-            result.kind = DYNAMIC;
-            return result;
-
         default:
             result.type = DYNAMIC;
             result.kind = DYNAMIC;
@@ -485,9 +479,6 @@ void check_binary_op(enum EXPRESSION_TYPE op, struct AstNode *left, struct AstNo
             }
             break;
 
-        case CONCAT_T:
-            /* String concatenation in Lua coerces to strings */
-            break;
 
         default:
             /* No specific requirements for other operators */

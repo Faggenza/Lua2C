@@ -250,8 +250,6 @@ char *convert_expr_type(enum EXPRESSION_TYPE expr_type)
         return "-";
     case PAR_T:
         return "()";
-    case CONCAT_T:
-        return "..";
     default:
         return "unknown";
     }
@@ -326,10 +324,4 @@ char *convert_func_name(char *name)
     if (!strcmp("scanf", name))
         return "fmt.Scanf";
     return name;
-}
-
-void translate(struct AstNode *root)
-{
-    printf("// Generated Lua to C parse tree\n");
-    // print_ast(root);
 }

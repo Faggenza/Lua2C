@@ -55,7 +55,6 @@ enum EXPRESSION_TYPE
     NE_T,
     NEG_T,
     PAR_T,
-    CONCAT_T // .. operatore concatenazione stringhe di Lua
 };
 
 // Struttura del nodo espressione
