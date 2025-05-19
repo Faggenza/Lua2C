@@ -83,12 +83,6 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
         case NIL_T:
             fprintf(output_fp, "NULL");
             break;
-        case TRUE_T:
-             fprintf(output_fp, "true");
-             break;
-        case FALSE_T:
-             fprintf(output_fp, "false");
-             break;
         default:
             // Per gli altri tipi, comprende int, float e boolean
             fprintf(output_fp, "%s", n->node.val->string_val);
@@ -96,11 +90,14 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
         }
         break;
     case VAR_T:
-        if (n->node.var && n->node.var->name) {
+        if (n->node.var && n->node.var->name)
+        {
             fprintf(output_fp, "%s", n->node.var->name);
             // Qui non dichiariamo il tipo, assumiamo sia già stata dichiarata
             // o che il contesto (es. chiamata a funzione) non richieda il tipo.
-        } else {
+        }
+        else
+        {
             fprintf(output_fp, "/* null_variable_name */");
         }
         break;
@@ -198,7 +195,8 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
         translate_tab(); // Indenta per la '}' di chiusura del 'then'
         fprintf(output_fp, "}");
 
-        if (n->node.ifn->else_body) {
+        if (n->node.ifn->else_body)
+        {
             fprintf(output_fp, " else {\n");
             translate_depth++;
             translate_ast(n->node.ifn->else_body);
@@ -210,10 +208,12 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
         break;
     case RETURN_T:
         fprintf(output_fp, "return");
-        if (n->node.ret->expr) {
+        if (n->node.ret->expr)
+        {
             fprintf(output_fp, " ");
             translate_node(n->node.ret->expr, current_scope);
-            if (n->node.ret->expr->next) {
+            if (n->node.ret->expr->next)
+            {
                 fprintf(output_fp, " /* Lua multiple return values not directly supported in C, only first value translated */");
             }
         }
@@ -233,7 +233,7 @@ void translate_ast(struct AstNode *n)
 
         translate_node(n, root_symtab); // Traduce il nodo corrente
 
-        if (n->nodetype != FDEF_T && n->nodetype != FOR_T && n->nodetype != IF_T )
+        if (n->nodetype != FDEF_T && n->nodetype != FOR_T && n->nodetype != IF_T)
         {
             fprintf(output_fp, ";\n");
         }
