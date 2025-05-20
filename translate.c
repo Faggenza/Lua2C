@@ -218,6 +218,61 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
             }
         }
         break;
+    case FCALL_T:
+        // Gestione speciale per io.read
+        if (n->node.fcall->func_expr->nodetype == VAR_T &&
+            n->node.fcall->func_expr->node.var->name != NULL && // Aggiunto controllo per nome non nullo
+            strcmp(n->node.fcall->func_expr->node.var->name, "io.read") == 0) {
+
+            struct AstNode* arg1 = n->node.fcall->args;
+            if (!arg1) { // io.read() -> default è "*l"
+                fprintf(output_fp, "c_lua_io_read_line()");
+            } else {
+                if (arg1->nodetype == VAL_T && arg1->node.val->val_type == STRING_T) {
+                    const char* fmt = arg1->node.val->string_val;
+                    if (strcmp(fmt, "*n") == 0) {
+                        fprintf(output_fp, "c_lua_io_read_number()");
+                    } else if (strcmp(fmt, "*l") == 0 || strcmp(fmt, "*L") == 0) { // *L è come *l
+                        fprintf(output_fp, "c_lua_io_read_line()");
+                    } else if (strcmp(fmt, "*a") == 0) {
+                         fprintf(output_fp, "/* io.read(\"*a\") - read all; complex, using simplified line read */ c_lua_io_read_line()");
+                    }
+                    else {
+                        fprintf(output_fp, "io_read_unsupported_format(\"%s\")", fmt);
+                    }
+                } else if (arg1->nodetype == VAL_T && (arg1->node.val->val_type == INT_T || arg1->node.val->val_type == FLOAT_T)){
+                    fprintf(output_fp, "c_lua_io_read_bytes(");
+                    translate_node(arg1, current_scope); // Traduce il numero N
+                    fprintf(output_fp, ")");
+                } else {
+                    fprintf(output_fp, "io_read_complex_arg()");
+                }
+                if (arg1->next) {
+                    fprintf(output_fp, " /* , ... further arguments to io.read ignored */");
+                }
+            }
+        } else if (n->node.fcall->func_expr->nodetype == VAR_T) { // Normale chiamata a funzione
+            if (n->node.fcall->func_expr->node.var->name != NULL) {
+                fprintf(output_fp, "%s", n->node.fcall->func_expr->node.var->name);
+            } else {
+                fprintf(output_fp, "/* anonymous_or_null_fcall_var_name */");
+            }
+            fprintf(output_fp, "(");
+            if (n->node.fcall->args) {
+                translate_list(n->node.fcall->args, ", "); // Passa lo scope implicitamente
+            }
+            fprintf(output_fp, ")");
+        } else { // Chiamata a espressione (es. (tab.get_func())() )
+            fprintf(output_fp, "("); // Parentesi attorno all'espressione funzione
+            translate_node(n->node.fcall->func_expr, current_scope);
+            fprintf(output_fp, ")");
+            fprintf(output_fp, "("); // Parentesi per gli argomenti
+            if (n->node.fcall->args) {
+                translate_list(n->node.fcall->args, ", ");
+            }
+            fprintf(output_fp, ")");
+        }
+        break;
     default:
         fprintf(output_fp, "/* unknown expression */");
         break;
@@ -241,26 +296,103 @@ void translate_ast(struct AstNode *n)
     }
 }
 
-void translate(struct AstNode *root)
+void translate(struct AstNode *root_ast_node)
 {
-    printf(">> Generated C translation!\n");
-    output_fp = fopen("prova.c", "w");
+    printf(">> Inizio traduzione da Lua a C...\n");
+
+    // Costruzione del nome del file di output
+    char *output_filename_base = NULL;
+    char *output_filename_c = NULL;
+
+    if (filename) {
+        // Trova l'ultima occorrenza di '.' per rimuovere l'estensione .lua
+        char *dot_position = strrchr(filename, '.');
+        if (dot_position != NULL) {
+            // Calcola la lunghezza della base del nome del file
+            size_t base_len = dot_position - filename;
+            output_filename_base = (char *)malloc(base_len + 1);
+            if (output_filename_base) {
+                strncpy(output_filename_base, filename, base_len);
+                output_filename_base[base_len] = '\0';
+            }
+        } else {
+            // Nessuna estensione trovata, usa l'intero nome del file come base
+            output_filename_base = strdup(filename);
+        }
+
+        if (output_filename_base) {
+            size_t c_filename_len = strlen(output_filename_base) + 2 + 1;
+            output_filename_c = (char *)malloc(c_filename_len);
+            if (output_filename_c) {
+                sprintf(output_filename_c, "%s.c", output_filename_base);
+            }
+            free(output_filename_base);
+        }
+    }
+
+    // Fallback se la costruzione del nome fallisce o filename è NULL
+    if (!output_filename_c) {
+        fprintf(stderr, YELLOW "ATTENZIONE:" RESET " Impossibile derivare il nome del file di output dal sorgente. Uso 'output.c' come default.\n");
+        output_filename_c = strdup("output.c"); // Nome di default
+        if (!output_filename_c) { // Fallimento anche per strdup (molto improbabile)
+             fprintf(stderr, RED "ERRORE:" RESET " Fallimento critico nell'allocazione del nome del file di output.\n");
+             exit(1);
+        }
+    }
+
+    // Apri il file di output
+    output_fp = fopen(output_filename_c, "w");
 
     if (!output_fp)
     {
-        fprintf(stderr, RED "error:" RESET " %s: ", filename);
-        perror("");
+        fprintf(stderr, RED "ERRORE:" RESET " Impossibile aprire il file di output C '%s'.\n", output_filename_c);
+        perror("fopen");
+        free(output_filename_c);
         exit(1);
     }
 
-    // Includi gli header necessari per il codice C generato
+    // include C necessari all'inizio del file
     // TODO: da includere solo se necessario
     fprintf(output_fp, "#include <stdio.h>\n");
     fprintf(output_fp, "#include <stdlib.h>\n");
     fprintf(output_fp, "#include <stdbool.h>\n");
     fprintf(output_fp, "#include <string.h>\n\n");
 
-    translate_ast(root);
 
+    // Traduzione le definizioni di funzione Lua PRIMA del main
+    struct AstNode *current_node = root_ast_node;
+    while (current_node) {
+        if (current_node->nodetype == FDEF_T) {
+            translate_node(current_node, root_symtab); // Passa la symbol table globale
+        }
+        current_node = current_node->next;
+    }
+
+    // Inizio della funzione main() C
+    fprintf(output_fp, "int main() {\n");
+    translate_depth++;
+
+    // Traduzione degli statement globali Lua (che non sono FDEF_T) dentro main()
+    current_node = root_ast_node;
+    while (current_node) {
+        if (current_node->nodetype != FDEF_T) { // Salta le definizioni di funzione, già tradotte
+            translate_tab(); // Indenta lo statement corrente
+            translate_node(current_node, root_symtab);
+            if (current_node->nodetype != IF_T && current_node->nodetype != FOR_T) {
+                 fprintf(output_fp, ";\n");
+            }
+        }
+        current_node = current_node->next;
+    }
+
+    // Fine della funzione main() C
+    translate_tab();
+    fprintf(output_fp, "return 0;\n");
+    translate_depth--;
+    fprintf(output_fp, "}\n");
+
+    // Chiudi il file di output
     fclose(output_fp);
+    printf(">> Traduzione completata. Codice C generato in '%s'.\n", output_filename_c);
+    free(output_filename_c); // Libera la memoria allocata per il nome del file
 }
