@@ -219,13 +219,13 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
         }
         break;
     case FCALL_T:
-        // Gestione speciale per io.read
+        // Gestione per io.read
         if (n->node.fcall->func_expr->nodetype == VAR_T &&
             n->node.fcall->func_expr->node.var->name != NULL && // Aggiunto controllo per nome non nullo
             strcmp(n->node.fcall->func_expr->node.var->name, "io.read") == 0) {
 
             struct AstNode* arg1 = n->node.fcall->args;
-            if (!arg1) { // io.read() -> default è "*l"
+            if (!arg1) { // io.read() di default è "*l"
                 fprintf(output_fp, "c_lua_io_read_line()");
             } else {
                 if (arg1->nodetype == VAL_T && arg1->node.val->val_type == STRING_T) {
