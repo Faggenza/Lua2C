@@ -166,21 +166,57 @@ struct complex_type eval_expr_type(struct AstNode *expr)
         result.type = TABLE_T;
         result.kind = DYNAMIC;
         return result;
-    case VAR_T:
-        // Per 'io.read' stesso (non una chiamata), non è un valore che ha un tipo semplice.
-        // Ma se è una variabile normale, il suo tipo è dinamico.
-        if (strcmp(expr->node.var->name, "io.read") == 0)
-        {
-            result.type = FUNCTION_T; // "io.read" si riferisce a una funzione
-        }
-        else
-        {
-            // Cerca nella symbol table per un tipo più specifico se possibile,
-            // altrimenti DYNAMIC. Per Lua, è generalmente DYNAMIC.
-            // struct symbol* sym = find_symtab...; if (sym) result.type = sym->type;
-            result.type = USERDATA_T; // Placeholder per tipo sconosciuto/dinamico di variabile
-        }
-        return result;
+   case VAR_T:
+            if (expr->node.var && expr->node.var->name) { // Controlla che il nome esista
+                if (strcmp(expr->node.var->name, "io.read") == 0) {
+                    result.type = FUNCTION_T; // "io.read" si riferisce a una funzione predefinita
+                } else {
+                    // Cerca la variabile nella symbol table corrente (o globale se necessario)
+                    // È cruciale che 'current_symtab' (o un meccanismo di lookup simile)
+                    // sia accessibile e punti allo scope corretto.
+                    // Se eval_expr_type è chiamata ricorsivamente all'interno di funzioni,
+                    // la gestione dello scope deve essere corretta.
+                    // Usiamo 'root_symtab' come fallback per le globali se 'current_symtab'
+                    // non è lo scope più esterno o non è disponibile.
+                    // Se stai processando codice globale, current_symtab dovrebbe essere root_symtab.
+
+                    struct symlist* scope_to_search = current_symtab;
+                    if (!scope_to_search) { // Fallback se current_symtab è NULL per qualche motivo
+                        scope_to_search = root_symtab;
+                    }
+
+                    struct symbol *sym = NULL;
+                    if (scope_to_search) { // Solo cerca se abbiamo uno scope valido
+                       sym = find_symtab(scope_to_search, expr->node.var->name);
+                    }
+
+
+                    if (sym) {
+                        // Trovato il simbolo! Usa il suo tipo.
+                        result.type = sym->type;
+                        // Potresti anche voler impostare result.kind se la symbol table
+                        // traccia se una variabile è una costante (meno comune in Lua).
+                    } else {
+                        // Variabile non trovata nella symbol table.
+                        // In Lua, questo significherebbe che la variabile è 'nil'.
+                        // Per la traduzione, questo è un punto critico.
+                        // Potrebbe essere un errore (variabile non dichiarata se vuoi uno stile più statico)
+                        // o potresti assumere 'nil' o un tipo dinamico.
+                        // Per 'print', se una variabile non dichiarata viene stampata, Lua stampa 'nil'.
+                        yywarning(error_string_format(
+                            "Variable '%s' used in expression but not found in symbol table (or symbol table access issue). Assuming nil for now.",
+                             expr->node.var->name
+                        ));
+                        result.type = NIL_T; // Comportamento più vicino a Lua per variabili non definite
+                                             // In precedenza era USERDATA_T, che causava "userdata"
+                    }
+                }
+            } else {
+                // Nodo VAR_T senza nome, dovrebbe essere un errore del parser o AST
+                yyerror("Encountered VAR_T node without a name during type evaluation.");
+                result.type = ERROR_T;
+            }
+            return result;
 
     case FCALL_T:
         if (expr->node.fcall->func_expr->nodetype == VAR_T &&
@@ -276,8 +312,8 @@ struct complex_type eval_expr_type(struct AstNode *expr)
             return result;
         }
     default:
-        result.type = DYNAMIC;
-        result.kind = DYNAMIC;
+        // Tipo di nodo AST non gestito esplicitamente qui
+        result.type = USERDATA_T; // O ERROR_T
         return result;
     }
 }
