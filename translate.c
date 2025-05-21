@@ -220,10 +220,146 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
         }
         break;
     case FCALL_T:
-        // Gestione per io.read
+        // Gestione per print
         if (n->node.fcall->func_expr->nodetype == VAR_T &&
-            n->node.fcall->func_expr->node.var->name != NULL && // Aggiunto controllo per nome non nullo
-            strcmp(n->node.fcall->func_expr->node.var->name, "io.read") == 0)
+            n->node.fcall->func_expr->node.var->name != NULL &&
+            strcmp(n->node.fcall->func_expr->node.var->name, "print") == 0)
+        {
+
+            struct AstNode *arg = n->node.fcall->args;
+
+            if (!arg)
+            {                                          // print()
+                fprintf(output_fp, "printf(\"\\n\")"); // Lua stampa una nuova riga
+            }
+            else
+            {
+                fprintf(output_fp, "printf(\"");
+                // Fase 1: Costruire la stringa di formato
+                struct AstNode *current_arg_for_format = arg;
+                bool first_item_in_format = true;
+                while (current_arg_for_format)
+                {
+                    if (!first_item_in_format)
+                    {
+                        fprintf(output_fp, " ");
+                    }
+
+                    struct complex_type ct = eval_expr_type(current_arg_for_format);
+                    enum LUA_TYPE type_of_arg = ct.type;
+
+                    // Controllo se l'argomento è un VALORE STRINGA LETTERALE
+                    if (current_arg_for_format->nodetype == VAL_T &&
+                        current_arg_for_format->node.val->val_type == STRING_T)
+                    {
+                        fprintf(output_fp, "%s", current_arg_for_format->node.val->string_val);
+                    }
+                    else
+                    {
+                        if (current_arg_for_format->nodetype == VAL_T)
+                        {
+                            type_of_arg = current_arg_for_format->node.val->val_type;
+                        }
+
+                        switch (type_of_arg)
+                        {
+                        case INT_T:
+                            fprintf(output_fp, "%%d");
+                            break;
+                        case FLOAT_T:
+                            fprintf(output_fp, "%%f");
+                            break;
+                        case NUMBER_T:
+                            fprintf(output_fp, "%%g");
+                            break;
+                        case STRING_T:
+                            fprintf(output_fp, "%%s");
+                            break;
+                        case NIL_T:
+                            fprintf(output_fp, "NULL");
+                            break;
+                        case TRUE_T:
+                            fprintf(output_fp, "true");
+                            break;
+                        case FALSE_T:
+                            fprintf(output_fp, "false");
+                            break;
+                        case BOOLEAN_T:
+                            fprintf(output_fp, "%%s");
+                            break;
+                        case FUNCTION_T:
+                            fprintf(output_fp, "function");
+                            break;
+                        case TABLE_T:
+                            fprintf(output_fp, "table");
+                            break;
+                        case USERDATA_T:
+                            fprintf(output_fp, "userdata");
+                            break;
+                        default:
+                            fprintf(output_fp, "%%s");
+                            break;
+                        }
+                    }
+                    first_item_in_format = false;
+                    current_arg_for_format = current_arg_for_format->next;
+                }
+                fprintf(output_fp, "\\n\""); // Aggiungere newline e chiudere la stringa di formato
+
+                // Fase 2: Aggiungere gli argomenti alla chiamata printf
+                struct AstNode *current_arg_for_value = arg;
+                bool needs_comma = false; // Flag per tracciare se serve una virgola
+                while (current_arg_for_value)
+                {
+                    struct complex_type ct = eval_expr_type(current_arg_for_value);
+                    enum LUA_TYPE type_of_arg = ct.type;
+
+                    bool is_literal_string = (current_arg_for_value->nodetype == VAL_T &&
+                                              current_arg_for_value->node.val->val_type == STRING_T);
+
+                    if (!is_literal_string)
+                    { // Solo se non è un letterale stringa
+                        if (current_arg_for_value->nodetype == VAL_T)
+                        {
+                            type_of_arg = current_arg_for_value->node.val->val_type;
+                        }
+
+                        switch (type_of_arg)
+                        {
+                        case INT_T:
+                        case FLOAT_T:
+                        case NUMBER_T:
+                        case STRING_T:
+                            if (needs_comma)
+                                fprintf(output_fp, ", ");
+                            else
+                                fprintf(output_fp, ", "); // Stampare virgola se c'è un argomento
+                            translate_node(current_arg_for_value, current_scope);
+                            needs_comma = true;
+                            break;
+                        case BOOLEAN_T:
+                            if (needs_comma)
+                                fprintf(output_fp, ", ");
+                            else
+                                fprintf(output_fp, ", ");
+                            fprintf(output_fp, "(");
+                            translate_node(current_arg_for_value, current_scope);
+                            fprintf(output_fp, ") ? \"true\" : \"false\"");
+                            needs_comma = true;
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                    current_arg_for_value = current_arg_for_value->next;
+                }
+                fprintf(output_fp, ")"); // Chiusura chiamata printf
+            }
+        }
+        // Gestione per io.read
+        else if (n->node.fcall->func_expr->nodetype == VAR_T &&
+                 n->node.fcall->func_expr->node.var->name != NULL &&
+                 strcmp(n->node.fcall->func_expr->node.var->name, "io.read") == 0)
         {
 
             struct AstNode *arg1 = n->node.fcall->args;
@@ -287,11 +423,11 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
             fprintf(output_fp, ")");
         }
         else
-        {                            // Chiamata a espressione (es. (tab.get_func())() )
-            fprintf(output_fp, "("); // Parentesi attorno all'espressione funzione
+        { // Chiamata a espressione (es. (tab.get_func())() )
+            fprintf(output_fp, "(");
             translate_node(n->node.fcall->func_expr, current_scope);
             fprintf(output_fp, ")");
-            fprintf(output_fp, "("); // Parentesi per gli argomenti
+            fprintf(output_fp, "(");
             if (n->node.fcall->args)
             {
                 translate_list(n->node.fcall->args, ", ");
@@ -310,7 +446,7 @@ void translate_ast(struct AstNode *n)
 {
     while (n)
     {
-        translate_tab(); // Stampa l'indentazione per lo statement corrente (SENZA argomenti, usa la globale translate_depth)
+        translate_tab(); // Stampa l'indentazione per lo statement corrente
 
         translate_node(n, root_symtab); // Traduce il nodo corrente
 
@@ -373,20 +509,9 @@ void translate(struct AstNode *root_ast_node)
     if (!output_filename_c)
     {
         fprintf(stderr, YELLOW "ATTENZIONE:" RESET " Impossibile derivare il nome del file di output dal sorgente. Uso 'output.c' come default.\n");
-        output_filename_c = strdup("output.c"); // Nome di default
+        output_filename_c = strdup("output.c");
         if (!output_filename_c)
-        { // Fallimento anche per strdup (molto improbabile)
-            fprintf(stderr, RED "ERRORE:" RESET " Fallimento critico nell'allocazione del nome del file di output.\n");
-            exit(1);
-        }
-    }
-    // Fallback se la costruzione del nome fallisce o filename è NULL
-    if (!output_filename_h)
-    {
-        fprintf(stderr, YELLOW "ATTENZIONE:" RESET " Impossibile derivare il nome del file di output dal sorgente. Uso 'output.c' come default.\n");
-        output_filename_h = strdup("output.h"); // Nome di default
-        if (!output_filename_h)
-        { // Fallimento anche per strdup (molto improbabile)
+        {
             fprintf(stderr, RED "ERRORE:" RESET " Fallimento critico nell'allocazione del nome del file di output.\n");
             exit(1);
         }
