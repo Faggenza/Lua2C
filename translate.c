@@ -528,7 +528,17 @@ void translate(struct AstNode *root_ast_node)
         exit(1);
     }
 
-    fprintf(output_fp, "#include \"%s\"\n\n", output_filename_h);
+    char *header_filename = (char *)malloc(strlen(output_filename_h) + 1);
+    header_filename = strrchr(output_filename_h, '/');
+    if (header_filename)
+    {
+        header_filename++; // Skip the '/'
+    }
+    else
+    {
+        header_filename = output_filename_h; // No '/' found, use the whole string
+    }
+    fprintf(output_fp, "#include \"%s\"\n\n", header_filename);
 
     // Traduzione le definizioni di funzione Lua PRIMA del main
     struct AstNode *current_node = root_ast_node;
