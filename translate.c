@@ -591,17 +591,26 @@ void translate(struct AstNode *root_ast_node)
     fprintf(output_fp, "#include <stdlib.h>\n");
     fprintf(output_fp, "#include <stdbool.h>\n");
     fprintf(output_fp, "#include <string.h>\n\n");
-    fprintf(output_fp_h, "char* lua_to_c_scan_line(){\n \
+    fprintf(output_fp_h, "char* c_lua_io_read_line(){\n \
     char *buff;\n\
     scanf(\"%%ms\", &buff);\n\
     return buff;\n\
 }\n\n");
 
-    fprintf(output_fp_h, "double lua_to_c_scan_number(){\n \
+    fprintf(output_fp_h, "double c_lua_io_read_number(){\n \
     double ret;\n\
     scanf(\"%%d\", &ret);\n\
     return ret;\n\
 }\n\n");
+
+    fprintf(output_fp_h, "char *c_lua_io_read_bytes(int n)\n\
+{\n\
+    char *buff = malloc(sizeof(char) * (n + 1));\n\
+    scanf(\"%%ms\", &buff);\n\
+    buff[n] = \'\\0\';\n\
+    return buff;\n\
+}\n\n");
+
     fclose(output_fp_h);
     free(output_filename_c); // Libera la memoria allocata per il nome del file
 }
