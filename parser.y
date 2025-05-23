@@ -217,7 +217,7 @@ iteration_statement
 
 start_expr
     : expr
-        { $$ = new_declaration(DECL_T, $1, NULL); fill_symtab(current_symtab, $$, 0, VARIABLE); }
+        { $$ = $1; }
     | /* empty */
         {$$ = NULL; }
     ;

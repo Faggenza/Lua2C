@@ -78,13 +78,13 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
     case VAL_T:
         switch (n->node.val->val_type)
         {
-        case STRING_T:
+    case STRING_T:
             fprintf(output_fp, "\"%s\"", n->node.val->string_val);
             break;
-        case NIL_T:
+    case NIL_T:
             fprintf(output_fp, "NULL");
             break;
-        default:
+    default:
             // Per gli altri tipi, comprende int, float e boolean
             fprintf(output_fp, "%s", n->node.val->string_val);
             break;
@@ -123,6 +123,11 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
         {
             translate_node(n->node.expr->l, current_scope);
             fprintf(output_fp, " && ");
+            translate_node(n->node.expr->r, current_scope);
+        }
+        else if (n->node.expr->expr_type == OR_T) {
+            translate_node(n->node.expr->l, current_scope);
+            fprintf(output_fp, " || ");
             translate_node(n->node.expr->r, current_scope);
         }
         else if (n->node.expr->expr_type == ASS_T)
@@ -176,12 +181,25 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
             fprintf(output_fp, " = ");
             translate_node(n->node.expr->r, current_scope);
         }
-        else
-        {
-            if (n->node.expr->l)
+        else {
+            // ADD_T, SUB_T, DIV_T, MUL_T,
+            // G_T, GE_T, L_T, LE_T, EQ_T, NE_T
+            if (n->node.expr->l) {
                 translate_node(n->node.expr->l, current_scope);
-            fprintf(output_fp, " %s ", convert_expr_type(n->node.expr->expr_type));
-            translate_node(n->node.expr->r, current_scope);
+            }
+            // La funzione convert_expr_type restituisce il simbolo C corretto per i vari operatori
+            // tranne che per NE_T che in lua è "~=" mentre in C è "!="
+            const char* c_operator;
+            if (n->node.expr->expr_type == NE_T) {
+                c_operator = "!=";
+            } else {
+                c_operator = convert_expr_type(n->node.expr->expr_type);
+            }
+            fprintf(output_fp, " %s ", c_operator);
+
+            if (n->node.expr->r) { // Operando destro
+                translate_node(n->node.expr->r, current_scope);
+            }
         }
         break;
     case IF_T:
