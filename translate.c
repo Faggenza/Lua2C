@@ -8,13 +8,13 @@
 #include "semantic.h"
 #include "symtab.h"
 
-FILE *output_fp;         // File pointer per l'output C
-FILE *output_fp_h;       // File pointer per l'output C
+FILE* output_fp; // File pointer per l'output C
+FILE* output_fp_h; // File pointer per l'output C
 int translate_depth = 0; // Per l'indentazione
-int scope_lvl = 0;       // Per la gestione degli scope
+int scope_lvl = 0; // Per la gestione degli scope
 
 // Converte un LUA_TYPE nel corrispondente tipo stringa C
-const char *lua_type_to_c_string(enum LUA_TYPE type)
+const char* lua_type_to_c_string(enum LUA_TYPE type)
 {
     switch (type)
     {
@@ -52,7 +52,7 @@ void translate_tab()
 }
 
 // Funzione per tradurre una lista di argomenti o espressioni
-void translate_list(struct AstNode *l, const char *separator)
+void translate_list(struct AstNode* l, const char* separator)
 {
     bool first = true;
     while (l)
@@ -68,7 +68,7 @@ void translate_list(struct AstNode *l, const char *separator)
 }
 
 // Funzione per tradurre il nodo con consapevolezza del tipo
-void translate_node(struct AstNode *n, struct symlist *current_scope)
+void translate_node(struct AstNode* n, struct symlist* current_scope)
 {
     if (!n)
         return;
@@ -78,13 +78,13 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
     case VAL_T:
         switch (n->node.val->val_type)
         {
-    case STRING_T:
+        case STRING_T:
             fprintf(output_fp, "\"%s\"", n->node.val->string_val);
             break;
-    case NIL_T:
+        case NIL_T:
             fprintf(output_fp, "NULL");
             break;
-    default:
+        default:
             // Per gli altri tipi, comprende int, float e boolean
             fprintf(output_fp, "%s", n->node.val->string_val);
             break;
@@ -125,7 +125,8 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
             fprintf(output_fp, " && ");
             translate_node(n->node.expr->r, current_scope);
         }
-        else if (n->node.expr->expr_type == OR_T) {
+        else if (n->node.expr->expr_type == OR_T)
+        {
             translate_node(n->node.expr->l, current_scope);
             fprintf(output_fp, " || ");
             translate_node(n->node.expr->r, current_scope);
@@ -135,10 +136,10 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
             // Per le assegnazioni, tratta il lato sinistro in modo speciale
             if (n->node.expr->l && n->node.expr->l->nodetype == VAR_T)
             {
-                char *varname = n->node.expr->l->node.var->name;
+                char* varname = n->node.expr->l->node.var->name;
 
                 // Controlla se la variabile è già stata dichiarata
-                struct symbol *sym = find_symtab(current_scope, n->node.expr->l->node.var->name);
+                struct symbol* sym = find_symtab(current_scope, n->node.expr->l->node.var->name);
                 if (sym)
                 {
                     // Se è già stata vista prima, è un'assegnazione e non una dichiarazione
@@ -181,23 +182,30 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
             fprintf(output_fp, " = ");
             translate_node(n->node.expr->r, current_scope);
         }
-        else {
+        else
+        {
             // ADD_T, SUB_T, DIV_T, MUL_T,
             // G_T, GE_T, L_T, LE_T, EQ_T, NE_T
-            if (n->node.expr->l) {
+            if (n->node.expr->l)
+            {
                 translate_node(n->node.expr->l, current_scope);
             }
             // La funzione convert_expr_type restituisce il simbolo C corretto per i vari operatori
             // tranne che per NE_T che in lua è "~=" mentre in C è "!="
             const char* c_operator;
-            if (n->node.expr->expr_type == NE_T) {
+            if (n->node.expr->expr_type == NE_T)
+            {
                 c_operator = "!=";
-            } else {
+            }
+            else
+            {
                 c_operator = convert_expr_type(n->node.expr->expr_type);
             }
             fprintf(output_fp, " %s ", c_operator);
 
-            if (n->node.expr->r) { // Operando destro
+            if (n->node.expr->r)
+            {
+                // Operando destro
                 translate_node(n->node.expr->r, current_scope);
             }
         }
@@ -211,10 +219,10 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
 
         // Create a new scope for 'then' block
         scope_lvl++;
-        struct symlist *then_scope = create_symtab(scope_lvl, current_scope);
+        struct symlist* then_scope = create_symtab(scope_lvl, current_scope);
 
         // Translate the 'then' block with the new scope
-        struct AstNode *then_body = n->node.ifn->body;
+        struct AstNode* then_body = n->node.ifn->body;
         while (then_body)
         {
             translate_tab();
@@ -243,10 +251,10 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
 
             // Create a new scope for 'else' block
             scope_lvl++;
-            struct symlist *else_scope = create_symtab(scope_lvl, current_scope);
+            struct symlist* else_scope = create_symtab(scope_lvl, current_scope);
 
             // Translate the 'else' block with the new scope
-            struct AstNode *else_body = n->node.ifn->else_body;
+            struct AstNode* else_body = n->node.ifn->else_body;
             while (else_body)
             {
                 translate_tab();
@@ -314,13 +322,13 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
 
         // Create a new scope for the loop body
         scope_lvl++;
-        struct symlist *for_scope = create_symtab(scope_lvl, current_scope);
+        struct symlist* for_scope = create_symtab(scope_lvl, current_scope);
 
         // Add the loop variable to the scope
         insert_sym(for_scope, n->node.forn->varname, INT_T, VARIABLE, NULL, 0, "");
 
         // Translate the loop body with the new scope
-        struct AstNode *for_body = n->node.forn->stmt;
+        struct AstNode* for_body = n->node.forn->stmt;
         while (for_body)
         {
             translate_tab();
@@ -339,7 +347,7 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
 
         translate_depth--; // Restore indentation
 
-        translate_tab();           // Indent for the closing '}'
+        translate_tab(); // Indent for the closing '}'
         fprintf(output_fp, "}\n"); // Newline after the for loop
         break;
     case RETURN_T:
@@ -350,7 +358,8 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
             translate_node(n->node.ret->expr, current_scope);
             if (n->node.ret->expr->next)
             {
-                fprintf(output_fp, " /* Lua multiple return values not directly supported in C, only first value translated */");
+                fprintf(output_fp,
+                        " /* Lua multiple return values not directly supported in C, only first value translated */");
             }
         }
         break;
@@ -360,18 +369,18 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
             n->node.fcall->func_expr->node.var->name != NULL &&
             strcmp(n->node.fcall->func_expr->node.var->name, "print") == 0)
         {
-
-            struct AstNode *arg = n->node.fcall->args;
+            struct AstNode* arg = n->node.fcall->args;
 
             if (!arg)
-            {                                          // print()
+            {
+                // print()
                 fprintf(output_fp, "printf(\"\\n\")"); // Lua stampa una nuova riga
             }
             else
             {
                 fprintf(output_fp, "printf(\"");
                 // Fase 1: Costruire la stringa di formato
-                struct AstNode *current_arg_for_format = arg;
+                struct AstNode* current_arg_for_format = arg;
                 bool first_item_in_format = true;
                 while (current_arg_for_format)
                 {
@@ -442,7 +451,7 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
                 fprintf(output_fp, "\\n\""); // Aggiungere newline e chiudere la stringa di formato
 
                 // Fase 2: Aggiungere gli argomenti alla chiamata printf
-                struct AstNode *current_arg_for_value = arg;
+                struct AstNode* current_arg_for_value = arg;
                 bool needs_comma = false; // Flag per tracciare se serve una virgola
                 while (current_arg_for_value)
                 {
@@ -450,10 +459,11 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
                     enum LUA_TYPE type_of_arg = ct.type;
 
                     bool is_literal_string = (current_arg_for_value->nodetype == VAL_T &&
-                                              current_arg_for_value->node.val->val_type == STRING_T);
+                        current_arg_for_value->node.val->val_type == STRING_T);
 
                     if (!is_literal_string)
-                    { // Solo se non è un letterale stringa
+                    {
+                        // Solo se non è un letterale stringa
                         if (current_arg_for_value->nodetype == VAL_T)
                         {
                             type_of_arg = current_arg_for_value->node.val->val_type;
@@ -493,38 +503,41 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
         }
         // Gestione per io.read
         else if (n->node.fcall->func_expr->nodetype == VAR_T &&
-                 n->node.fcall->func_expr->node.var->name != NULL &&
-                 strcmp(n->node.fcall->func_expr->node.var->name, "io.read") == 0)
+            n->node.fcall->func_expr->node.var->name != NULL &&
+            strcmp(n->node.fcall->func_expr->node.var->name, "io.read") == 0)
         {
-
-            struct AstNode *arg1 = n->node.fcall->args;
+            struct AstNode* arg1 = n->node.fcall->args;
             if (!arg1)
-            { // io.read() di default è "*l"
+            {
+                // io.read() di default è "*l"
                 fprintf(output_fp, "c_lua_io_read_line()");
             }
             else
             {
                 if (arg1->nodetype == VAL_T && arg1->node.val->val_type == STRING_T)
                 {
-                    const char *fmt = arg1->node.val->string_val;
+                    const char* fmt = arg1->node.val->string_val;
                     if (strcmp(fmt, "*n") == 0)
                     {
                         fprintf(output_fp, "c_lua_io_read_number()");
                     }
                     else if (strcmp(fmt, "*l") == 0 || strcmp(fmt, "*L") == 0)
-                    { // *L è come *l
+                    {
+                        // *L è come *l
                         fprintf(output_fp, "c_lua_io_read_line()");
                     }
                     else if (strcmp(fmt, "*a") == 0)
                     {
-                        fprintf(output_fp, "/* io.read(\"*a\") - read all; complex, using simplified line read */ c_lua_io_read_line()");
+                        fprintf(output_fp,
+                                "/* io.read(\"*a\") - read all; complex, using simplified line read */ c_lua_io_read_line()");
                     }
                     else
                     {
                         fprintf(output_fp, "io_read_unsupported_format(\"%s\")", fmt);
                     }
                 }
-                else if (arg1->nodetype == VAL_T && (arg1->node.val->val_type == INT_T || arg1->node.val->val_type == FLOAT_T))
+                else if (arg1->nodetype == VAL_T && (arg1->node.val->val_type == INT_T || arg1->node.val->val_type ==
+                    FLOAT_T))
                 {
                     fprintf(output_fp, "c_lua_io_read_bytes(");
                     translate_node(arg1, current_scope); // Traduce il numero N
@@ -541,7 +554,8 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
             }
         }
         else if (n->node.fcall->func_expr->nodetype == VAR_T)
-        { // Normale chiamata a funzione
+        {
+            // Normale chiamata a funzione
             if (n->node.fcall->func_expr->node.var->name != NULL)
             {
                 fprintf(output_fp, "%s", n->node.fcall->func_expr->node.var->name);
@@ -558,7 +572,8 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
             fprintf(output_fp, ")");
         }
         else
-        { // Chiamata a espressione (es. (tab.get_func())() )
+        {
+            // Chiamata a espressione (es. (tab.get_func())() )
             fprintf(output_fp, "(");
             translate_node(n->node.fcall->func_expr, current_scope);
             fprintf(output_fp, ")");
@@ -577,11 +592,11 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
 }
 
 /* Funzione per tradurre l'Ast (lista di statement) */
-void translate_ast(struct AstNode *n)
+void translate_ast(struct AstNode* n)
 {
     // Create a new local scope for translating the statement list
     scope_lvl++;
-    struct symlist *local_scope = create_symtab(scope_lvl, root_symtab);
+    struct symlist* local_scope = create_symtab(scope_lvl, root_symtab);
 
     while (n)
     {
@@ -601,24 +616,24 @@ void translate_ast(struct AstNode *n)
     scope_lvl--;
 }
 
-void translate(struct AstNode *root_ast_node)
+void translate(struct AstNode* root_ast_node)
 {
     printf(">> Inizio traduzione da Lua a C...\n");
 
     // Costruzione del nome del file di output
-    char *output_filename_base = NULL;
-    char *output_filename_c = NULL;
-    char *output_filename_h = NULL;
+    char* output_filename_base = NULL;
+    char* output_filename_c = NULL;
+    char* output_filename_h = NULL;
 
     if (filename)
     {
         // Trova l'ultima occorrenza di '.' per rimuovere l'estensione .lua
-        char *dot_position = strrchr(filename, '.');
+        char* dot_position = strrchr(filename, '.');
         if (dot_position != NULL)
         {
             // Calcola la lunghezza della base del nome del file
             size_t base_len = dot_position - filename;
-            output_filename_base = (char *)malloc(base_len + 1);
+            output_filename_base = (char*)malloc(base_len + 1);
             if (output_filename_base)
             {
                 strncpy(output_filename_base, filename, base_len);
@@ -634,8 +649,8 @@ void translate(struct AstNode *root_ast_node)
         if (output_filename_base)
         {
             size_t c_filename_len = strlen(output_filename_base) + 2 + 1;
-            output_filename_c = (char *)malloc(c_filename_len);
-            output_filename_h = (char *)malloc(c_filename_len);
+            output_filename_c = (char*)malloc(c_filename_len);
+            output_filename_h = (char*)malloc(c_filename_len);
             if (output_filename_c)
             {
                 sprintf(output_filename_c, "%s.c", output_filename_base);
@@ -651,7 +666,10 @@ void translate(struct AstNode *root_ast_node)
     // Fallback se la costruzione del nome fallisce o filename è NULL
     if (!output_filename_c)
     {
-        fprintf(stderr, YELLOW "ATTENZIONE:" RESET " Impossibile derivare il nome del file di output dal sorgente. Uso 'output.c' come default.\n");
+        fprintf(
+            stderr,
+            YELLOW "ATTENZIONE:" RESET
+            " Impossibile derivare il nome del file di output dal sorgente. Uso 'output.c' come default.\n");
         output_filename_c = strdup("output.c");
         if (!output_filename_c)
         {
@@ -671,7 +689,7 @@ void translate(struct AstNode *root_ast_node)
         exit(1);
     }
 
-    char *header_filename = (char *)malloc(strlen(output_filename_h) + 1);
+    char* header_filename = (char*)malloc(strlen(output_filename_h) + 1);
     header_filename = strrchr(output_filename_h, '/');
     if (header_filename)
     {
@@ -684,7 +702,7 @@ void translate(struct AstNode *root_ast_node)
     fprintf(output_fp, "#include \"%s\"\n\n", header_filename);
 
     // Traduzione le definizioni di funzione Lua PRIMA del main
-    struct AstNode *current_node = root_ast_node;
+    struct AstNode* current_node = root_ast_node;
     while (current_node)
     {
         if (current_node->nodetype == FDEF_T)
@@ -707,7 +725,8 @@ void translate(struct AstNode *root_ast_node)
     while (current_node)
     {
         if (current_node->nodetype != FDEF_T)
-        {                    // Salta le definizioni di funzione, già tradotte
+        {
+            // Salta le definizioni di funzione, già tradotte
             translate_tab(); // Indenta lo statement corrente
             translate_node(current_node, root_symtab);
             if (current_node->nodetype != IF_T && current_node->nodetype != FOR_T)

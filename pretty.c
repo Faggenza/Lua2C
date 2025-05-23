@@ -12,8 +12,9 @@ void print_tab(int depth)
         printf("\t");
     }
 }
+
 /* Funzione per printare i nodi Ast */
-void print_node(struct AstNode *n)
+void print_node(struct AstNode* n)
 {
     switch (n->nodetype)
     {
@@ -158,7 +159,7 @@ void print_node(struct AstNode *n)
 }
 
 /* Funzione per printare l'Ast */
-void print_ast(struct AstNode *n)
+void print_ast(struct AstNode* n)
 {
     while (n)
     {
@@ -181,7 +182,7 @@ void print_ast(struct AstNode *n)
 }
 
 /* Funzione per printare liste di nodi */
-void print_list(struct AstNode *l)
+void print_list(struct AstNode* l)
 {
     while (l)
     {
@@ -196,7 +197,7 @@ void print_list(struct AstNode *l)
 }
 
 /* Funzione per printare le dichiarazioni multiple come singole dichiarazioni */
-void print_decl(struct AstNode *l, char *type)
+void print_decl(struct AstNode* l, char* type)
 {
     /* splitta le dichiarazioni multiple , in quanto in golang non possiamo averle con assegnazione se non sono tutte con
     assegnazione, es int a, b=0, c; */
@@ -214,7 +215,7 @@ void print_decl(struct AstNode *l, char *type)
 }
 
 /* Convertire un tipo di espressione in una stringa */
-char *convert_expr_type(enum EXPRESSION_TYPE expr_type)
+char* convert_expr_type(enum EXPRESSION_TYPE expr_type)
 {
     switch (expr_type)
     {
@@ -256,7 +257,7 @@ char *convert_expr_type(enum EXPRESSION_TYPE expr_type)
 }
 
 // Aggiungere la funzione convert_var_type
-char *convert_var_type(enum LUA_TYPE type)
+char* convert_var_type(enum LUA_TYPE type)
 {
     switch (type)
     {
@@ -289,7 +290,7 @@ char *convert_var_type(enum LUA_TYPE type)
 
 /* Funzione per convertire il tipo di nodo */
 // usata per debug
-char *convert_node_type(enum NODE_TYPE t)
+char* convert_node_type(enum NODE_TYPE t)
 {
     switch (t)
     {
