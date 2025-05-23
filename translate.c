@@ -190,7 +190,29 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
         fprintf(output_fp, ") {\n");
 
         translate_depth++; // Aumenta l'indentazione per il blocco 'then'
-        translate_ast(n->node.ifn->body);
+
+        // Create a new scope for 'then' block
+        scope_lvl++;
+        struct symlist *then_scope = create_symtab(scope_lvl, current_scope);
+
+        // Translate the 'then' block with the new scope
+        struct AstNode *then_body = n->node.ifn->body;
+        while (then_body)
+        {
+            translate_tab();
+            translate_node(then_body, then_scope);
+
+            if (then_body->nodetype != FDEF_T && then_body->nodetype != FOR_T && then_body->nodetype != IF_T)
+            {
+                fprintf(output_fp, ";\n");
+            }
+            then_body = then_body->next;
+        }
+
+        // Clean up the 'then' scope
+        delete_symtab(then_scope);
+        scope_lvl--;
+
         translate_depth--; // Ripristina l'indentazione
 
         translate_tab(); // Indenta per la '}' di chiusura del 'then'
@@ -200,12 +222,107 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
         {
             fprintf(output_fp, " else {\n");
             translate_depth++;
-            translate_ast(n->node.ifn->else_body);
+
+            // Create a new scope for 'else' block
+            scope_lvl++;
+            struct symlist *else_scope = create_symtab(scope_lvl, current_scope);
+
+            // Translate the 'else' block with the new scope
+            struct AstNode *else_body = n->node.ifn->else_body;
+            while (else_body)
+            {
+                translate_tab();
+                translate_node(else_body, else_scope);
+
+                if (else_body->nodetype != FDEF_T && else_body->nodetype != FOR_T && else_body->nodetype != IF_T)
+                {
+                    fprintf(output_fp, ";\n");
+                }
+                else_body = else_body->next;
+            }
+
+            // Clean up the 'else' scope
+            delete_symtab(else_scope);
+            scope_lvl--;
+
             translate_depth--;
             translate_tab();
             fprintf(output_fp, "}");
         }
         fprintf(output_fp, "\n"); // Newline dopo l'intera struttura if/else
+        break;
+    case FOR_T:
+        fprintf(output_fp, "for (");
+
+        // Initialize the loop variable
+        fprintf(output_fp, "int %s = ", n->node.forn->varname);
+        if (n->node.forn->start)
+        {
+            translate_node(n->node.forn->start, current_scope);
+        }
+        else
+        {
+            fprintf(output_fp, "0"); // Default start value if not specified
+        }
+
+        fprintf(output_fp, "; %s <= ", n->node.forn->varname);
+
+        // End condition
+        if (n->node.forn->end)
+        {
+            translate_node(n->node.forn->end, current_scope);
+        }
+        else
+        {
+            fprintf(output_fp, "0"); // Default end value if not specified
+        }
+
+        fprintf(output_fp, "; ");
+
+        // Step increment
+        if (n->node.forn->step)
+        {
+            fprintf(output_fp, "%s += ", n->node.forn->varname);
+            translate_node(n->node.forn->step, current_scope);
+        }
+        else
+        {
+            fprintf(output_fp, "%s++", n->node.forn->varname); // Default step is 1
+        }
+
+        fprintf(output_fp, ") {\n");
+
+        translate_depth++; // Increase indentation for the loop body
+
+        // Create a new scope for the loop body
+        scope_lvl++;
+        struct symlist *for_scope = create_symtab(scope_lvl, current_scope);
+
+        // Add the loop variable to the scope
+        insert_sym(for_scope, n->node.forn->varname, INT_T, VARIABLE, NULL, 0, "");
+
+        // Translate the loop body with the new scope
+        struct AstNode *for_body = n->node.forn->stmt;
+        while (for_body)
+        {
+            translate_tab();
+            translate_node(for_body, for_scope);
+
+            if (for_body->nodetype != FDEF_T && for_body->nodetype != FOR_T && for_body->nodetype != IF_T)
+            {
+                fprintf(output_fp, ";\n");
+            }
+            for_body = for_body->next;
+        }
+
+        // Clean up the for scope
+        delete_symtab(for_scope);
+        scope_lvl--;
+
+        translate_depth--; // Restore indentation
+
+        translate_tab();           // Indent for the closing '}'
+        fprintf(output_fp, "}\n"); // Newline after the for loop
         break;
     case RETURN_T:
         fprintf(output_fp, "return");
@@ -444,11 +561,15 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
 /* Funzione per tradurre l'Ast (lista di statement) */
 void translate_ast(struct AstNode *n)
 {
+    // Create a new local scope for translating the statement list
+    scope_lvl++;
+    struct symlist *local_scope = create_symtab(scope_lvl, root_symtab);
+
     while (n)
     {
         translate_tab(); // Stampa l'indentazione per lo statement corrente
 
-        translate_node(n, root_symtab); // Traduce il nodo corrente
+        translate_node(n, local_scope); // Traduce il nodo corrente con lo scope locale
 
         if (n->nodetype != FDEF_T && n->nodetype != FOR_T && n->nodetype != IF_T)
         {
@@ -456,6 +577,10 @@ void translate_ast(struct AstNode *n)
         }
         n = n->next;
     }
+
+    // Clean up the local scope
+    delete_symtab(local_scope);
+    scope_lvl--;
 }
 
 void translate(struct AstNode *root_ast_node)
@@ -557,6 +682,10 @@ void translate(struct AstNode *root_ast_node)
 
     // Traduzione degli statement globali Lua (che non sono FDEF_T) dentro main()
     current_node = root_ast_node;
+
+    // Initialize the scope level to 0 for the global scope
+    scope_lvl = 0;
+
     while (current_node)
     {
         if (current_node->nodetype != FDEF_T)

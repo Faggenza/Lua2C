@@ -84,7 +84,7 @@ static struct AstNode* new_io_read_identifier_node(char* ns_token, char* func_to
 %type <ast> statement_list statement
 %type <ast> name_or_ioread
 %type <ast> func_definition param_list param table_field table_list chunk
-%type <ast> iteration_statement start_expr end_expr step selection_statement optional_expr_list
+%type <ast> iteration_statement start_expr end_expr step selection_statement selection_ending optional_expr_list
 %type <ast> primary_expr
 
 %%
@@ -183,8 +183,27 @@ statement
     ;
 
 selection_statement
-    : IF  if_cond THEN chunk END                              { $$ = new_if(IF_T, $2, $4, NULL); }
-    | IF  if_cond THEN chunk ELSE chunk END                   { $$ = new_if(IF_T, $2, $4, $6);}
+    : IF if_cond THEN 
+      { scope_enter(); } 
+      chunk 
+      { $<ast>$ = $5; }
+      selection_ending
+      { 
+        /* if else exists */
+        if ($7)
+          $$ = new_if(IF_T, $2, $<ast>6, $7);
+        else // else end
+          $$ = new_if(IF_T, $2, $<ast>6, NULL);
+      }
+    ;
+
+selection_ending
+    : END 
+      { scope_exit(); $$ = NULL;} // No else
+    | ELSE 
+      { scope_exit(); scope_enter(); } 
+      chunk END
+      { $$ = $3;  scope_exit(); } // Else
     ;
 
 if_cond
@@ -193,7 +212,7 @@ if_cond
     ;
 
 iteration_statement
-    : FOR ID '=' start_expr ',' end_expr step DO chunk END               { $$ = new_for(FOR_T, $2, $4, $6, $7, $9); }
+    : FOR ID '=' start_expr ',' end_expr step DO { scope_enter(); } chunk END               { $$ = new_for(FOR_T, $2, $4, $6, $7, $10); scope_exit(); }
     ;
 
 start_expr

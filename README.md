@@ -25,4 +25,9 @@ Options:
     -s  print symtable
 ```
 # TODO 
-**Fix 3 conflits shift/reduce**
+    - F_DEF
+    - for translation
+    - scope if/for
+    - general clean-up
+    - table
+    - ??dynamic imports??
