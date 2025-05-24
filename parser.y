@@ -112,15 +112,60 @@ func_definition
     : FUNCTION ID '(' param_list ')'
         { scope_enter(); param_list = $4; }
             chunk   END
-        { $$ = new_func_def(FDEF_T, $2, $4, $7); scope_exit(); }
+        { 
+          enum LUA_TYPE ret = infer_func_return_type($7);
+          // Create the function AST node with the inferred return type
+          $$ = new_func_def(FDEF_T, $2, $4, $7, ret);
+          
+          // Add the function with its return type to the parent scope (so it's visible for calls)
+          struct symlist* parent_symtab = current_symtab->next;
+          if (parent_symtab != NULL) {
+              insert_sym(parent_symtab, $2, ret, FUNCTION, $4, yylineno, line);
+          }
+          
+          // Add return type to the current scope for its own use
+          // This is needed for the current scope_exit() and future references
+          ret_type = ret;
+          insert_sym(current_symtab, "return", ret, F_RETURN, NULL, yylineno, line);
+          
+          scope_exit(); 
+        }
     | FUNCTION ID '(' ')'
         { scope_enter(); param_list = NULL;}
             chunk   END
-        { $$ = new_func_def(FDEF_T, $2, NULL, $6); scope_exit(); }
+        { 
+          enum LUA_TYPE ret = infer_func_return_type($6);
+          // Create the function AST node with the inferred return type
+          $$ = new_func_def(FDEF_T, $2, NULL, $6, ret);
+          
+          // Add the function with its return type to the parent scope (so it's visible for calls)
+          struct symlist* parent_symtab = current_symtab->next;
+          if (parent_symtab != NULL) {
+              insert_sym(parent_symtab, $2, ret, FUNCTION, NULL, yylineno, line);
+          }
+          
+          // Add return type to the current scope for its own use
+          // This is needed for the current scope_exit() and future references
+          ret_type = ret;
+          insert_sym(current_symtab, "return", ret, F_RETURN, NULL, yylineno, line);
+          
+          scope_exit(); 
+        }
     | name_or_ioread '=' FUNCTION  '(' param_list ')'
         { scope_enter(); param_list = $5; }
             chunk   END
-        { $$ = new_func_def(FDEF_T, NULL, $5, $8); scope_exit(); }
+        { 
+          enum LUA_TYPE ret = infer_func_return_type($8);
+          // Create the function AST node with the inferred return type
+          $$ = new_func_def(FDEF_T, NULL, $5, $8, ret);
+          
+          // For anonymous functions, we can't easily add them to the symbol table
+          // But we should still set the return type in the current scope
+          ret_type = ret;
+          insert_sym(current_symtab, "return", ret, F_RETURN, NULL, yylineno, line);
+          
+          scope_exit(); 
+        }
     ;
 
 param_list
@@ -287,10 +332,26 @@ func_call
     : name_or_ioread '(' args ')' { // name_or_ioread può essere 'ID' o 'io.read'
                                      $$ = new_func_call(FCALL_T, $1, $3);
                                      check_fcall($1, $3); // Chiamata alla funzione di controllo semantico
+                                     
+                                     // Aggiorna il tipo di ritorno in base alla definizione della funzione
+                                     if ($1->nodetype == VAR_T) {
+                                         struct symbol* func_sym = find_symtab(current_symtab, $1->node.var->name);
+                                         if (func_sym) {
+                                             $$->node.fcall->return_type = func_sym->type;
+                                         }
+                                     }
                                    }
     | name_or_ioread '(' ')'      {
                                      $$ = new_func_call(FCALL_T, $1, NULL);
                                      check_fcall($1, NULL);
+                                     
+                                     // Aggiorna il tipo di ritorno in base alla definizione della funzione
+                                     if ($1->nodetype == VAR_T) {
+                                         struct symbol* func_sym = find_symtab(current_symtab, $1->node.var->name);
+                                         if (func_sym) {
+                                             $$->node.fcall->return_type = func_sym->type;
+                                         }
+                                     }
                                    }
     ;
 
@@ -384,10 +445,9 @@ void scope_enter() {
         param_list = NULL;
     }
 
-    if(ret_type != -1) {
-        insert_sym(current_symtab, "return", ret_type, F_RETURN, NULL, yylineno, line);
-        ret_type = -1;
-    }
+    // We now handle function return types explicitly in the function definition rules
+    // so we don't need to add them here automatically
+    ret_type = -1; // Reset ret_type to default value
 }
 
 /* Chiude uno scope. Eventualmente effettua il print della Symbol Table.

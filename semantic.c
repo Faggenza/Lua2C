@@ -8,7 +8,7 @@
 
 int div_by_zero; // flag che indica se ho una divisione per in eval_array_dim
 
-enum LUA_TYPE eval_bool(char* t)
+enum LUA_TYPE eval_bool(char *t)
 {
     switch (t[0])
     {
@@ -25,7 +25,7 @@ enum LUA_TYPE eval_bool(char* t)
 }
 
 /* Controlla la correttezza della dimensione o indice di un array */
-void check_array(struct AstNode* dim)
+void check_array(struct AstNode *dim)
 {
     /*  dim = dimensione o indice dell'array */
     if (check_array_dim(dim))
@@ -43,7 +43,7 @@ void check_array(struct AstNode* dim)
         ritorna 0: altrimenti
         errori: variabili,valori e funzioni con ritorno di tipo non intero
                 operatori che restituiscono un valore booleano */
-int check_array_dim(struct AstNode* expr)
+int check_array_dim(struct AstNode *expr)
 {
     /*  expr = espressione che rappresenta la dimensione o indice di un array */
     switch (expr->nodetype)
@@ -55,17 +55,17 @@ int check_array_dim(struct AstNode* expr)
             return 0;
         }
         return 1;
-    case VAR_T: ;
-        struct symbol* var = find_symtab(current_symtab, expr->node.var->name);
+    case VAR_T:;
+        struct symbol *var = find_symtab(current_symtab, expr->node.var->name);
         if (var != NULL && var->type != INT_T)
             yyerror("invalid array index or size, non-integer len argument");
         return 0;
-    case FCALL_T: ;
-        struct symbol* f = find_symtab(current_symtab, expr->node.fcall->name);
+    case FCALL_T:;
+        struct symbol *f = find_symtab(current_symtab, expr->node.fcall->name);
         if (f != NULL && f->type != INT_T)
             yyerror("invalid array index or size, non-integer len argument");
         return 0;
-    case EXPR_T: ;
+    case EXPR_T:;
         int l = 1;
         int r = 1;
         switch (expr->node.expr->expr_type)
@@ -97,7 +97,7 @@ int check_array_dim(struct AstNode* expr)
 
 /* funzione richiamata solo se l'espressione è costante intera.
     Controlla che la dimensione/indice sia un numero intero >= 0 */
-int eval_array_dim(struct AstNode* expr)
+int eval_array_dim(struct AstNode *expr)
 {
     /* Nota:    go restituisce un intero anche se il risultato è un numero decimale, l'importante è
                 che si lavori con numeri int.
@@ -143,7 +143,7 @@ int eval_array_dim(struct AstNode* expr)
 }
 
 /* Evaluate expression type - in Lua this means inferring the runtime type */
-struct complex_type eval_expr_type(struct AstNode* expr)
+struct complex_type eval_expr_type(struct AstNode *expr)
 {
     struct complex_type result;
     result.kind = DYNAMIC; // Default a dinamico per Lua
@@ -186,20 +186,19 @@ struct complex_type eval_expr_type(struct AstNode* expr)
                 // non è lo scope più esterno o non è disponibile.
                 // Se stai processando codice globale, current_symtab dovrebbe essere root_symtab.
 
-                struct symlist* scope_to_search = current_symtab;
+                struct symlist *scope_to_search = current_symtab;
                 if (!scope_to_search)
                 {
                     // Fallback se current_symtab è NULL per qualche motivo
                     scope_to_search = root_symtab;
                 }
 
-                struct symbol* sym = NULL;
+                struct symbol *sym = NULL;
                 if (scope_to_search)
                 {
                     // Solo cerca se abbiamo uno scope valido
                     sym = find_symtab(scope_to_search, expr->node.var->name);
                 }
-
 
                 if (sym)
                 {
@@ -218,8 +217,7 @@ struct complex_type eval_expr_type(struct AstNode* expr)
                     // Per 'print', se una variabile non dichiarata viene stampata, Lua stampa 'nil'.
                     yywarning(error_string_format(
                         "Variable '%s' used in expression but not found in symbol table (or symbol table access issue). Assuming nil for now.",
-                        expr->node.var->name
-                    ));
+                        expr->node.var->name));
                     result.type = NIL_T; // Comportamento più vicino a Lua per variabili non definite
                     // In precedenza era USERDATA_T, che causava "userdata"
                 }
@@ -238,7 +236,7 @@ struct complex_type eval_expr_type(struct AstNode* expr)
             strcmp(expr->node.fcall->func_expr->node.var->name, "io.read") == 0)
         {
             // Tipo di ritorno specifico per io.read
-            struct AstNode* fcall_args = expr->node.fcall->args;
+            struct AstNode *fcall_args = expr->node.fcall->args;
             if (fcall_args == NULL)
             {
                 // io.read() -> string (default "*l")
@@ -251,7 +249,7 @@ struct complex_type eval_expr_type(struct AstNode* expr)
                 {
                     if (fcall_args->node.val->val_type == STRING_T)
                     {
-                        const char* fmt = fcall_args->node.val->string_val;
+                        const char *fmt = fcall_args->node.val->string_val;
                         if (strcmp(fmt, "*n") == 0)
                         {
                             result.type = NUMBER_T; // Potrebbe essere INT_T o FLOAT_T
@@ -279,9 +277,17 @@ struct complex_type eval_expr_type(struct AstNode* expr)
         }
         else
         {
-            // Per altre chiamate di funzione, il tipo di ritorno è generalmente dinamico
-            // o deve essere cercato nella symbol table se la funzione è definita.
-            result.type = USERDATA_T; // Placeholder per tipo di ritorno generico/dinamico
+            // Per altre chiamate di funzione, usiamo il tipo memorizzato nel nodo della chiamata
+            // Se questo è stato impostato con successo durante il parsing in base alla definizione della funzione
+            if (expr->node.fcall->return_type != NIL_T)
+            {
+                result.type = expr->node.fcall->return_type;
+            }
+            else
+            {
+                // Altrimenti usiamo un tipo generico/dinamico
+                result.type = USERDATA_T; // Placeholder per tipo di ritorno generico/dinamico
+            }
         }
         return result;
 
@@ -343,7 +349,7 @@ void check_cond(enum LUA_TYPE type)
 }
 
 /* Check that division doesn't involve zero */
-void check_division(struct AstNode* expr)
+void check_division(struct AstNode *expr)
 {
     struct complex_type t = eval_expr_type(expr);
 
@@ -358,7 +364,7 @@ void check_division(struct AstNode* expr)
 }
 
 /* Check if an expression is used as a statement */
-struct AstNode* check_expr_statement(struct AstNode* expr)
+struct AstNode *check_expr_statement(struct AstNode *expr)
 {
     /* In Lua, expressions can be statements without assignment */
     /* Only function calls, assignments, and variable declarations have effects */
@@ -379,13 +385,13 @@ struct AstNode* check_expr_statement(struct AstNode* expr)
 /* For now, this is a simplified check */
 // }
 
-void check_fcall(struct AstNode* func_expr, struct AstNode* args)
+void check_fcall(struct AstNode *func_expr, struct AstNode *args)
 {
     if (func_expr->nodetype == VAR_T &&
         strcmp(func_expr->node.var->name, "io.read") == 0)
     {
         // È una chiamata a io.read
-        struct AstNode* current_arg = args;
+        struct AstNode *current_arg = args;
         int arg_count = 0;
         if (current_arg != NULL)
         {
@@ -398,7 +404,7 @@ void check_fcall(struct AstNode* func_expr, struct AstNode* args)
             {
                 if (current_arg->node.val->val_type == STRING_T)
                 {
-                    const char* fmt = current_arg->node.val->string_val;
+                    const char *fmt = current_arg->node.val->string_val;
                     if (strcmp(fmt, "*n") == 0 || strcmp(fmt, "*l") == 0 ||
                         strcmp(fmt, "*a") == 0 || strcmp(fmt, "*L") == 0)
                     {
@@ -445,11 +451,26 @@ void check_fcall(struct AstNode* func_expr, struct AstNode* args)
     else if (func_expr->nodetype == VAR_T)
     {
         // Chiamata a una funzione normale (es. f())
-        // Qui puoi cercare func_expr->node.var->name nella symbol table,
-        // controllare i parametri, etc. come facevi prima con check_fcall(char* name, ...)
-        // struct symbol* func_sym = find_symtab(current_symtab, func_expr->node.var->name);
-        // if (!func_sym) { yyerror("call to undefined function '%s'", func_expr->node.var->name); }
-        // ... ecc.
+        // Cerchiamo la funzione nella symbol table per ottenere il tipo di ritorno
+        struct symbol *func_sym = find_symtab(current_symtab, func_expr->node.var->name);
+
+        // Il tipo di ritorno dovrebbe essere aggiornato nel nodo della chiamata di funzione
+        // che però non abbiamo direttamente qui. Lo strumento check_fcall viene chiamato
+        // all'interno dell'azione di parsificazione per func_call, dove possiamo accedere
+        // al nodo FCALL_T completo.
+
+        if (func_sym)
+        {
+            // Se la funzione è stata trovata, aggiorna i tipi dei parametri in base agli argomenti
+            // Stiamo salvando gli argomenti nella definizione della funzione per poterli usare più tardi
+            // quando traduciamo la definizione della funzione
+            func_sym->pl = args;
+        }
+        else
+        {
+            // Funzione non trovata nella symbol table, avvisiamo
+            yywarning(error_string_format("Function '%s' called but not defined", func_expr->node.var->name));
+        }
     }
     else
     {
@@ -460,49 +481,49 @@ void check_fcall(struct AstNode* func_expr, struct AstNode* args)
 }
 
 /* Check returned values */
-void check_return(struct AstNode* expr)
+void check_return(struct AstNode *expr)
 {
     /* In Lua, return values are dynamically typed */
     /* No checking required for type correctness */
 }
 
 /* Check variable references */
-void check_var_reference(struct AstNode* var)
+void check_var_reference(struct AstNode *var)
 {
     /* In Lua, accessing an undefined variable returns nil */
     /* This is not an error, but we might want to warn about it */
 }
 
 /* Check table access */
-void check_table_access(struct AstNode* table, struct AstNode* key)
+void check_table_access(struct AstNode *table, struct AstNode *key)
 {
     /* In Lua, accessing a non-existent table key returns nil */
     /* No error, but we could warn about potential issues */
 }
 
 /* Check variable assignment */
-void check_var_assignment(struct AstNode* var, struct AstNode* expr)
+void check_var_assignment(struct AstNode *var, struct AstNode *expr)
 {
     /* In Lua, variables can be assigned any type */
     /* No type checking required */
 }
 
 /* Check format strings (for print) */
-void check_format_string(struct AstNode* format_string, struct AstNode* args, enum FUNC_TYPE f_type)
+void check_format_string(struct AstNode *format_string, struct AstNode *args, enum FUNC_TYPE f_type)
 {
     /* In Lua, string formatting works differently - could implement a simple check */
     /* For compatibility with the existing code, we'll leave this function but simplify it */
 }
 
 /* Controllo del valore di ritorno delle funzioni */
-void check_func_return(enum LUA_TYPE type, struct AstNode* stmt_list)
+void check_func_return(enum LUA_TYPE type, struct AstNode *stmt_list)
 {
     /* In Lua, le funzioni possono restituire qualsiasi tipo o nessun valore */
     /* Non è necessario il controllo del tipo di ritorno */
 }
 
 /* Evaluate constant expressions */
-int eval_constant_expr(struct AstNode* expr)
+int eval_constant_expr(struct AstNode *expr)
 {
     if (!expr)
         return 0;
@@ -526,15 +547,15 @@ int eval_constant_expr(struct AstNode* expr)
         case MUL_T:
             return eval_constant_expr(expr->node.expr->l) * eval_constant_expr(expr->node.expr->r);
         case DIV_T:
+        {
+            int divisor = eval_constant_expr(expr->node.expr->r);
+            if (divisor == 0)
             {
-                int divisor = eval_constant_expr(expr->node.expr->r);
-                if (divisor == 0)
-                {
-                    yyerror("division by zero in constant expression");
-                    return 0;
-                }
-                return eval_constant_expr(expr->node.expr->l) / divisor;
+                yyerror("division by zero in constant expression");
+                return 0;
             }
+            return eval_constant_expr(expr->node.expr->l) / divisor;
+        }
         case NEG_T:
             return -eval_constant_expr(expr->node.expr->r);
 
@@ -548,7 +569,7 @@ int eval_constant_expr(struct AstNode* expr)
 }
 
 /* Check binary operations for valid operand types */
-void check_binary_op(enum EXPRESSION_TYPE op, struct AstNode* left, struct AstNode* right)
+void check_binary_op(enum EXPRESSION_TYPE op, struct AstNode *left, struct AstNode *right)
 {
     /* In Lua, most operators are flexible about types */
     /* The only strict requirements are for arithmetic operations (need numbers) */
@@ -572,10 +593,89 @@ void check_binary_op(enum EXPRESSION_TYPE op, struct AstNode* left, struct AstNo
             }
             break;
 
-
         default:
             /* No specific requirements for other operators */
             break;
         }
     }
+}
+
+/* Infer the return type of a function by analyzing its code and return statements */
+enum LUA_TYPE infer_func_return_type(struct AstNode *code)
+{
+    if (!code)
+        return NIL_T; // If no code, default to nil return type
+
+    struct AstNode *current = code;
+    enum LUA_TYPE inferred_type = NIL_T; // Default to NIL if no return statement found
+
+    /* Traverse the code and look for return statements */
+    while (current)
+    {
+        if (current->nodetype == RETURN_T && current->node.ret->expr)
+        {
+            struct complex_type ret_expr_type = eval_expr_type(current->node.ret->expr);
+
+            // If we find a concrete type, use it
+            if (ret_expr_type.type != NIL_T)
+            {
+                inferred_type = ret_expr_type.type;
+                // If it's a concrete non-nil type, we can stop searching
+                if (ret_expr_type.kind == CONSTANT)
+                {
+                    return inferred_type;
+                }
+            }
+        }
+
+        // Check for nested returns in if, for, etc.
+        if (current->nodetype == IF_T)
+        {
+            enum LUA_TYPE if_body_type = infer_func_return_type(current->node.ifn->body);
+            if (if_body_type != NIL_T)
+            {
+                inferred_type = if_body_type;
+            }
+
+            if (current->node.ifn->else_body)
+            {
+                enum LUA_TYPE else_body_type = infer_func_return_type(current->node.ifn->else_body);
+                if (else_body_type != NIL_T)
+                {
+                    // If both branches have different types, we have to keep the more general one
+                    if (inferred_type != NIL_T && inferred_type != else_body_type)
+                    {
+                        // For simplicity, we'll choose NUMBER_T for mixed numeric types
+                        if ((inferred_type == INT_T || inferred_type == FLOAT_T) &&
+                            (else_body_type == INT_T || else_body_type == FLOAT_T))
+                        {
+                            inferred_type = NUMBER_T;
+                        }
+                        else
+                        {
+                            // If completely different types, resort to dynamic typing
+                            return NIL_T; // Indicate dynamic type
+                        }
+                    }
+                    else if (inferred_type == NIL_T)
+                    {
+                        inferred_type = else_body_type;
+                    }
+                }
+            }
+        }
+        else if (current->nodetype == FOR_T)
+        {
+            enum LUA_TYPE for_body_type = infer_func_return_type(current->node.forn->stmt);
+            if (for_body_type != NIL_T)
+            {
+                inferred_type = for_body_type;
+            }
+        }
+
+        // Check next statement
+        current = current->next;
+    }
+
+    return inferred_type;
 }

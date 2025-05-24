@@ -12,7 +12,8 @@ function calculate_factorial(n)
     if n <= 1 then
         return 1
     else
-        return n * calculate_factorial(n - 1)
+        n = n* calculate_factorial(n - 1)
+        return n
     end
 end
 

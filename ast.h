@@ -138,6 +138,7 @@ struct funcCall
     char *name;                // Può essere nil per funzioni anonime
     struct AstNode *func_expr; // Può essere un nome o un'espressione che valuta a funzione
     struct AstNode *args;
+    enum LUA_TYPE return_type; // Tipo di ritorno dedotto dalla definizione della funzione
 };
 
 // Struttura del nodo definizione di funzione
@@ -146,6 +147,7 @@ struct funcDef
     char *name; // Può essere nil per funzioni anonime
     struct AstNode *params;
     struct AstNode *code;
+    enum LUA_TYPE ret_type;
 };
 
 // Struttura del nodo generico Ast
@@ -179,7 +181,7 @@ struct AstNode *new_expression(enum NODE_TYPE nodetype, enum EXPRESSION_TYPE exp
 struct AstNode *new_declaration(enum NODE_TYPE nodetype, struct AstNode *var, struct AstNode *expr);
 struct AstNode *new_return(enum NODE_TYPE nodetype, struct AstNode *expr);
 struct AstNode *new_func_call(enum NODE_TYPE nodetype, struct AstNode *func_expr, struct AstNode *args);
-struct AstNode *new_func_def(enum NODE_TYPE nodetype, char *name, struct AstNode *params, struct AstNode *code);
+struct AstNode *new_func_def(enum NODE_TYPE nodetype, char *name, struct AstNode *params, struct AstNode *code, enum LUA_TYPE ret_type);
 struct AstNode *new_while(enum NODE_TYPE nodetype, struct AstNode *cond, struct AstNode *body);
 struct AstNode *new_for(enum NODE_TYPE nodetype, char *varname, struct AstNode *start, struct AstNode *end, struct AstNode *step, struct AstNode *stmt);
 struct AstNode *new_if(enum NODE_TYPE nodetype, struct AstNode *cond, struct AstNode *body, struct AstNode *else_body);

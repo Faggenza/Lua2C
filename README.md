@@ -25,9 +25,7 @@ Options:
     -s  print symtable
 ```
 # TODO 
-    - F_DEF
-    - for translation
-    - scope if/for
+    - F_DEF (tipo argomenti e rotta print con chiamata a funzioni)
     - general clean-up
     - table
     - ??dynamic imports??

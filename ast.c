@@ -123,6 +123,7 @@ struct AstNode *new_func_call(enum NODE_TYPE nodetype, struct AstNode *func_expr
 
     fcall->func_expr = func_expr;
     fcall->args = args;
+    fcall->return_type = NIL_T; // Default return type, will be updated by check_fcall if function is found
 
     node->nodetype = nodetype;
     node->node.fcall = fcall;
@@ -132,7 +133,7 @@ struct AstNode *new_func_call(enum NODE_TYPE nodetype, struct AstNode *func_expr
 }
 
 /* Crea un nodo definizione di funzione */
-struct AstNode *new_func_def(enum NODE_TYPE nodetype, char *name, struct AstNode *params, struct AstNode *code)
+struct AstNode *new_func_def(enum NODE_TYPE nodetype, char *name, struct AstNode *params, struct AstNode *code, enum LUA_TYPE ret_type)
 {
     struct funcDef *fdef = malloc(sizeof(struct funcDef));
     struct AstNode *node = malloc(sizeof(struct AstNode));
@@ -140,6 +141,7 @@ struct AstNode *new_func_def(enum NODE_TYPE nodetype, char *name, struct AstNode
     fdef->name = name;
     fdef->params = params;
     fdef->code = code;
+    fdef->ret_type = ret_type;
 
     node->nodetype = nodetype;
     node->node.fdef = fdef;
