@@ -20,24 +20,8 @@ l = nil
 -- Tables
 m = {1, 2, 3}           -- array-like table
 n = {a = 1, b = 2}      -- dictionary-like table
-o = {1, 2, 3, a = 4}    -- mixed table
+z = {"one", "two", "three", "four"} -- mixed table with string
+w = {a = true, b = false, c = "trues_tring"} -- table with boolean values
+o = {1, 2.2, 2.3, a = 4.3}    -- mixed table
 p = {{1, 2}, {3, 4}}    -- nested tables
 q = {}                  -- empty table
-
-
--- Functions
-r = function(x, y)      -- anonymous function
-   return x * y
- end
-
-function s(x, y)        -- named function
-  somma = "ciao"
-  return x , y
-end
-
--- --result = s(2,4)         -- function call
-
-
-function u(x, y)        -- multiple return values
-   return x, y, x+y
-end

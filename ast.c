@@ -19,7 +19,8 @@ enum LUA_TYPE infer_type(char *value)
     double num = strtod(value, &endptr);
     if (*endptr == '\0')
     {
-        if (strchr(value, '.'))
+        // Se contiene un punto o 'e'/'E' per notazione esponenziale, è un float
+        if (strchr(value, '.') || strchr(value, 'e') || strchr(value, 'E'))
             return FLOAT_T;
         else
             return INT_T;
@@ -35,7 +36,18 @@ struct AstNode *new_value(enum NODE_TYPE nodetype, enum LUA_TYPE val_type, char 
     struct value *val = malloc(sizeof(struct value));
     struct AstNode *node = malloc(sizeof(struct AstNode));
 
-    val->val_type = val_type != 0 ? val_type : infer_type(string_val);
+    // If val_type is explicitly provided and valid, use it
+    // Otherwise, infer the type from the string value
+    if (val_type != 0 && val_type != ERROR_T) {
+        val->val_type = val_type;
+    } else {
+        val->val_type = infer_type(string_val);
+    }
+    
+    // For debugging
+    fprintf(stderr, "new_value: string='%s', provided_type=%d, final_type=%d\n", 
+            string_val ? string_val : "NULL", val_type, val->val_type);
+            
     val->string_val = string_val;
 
     node->nodetype = nodetype;

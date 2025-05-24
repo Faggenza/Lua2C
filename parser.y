@@ -202,9 +202,13 @@ table_field
     | ID '=' expr
         { $$ = new_table_field(TABLE_FIELD_T, new_variable(VAR_T, $1, NULL), $3); }
     | INT_NUM
-        { $$ = new_table_field(TABLE_FIELD_T, new_value(VAL_T, INT_NUM, $1), NULL); }
+        { $$ = new_table_field(TABLE_FIELD_T, NULL, new_value(VAL_T, INT_T, $1)); }
     | FLOAT_NUM
-        { $$ = new_table_field(TABLE_FIELD_T, new_value(VAL_T, FLOAT_NUM, $1), NULL); }
+        { $$ = new_table_field(TABLE_FIELD_T, NULL, new_value(VAL_T, FLOAT_T, $1)); }
+    | STRING
+        { $$ = new_table_field(TABLE_FIELD_T, NULL, new_value(VAL_T, STRING_T, $1)); }
+    | BOOL
+        { $$ = new_table_field(TABLE_FIELD_T, NULL, new_value(VAL_T, eval_bool($1), $1)); }
     | '{' table_list '}'
         { $$ = new_table(TABLE_NODE_T, $2); }
     | /* empty */
