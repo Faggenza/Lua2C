@@ -225,7 +225,7 @@ chunk
 
 statement_list
     : statement
-    | statement_list statement                                      { $$ = link_AstNode($1, $2); }
+    | statement statement_list                                       { $$ = link_AstNode($1, $2); }
     ;
 
 statement
