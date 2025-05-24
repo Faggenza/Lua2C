@@ -32,8 +32,6 @@ enum NODE_TYPE
     FDEF_T,
     IF_T,
     FOR_T,
-    WHILE_T,
-    END_T,
     ERROR_NODE_T
 };
 

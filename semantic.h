@@ -23,18 +23,13 @@ struct complex_type
     } kind;
 };
 
-/* Array checking functions */
-void check_array(struct AstNode *dim);
-int check_array_dim(struct AstNode *expr);
-int eval_array_dim(struct AstNode *expr);
-
 /* Function checks */
 // void check_fcall(char *name, struct AstNode *args);
 void check_fcall(struct AstNode *func_expr, struct AstNode *args);
-//enum LUA_TYPE infer_func_return_type(struct AstNode *code);
+// enum LUA_TYPE infer_func_return_type(struct AstNode *code);
 void check_func_return(enum LUA_TYPE type, struct AstNode *stmt_list);
 void check_return(struct AstNode *expr);
-//void check_main_chunk(struct AstNode *chunk);
+// void check_main_chunk(struct AstNode *chunk);
 
 /* Table-related checks */
 void check_table_access(struct AstNode *table, struct AstNode *key);

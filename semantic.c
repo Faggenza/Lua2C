@@ -24,130 +24,12 @@ enum LUA_TYPE eval_bool(char *t)
     }
 }
 
-/* Controlla la correttezza della dimensione o indice di un array */
-void check_array(struct AstNode *dim)
-{
-    /*  dim = dimensione o indice dell'array */
-    if (check_array_dim(dim))
-    {
-        div_by_zero = 0;
-        if (eval_array_dim(dim) < 0)
-        {
-            yyerror("cannot use negative array index or size");
-        }
-    }
-}
-
-/* Controlla se l'espressione è costante:
-        ritorna 1: se l'espressione è costante intera
-        ritorna 0: altrimenti
-        errori: variabili,valori e funzioni con ritorno di tipo non intero
-                operatori che restituiscono un valore booleano */
-int check_array_dim(struct AstNode *expr)
-{
-    /*  expr = espressione che rappresenta la dimensione o indice di un array */
-    switch (expr->nodetype)
-    {
-    case VAL_T:
-        if (expr->node.val->val_type == FLOAT_T)
-        {
-            yyerror("invalid array index or size, non-integer len argument");
-            return 0;
-        }
-        return 1;
-    case VAR_T:;
-        struct symbol *var = find_symtab(current_symtab, expr->node.var->name);
-        if (var != NULL && var->type != INT_T)
-            yyerror("invalid array index or size, non-integer len argument");
-        return 0;
-    case FCALL_T:;
-        struct symbol *f = find_symtab(current_symtab, expr->node.fcall->name);
-        if (f != NULL && f->type != INT_T)
-            yyerror("invalid array index or size, non-integer len argument");
-        return 0;
-    case EXPR_T:;
-        int l = 1;
-        int r = 1;
-        switch (expr->node.expr->expr_type)
-        {
-        case NOT_T:
-        case AND_T:
-        case OR_T:
-        case G_T:
-        case GE_T:
-        case L_T:
-        case LE_T:
-        case EQ_T:
-        case NE_T:
-        case ASS_T:
-            yyerror(error_string_format("invalid array index or size, cannot use operator " BOLD "%s" RESET,
-                                        convert_expr_type(expr->node.expr->expr_type)));
-            return 0;
-        }
-
-        if (expr->node.expr->l)
-            l = check_array_dim(expr->node.expr->l);
-
-        if (expr->node.expr->r)
-            r = check_array_dim(expr->node.expr->r);
-
-        return l && r;
-    }
-}
-
-/* funzione richiamata solo se l'espressione è costante intera.
-    Controlla che la dimensione/indice sia un numero intero >= 0 */
-int eval_array_dim(struct AstNode *expr)
-{
-    /* Nota:    go restituisce un intero anche se il risultato è un numero decimale, l'importante è
-                che si lavori con numeri int.
-                esempio int a[3/2] non da errore anche se è float il risultato, lo approssima ad a[1] */
-    /*  expr = espressione che rappresenta la dimensione o indice di un array */
-    switch (expr->nodetype)
-    {
-        int l, r;
-    case VAL_T:
-        if (expr->node.val->val_type == INT_T)
-            return atoi(expr->node.val->string_val);
-    case EXPR_T:
-        if (expr->node.expr->l)
-            l = eval_array_dim(expr->node.expr->l);
-
-        if (expr->node.expr->r)
-            r = eval_array_dim(expr->node.expr->r);
-
-        if (div_by_zero)
-            return 0;
-
-        switch (expr->node.expr->expr_type)
-        {
-        case ADD_T:
-            return l + r;
-        case SUB_T:
-            return l - r;
-        case MUL_T:
-            return l * r;
-        case DIV_T:
-            if (r == 0)
-            {
-                div_by_zero = 1;
-                return 0;
-            }
-            return l / r;
-        case NEG_T:
-            return -r;
-        case PAR_T:
-            return r;
-        }
-    }
-}
-
 /* Evaluate expression type - in Lua this means inferring the runtime type */
 struct complex_type eval_expr_type(struct AstNode *expr, struct symlist *current_scope)
 {
     struct complex_type result;
     result.kind = DYNAMIC; // Default a dinamico per Lua
-    result.type = NIL_T; // Inizializza a nil
+    result.type = NIL_T;   // Inizializza a nil
 
     if (!expr)
     {
@@ -190,7 +72,7 @@ struct complex_type eval_expr_type(struct AstNode *expr, struct symlist *current
                 // struct symlist *scope_to_search = current_symtab;
                 // if (!scope_to_search)
                 // {
-                    // Fallback se current_symtab è NULL per qualche motivo
+                // Fallback se current_symtab è NULL per qualche motivo
                 //     scope_to_search = root_symtab;
                 // }
 
@@ -232,67 +114,88 @@ struct complex_type eval_expr_type(struct AstNode *expr, struct symlist *current
         }
         return result;
 
-     case FCALL_T:
-         // Gestione io.read
-         if (expr->node.fcall->func_expr && expr->node.fcall->func_expr->nodetype == VAR_T &&
-             expr->node.fcall->func_expr->node.var && expr->node.fcall->func_expr->node.var->name &&
-             strcmp(expr->node.fcall->func_expr->node.var->name, "io.read") == 0)
-         {
-             struct AstNode *fcall_args = expr->node.fcall->args;
-             if (fcall_args == NULL) { // io.read()
-                 result.type = STRING_T;
-             } else { // io.read(format)
-                 // Semplificazione: il tipo di ritorno dipende dal primo formato
-                 struct complex_type arg_type = eval_expr_type(fcall_args, current_scope);
-                 if (arg_type.type == STRING_T && fcall_args->nodetype == VAL_T) {
-                     const char *fmt = fcall_args->node.val->string_val;
-                     if (strcmp(fmt, "*n") == 0) result.type = NUMBER_T;
-                     else result.type = STRING_T; // *l, *a, *L
-                 } else if (arg_type.type == INT_T || arg_type.type == FLOAT_T || arg_type.type == NUMBER_T) {
-                     result.type = STRING_T; // io.read(N)
-                 } else {
-                     result.type = ERROR_T; // Formato non valido o non costante
-                 }
-             }
-         }
-         // Gestione print (non restituisce valore significativo per l'espressione)
-         else if (expr->node.fcall->func_expr && expr->node.fcall->func_expr->nodetype == VAR_T &&
-                  expr->node.fcall->func_expr->node.var && expr->node.fcall->func_expr->node.var->name &&
-                  strcmp(expr->node.fcall->func_expr->node.var->name, "print") == 0)
-         {
-             result.type = NIL_T; // print non restituisce un valore in Lua
-         }
-         // Altre funzioni
-         else
-         {
-             // Prova a usare il tipo di ritorno memorizzato nel nodo fcall (impostato dal parser)
-             if (expr->node.fcall->return_type != 0 && expr->node.fcall->return_type != NIL_T) { // NIL_T era default
-                 result.type = expr->node.fcall->return_type;
-             }
-             // Altrimenti, prova a dedurlo dalla symbol table
-             else if (expr->node.fcall->func_expr && expr->node.fcall->func_expr->nodetype == VAR_T &&
-                      expr->node.fcall->func_expr->node.var && expr->node.fcall->func_expr->node.var->name) {
-                 struct symbol *func_sym = NULL;
-                 if (current_scope) {
-                     func_sym = find_symtab(current_scope, expr->node.fcall->func_expr->node.var->name);
-                 }
-                 if (func_sym && func_sym->sym_type == FUNCTION_SYM) {
-                     result.type = func_sym->type; // sym->type per FUNCTION è il tipo di ritorno
-                 } else {
-                     yywarning(error_string_format("Return type for function call '%s' could not be determined. Assuming dynamic/userdata.", expr->node.fcall->func_expr->node.var->name));
-                     result.type = USERDATA_T; // Fallback per funzioni non trovate o senza tipo di ritorno noto
-                 }
-             } else {
-                 // Chiamata a espressione complessa, es. (func_var)()
-                 result.type = USERDATA_T; // Tipo dinamico/sconosciuto
-             }
-         }
-         return result;
+    case FCALL_T:
+        // Gestione io.read
+        if (expr->node.fcall->func_expr && expr->node.fcall->func_expr->nodetype == VAR_T &&
+            expr->node.fcall->func_expr->node.var && expr->node.fcall->func_expr->node.var->name &&
+            strcmp(expr->node.fcall->func_expr->node.var->name, "io.read") == 0)
+        {
+            struct AstNode *fcall_args = expr->node.fcall->args;
+            if (fcall_args == NULL)
+            { // io.read()
+                result.type = STRING_T;
+            }
+            else
+            { // io.read(format)
+                // Semplificazione: il tipo di ritorno dipende dal primo formato
+                struct complex_type arg_type = eval_expr_type(fcall_args, current_scope);
+                if (arg_type.type == STRING_T && fcall_args->nodetype == VAL_T)
+                {
+                    const char *fmt = fcall_args->node.val->string_val;
+                    if (strcmp(fmt, "*n") == 0)
+                        result.type = NUMBER_T;
+                    else
+                        result.type = STRING_T; // *l, *a, *L
+                }
+                else if (arg_type.type == INT_T || arg_type.type == FLOAT_T || arg_type.type == NUMBER_T)
+                {
+                    result.type = STRING_T; // io.read(N)
+                }
+                else
+                {
+                    result.type = ERROR_T; // Formato non valido o non costante
+                }
+            }
+        }
+        // Gestione print (non restituisce valore significativo per l'espressione)
+        else if (expr->node.fcall->func_expr && expr->node.fcall->func_expr->nodetype == VAR_T &&
+                 expr->node.fcall->func_expr->node.var && expr->node.fcall->func_expr->node.var->name &&
+                 strcmp(expr->node.fcall->func_expr->node.var->name, "print") == 0)
+        {
+            result.type = NIL_T; // print non restituisce un valore in Lua
+        }
+        // Altre funzioni
+        else
+        {
+            // Prova a usare il tipo di ritorno memorizzato nel nodo fcall (impostato dal parser)
+            if (expr->node.fcall->return_type != 0 && expr->node.fcall->return_type != NIL_T)
+            { // NIL_T era default
+                result.type = expr->node.fcall->return_type;
+            }
+            // Altrimenti, prova a dedurlo dalla symbol table
+            else if (expr->node.fcall->func_expr && expr->node.fcall->func_expr->nodetype == VAR_T &&
+                     expr->node.fcall->func_expr->node.var && expr->node.fcall->func_expr->node.var->name)
+            {
+                struct symbol *func_sym = NULL;
+                if (current_scope)
+                {
+                    func_sym = find_symtab(current_scope, expr->node.fcall->func_expr->node.var->name);
+                }
+                if (func_sym && func_sym->sym_type == FUNCTION_SYM)
+                {
+                    result.type = func_sym->type; // sym->type per FUNCTION è il tipo di ritorno
+                }
+                else
+                {
+                    yywarning(error_string_format("Return type for function call '%s' could not be determined. Assuming dynamic/userdata.", expr->node.fcall->func_expr->node.var->name));
+                    result.type = USERDATA_T; // Fallback per funzioni non trovate o senza tipo di ritorno noto
+                }
+            }
+            else
+            {
+                // Chiamata a espressione complessa, es. (func_var)()
+                result.type = USERDATA_T; // Tipo dinamico/sconosciuto
+            }
+        }
+        return result;
 
     case EXPR_T:
         switch (expr->node.expr->expr_type)
         {
-    case ADD_T: case SUB_T: case MUL_T: case DIV_T:
+        case ADD_T:
+        case SUB_T:
+        case MUL_T:
+        case DIV_T:
             // Questa è una semplificazione. Lua fa coercizione.
             // Per ora, se gli operandi sono numeri, il risultato è un numero.
             // Altrimenti, in Lua potrebbe essere un errore o concatenazione (per .. non +).
@@ -300,24 +203,31 @@ struct complex_type eval_expr_type(struct AstNode *expr, struct symlist *current
             result.kind = DYNAMIC;
             return result;
 
-    case AND_T: case OR_T: case NOT_T:
-    case G_T: case GE_T: case L_T: case LE_T: case EQ_T: case NE_T:
+        case AND_T:
+        case OR_T:
+        case NOT_T:
+        case G_T:
+        case GE_T:
+        case L_T:
+        case LE_T:
+        case EQ_T:
+        case NE_T:
             result.type = BOOLEAN_T;
             result.kind = DYNAMIC;
             return result;
 
-    case NEG_T: // -expr
+        case NEG_T: // -expr
             return eval_expr_type(expr->node.expr->r, current_scope);
 
-    case ASS_T: // var = expr
+        case ASS_T: // var = expr
             // Il "valore" di un'assegnazione è l'RHS, ma raramente usato come espressione.
             // Per la tipizzazione, è il tipo dell'RHS.
             return eval_expr_type(expr->node.expr->r, current_scope);
 
-    case PAR_T: // (expr)
+        case PAR_T: // (expr)
             return eval_expr_type(expr->node.expr->r, current_scope);
 
-    default:
+        default:
             result.type = USERDATA_T;
             result.kind = DYNAMIC;
             return result;
@@ -341,7 +251,7 @@ void check_division(struct AstNode *expr, struct symlist *current_scope)
     struct complex_type t = eval_expr_type(expr, current_scope);
 
     /* Can only check if it's a constant */
-    if (t.kind == CONSTANT && (t.type == NUMBER_T || t.type == INT_T || t.type == FLOAT_T) )
+    if (t.kind == CONSTANT && (t.type == NUMBER_T || t.type == INT_T || t.type == FLOAT_T))
     {
         if (expr->nodetype == VAL_T && expr->node.val && expr->node.val->string_val)
         {
@@ -593,78 +503,98 @@ void check_binary_op(enum EXPRESSION_TYPE op, struct AstNode *left, struct AstNo
 
 /* Infer the return type of a function by analyzing its code and return statements */
 enum LUA_TYPE infer_func_return_type(struct AstNode *code, struct symlist *func_scope)
- {
-     if (!code)
-         return NIL_T;
+{
+    if (!code)
+        return NIL_T;
 
-     struct AstNode *current = code;
-     enum LUA_TYPE inferred_type = NIL_T;
-     int return_count = 0;
-     enum LUA_TYPE first_return_type = NIL_T;
+    struct AstNode *current = code;
+    enum LUA_TYPE inferred_type = NIL_T;
+    int return_count = 0;
+    enum LUA_TYPE first_return_type = NIL_T;
 
+    while (current)
+    {
+        if (current->nodetype == RETURN_T)
+        {
+            return_count++;
+            enum LUA_TYPE current_return_expr_type = NIL_T;
+            if (current->node.ret->expr)
+            {
+                // Passa func_scope a eval_expr_type
+                current_return_expr_type = eval_expr_type(current->node.ret->expr, func_scope).type;
+            }
 
-     while (current)
-     {
-         if (current->nodetype == RETURN_T)
-         {
-             return_count++;
-             enum LUA_TYPE current_return_expr_type = NIL_T;
-             if (current->node.ret->expr) {
-                 // Passa func_scope a eval_expr_type
-                 current_return_expr_type = eval_expr_type(current->node.ret->expr, func_scope).type;
-             }
-
-             if (return_count == 1) {
-                 first_return_type = current_return_expr_type;
-                 inferred_type = first_return_type;
-             } else if (current_return_expr_type != first_return_type) {
-                 // Tipi di ritorno multipli e diversi.
-                 // Potremmo generalizzare (es. INT e FLOAT -> NUMBER)
-                 if ((first_return_type == INT_T || first_return_type == FLOAT_T || first_return_type == NUMBER_T) &&
-                     (current_return_expr_type == INT_T || current_return_expr_type == FLOAT_T || current_return_expr_type == NUMBER_T)) {
-                     inferred_type = NUMBER_T;
-                 } else if (first_return_type == NIL_T && current_return_expr_type != NIL_T) {
-                     // Se il primo return era nil e questo non lo è, aggiorna.
-                     inferred_type = current_return_expr_type;
-                     first_return_type = current_return_expr_type; // Aggiorna il riferimento
-                 } else if (current_return_expr_type == NIL_T && first_return_type != NIL_T) {
-                     // Se questo return è nil e il primo non lo era, non cambiare inferred_type basato su nil se già c'è un tipo.
-                 }
-                 else {
-                     yywarning("Function has multiple incompatible return types. Defaulting to a generic type (void*).");
-                     return USERDATA_T; // Indica tipo dinamico/sconosciuto per C
-                 }
-             }
-         }
-         // Ricorsione per if/for/while se possono contenere return
-         else if (current->nodetype == IF_T) {
-             enum LUA_TYPE if_type = infer_func_return_type(current->node.ifn->body, func_scope);
-             enum LUA_TYPE else_type = NIL_T;
-             if (current->node.ifn->else_body) {
-                 else_type = infer_func_return_type(current->node.ifn->else_body, func_scope);
-             }
-             // Semplice logica: se uno dei branch ritorna qualcosa, lo consideriamo.
-             // Una logica più complessa gestirebbe la coerenza tra i tipi.
-             if (if_type != NIL_T && inferred_type == NIL_T) inferred_type = if_type;
-             if (else_type != NIL_T && inferred_type == NIL_T) inferred_type = else_type;
-             // Se if_type e else_type sono diversi e non NIL, potremmo dover generalizzare o avvisare.
-             if (if_type != NIL_T && else_type != NIL_T && if_type != else_type) {
-                 if ((if_type == INT_T || if_type == FLOAT_T || if_type == NUMBER_T) &&
-                     (else_type == INT_T || else_type == FLOAT_T || else_type == NUMBER_T)) {
-                     if (inferred_type == NIL_T || inferred_type == INT_T || inferred_type == FLOAT_T) inferred_type = NUMBER_T;
-                 } else {
-                     yywarning("Function has different return types in if/else branches. Type inference may be inaccurate.");
-                     if (inferred_type == NIL_T) return USERDATA_T; // Se non c'era un tipo prima
-                 }
-             }
-
-         } else if (current->nodetype == FOR_T) {
-             enum LUA_TYPE for_type = infer_func_return_type(current->node.forn->stmt, func_scope);
-             if (for_type != NIL_T && inferred_type == NIL_T) inferred_type = for_type;
-         }
-         // Aggiungere WHILE_T se presente
-         current = current->next;
-     }
-     return inferred_type;
- }
-
+            if (return_count == 1)
+            {
+                first_return_type = current_return_expr_type;
+                inferred_type = first_return_type;
+            }
+            else if (current_return_expr_type != first_return_type)
+            {
+                // Tipi di ritorno multipli e diversi.
+                // Potremmo generalizzare (es. INT e FLOAT -> NUMBER)
+                if ((first_return_type == INT_T || first_return_type == FLOAT_T || first_return_type == NUMBER_T) &&
+                    (current_return_expr_type == INT_T || current_return_expr_type == FLOAT_T || current_return_expr_type == NUMBER_T))
+                {
+                    inferred_type = NUMBER_T;
+                }
+                else if (first_return_type == NIL_T && current_return_expr_type != NIL_T)
+                {
+                    // Se il primo return era nil e questo non lo è, aggiorna.
+                    inferred_type = current_return_expr_type;
+                    first_return_type = current_return_expr_type; // Aggiorna il riferimento
+                }
+                else if (current_return_expr_type == NIL_T && first_return_type != NIL_T)
+                {
+                    // Se questo return è nil e il primo non lo era, non cambiare inferred_type basato su nil se già c'è un tipo.
+                }
+                else
+                {
+                    yywarning("Function has multiple incompatible return types. Defaulting to a generic type (void*).");
+                    return USERDATA_T; // Indica tipo dinamico/sconosciuto per C
+                }
+            }
+        }
+        // Ricorsione per if/for/while se possono contenere return
+        else if (current->nodetype == IF_T)
+        {
+            enum LUA_TYPE if_type = infer_func_return_type(current->node.ifn->body, func_scope);
+            enum LUA_TYPE else_type = NIL_T;
+            if (current->node.ifn->else_body)
+            {
+                else_type = infer_func_return_type(current->node.ifn->else_body, func_scope);
+            }
+            // Semplice logica: se uno dei branch ritorna qualcosa, lo consideriamo.
+            // Una logica più complessa gestirebbe la coerenza tra i tipi.
+            if (if_type != NIL_T && inferred_type == NIL_T)
+                inferred_type = if_type;
+            if (else_type != NIL_T && inferred_type == NIL_T)
+                inferred_type = else_type;
+            // Se if_type e else_type sono diversi e non NIL, potremmo dover generalizzare o avvisare.
+            if (if_type != NIL_T && else_type != NIL_T && if_type != else_type)
+            {
+                if ((if_type == INT_T || if_type == FLOAT_T || if_type == NUMBER_T) &&
+                    (else_type == INT_T || else_type == FLOAT_T || else_type == NUMBER_T))
+                {
+                    if (inferred_type == NIL_T || inferred_type == INT_T || inferred_type == FLOAT_T)
+                        inferred_type = NUMBER_T;
+                }
+                else
+                {
+                    yywarning("Function has different return types in if/else branches. Type inference may be inaccurate.");
+                    if (inferred_type == NIL_T)
+                        return USERDATA_T; // Se non c'era un tipo prima
+                }
+            }
+        }
+        else if (current->nodetype == FOR_T)
+        {
+            enum LUA_TYPE for_type = infer_func_return_type(current->node.forn->stmt, func_scope);
+            if (for_type != NIL_T && inferred_type == NIL_T)
+                inferred_type = for_type;
+        }
+        // Aggiungere WHILE_T se presente
+        current = current->next;
+    }
+    return inferred_type;
+}

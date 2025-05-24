@@ -376,7 +376,12 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
 
             // Special case: table with a single null field
             if (field && field->next == NULL &&
-                (field->nodetype != TABLE_FIELD_T | STRING_T | INT_T | FLOAT_T | NUMBER_T | BOOLEAN_T))
+                (field->nodetype == TABLE_FIELD_T ||
+                 field->nodetype == STRING_T ||
+                 field->nodetype == INT_T ||
+                 field->nodetype == FLOAT_T ||
+                 field->nodetype == NUMBER_T ||
+                 field->nodetype == BOOLEAN_T))
             {
                 translate_depth--; // Restore indentation
                 fprintf(output_fp, " }");
@@ -441,7 +446,7 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
             else
             {
                 // For expressions, use the regular eval_expr_type function
-                type = eval_expr_type(n->node.tfield->value).type;
+                type = eval_expr_type(n->node.tfield->value, current_scope).type;
             }
 
             switch (type)
@@ -874,7 +879,6 @@ void translate_params(struct AstNode *params, struct symlist *current_symtab)
         params = params->next;
     }
 }
-
 
 // Funzione per generare il prototipo di funzione nell'header
 void generate_func_prototype(struct AstNode *func_node)
