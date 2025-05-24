@@ -38,7 +38,7 @@ const char *lua_type_to_c_string(enum LUA_TYPE type)
     // case USERDATA_T:
     // return "/* userdata_t */ void*";
     case NUMBER_T:
-        return "double";
+        return "float";
     case TABLE_T:
         return "lua_field";
     default:
@@ -1080,7 +1080,7 @@ void translate(struct AstNode *root_ast_node)
 
     fprintf(output_fp_h, "float c_lua_io_read_number(){\n \
     float ret;\n\
-    scanf(\"%%d\", &ret);\n\
+    scanf(\"%%f\", &ret);\n\
     return ret;\n\
 }\n\n");
 

@@ -9,7 +9,7 @@ char* c_lua_io_read_line(){
 
 float c_lua_io_read_number(){
      float ret;
-    scanf("%d", &ret);
+    scanf("%f", &ret);
     return ret;
 }
 
