@@ -80,7 +80,7 @@ static struct AstNode* new_io_read_identifier_node(char* ns_token, char* func_to
 %nonassoc '('
 
 %type <ast> number global_statement_list global_statement expr  assignment
-%type <ast> return_statement func_call args if_cond 
+%type <ast> return_statement func_call args if_cond
 %type <ast> statement_list statement
 %type <ast> name_or_ioread
 %type <ast> func_definition param_list param table_field table_list chunk
@@ -108,65 +108,70 @@ global_statement
     | return_statement
     ;
 
-func_definition
-    : FUNCTION ID '(' param_list ')'
-        { scope_enter(); param_list = $4; }
-            chunk   END
-        { 
-          enum LUA_TYPE ret = infer_func_return_type($7);
-          // Create the function AST node with the inferred return type
-          $$ = new_func_def(FDEF_T, $2, $4, $7, ret);
-          
-          // Add the function with its return type to the parent scope (so it's visible for calls)
-          struct symlist* parent_symtab = current_symtab->next;
-          if (parent_symtab != NULL) {
-              insert_sym(parent_symtab, $2, ret, FUNCTION, $4, yylineno, line);
-          }
-          
-          // Add return type to the current scope for its own use
-          // This is needed for the current scope_exit() and future references
-          ret_type = ret;
-          insert_sym(current_symtab, "return", ret, F_RETURN, NULL, yylineno, line);
-          
-          scope_exit(); 
-        }
-    | FUNCTION ID '(' ')'
-        { scope_enter(); param_list = NULL;}
-            chunk   END
-        { 
-          enum LUA_TYPE ret = infer_func_return_type($6);
-          // Create the function AST node with the inferred return type
-          $$ = new_func_def(FDEF_T, $2, NULL, $6, ret);
-          
-          // Add the function with its return type to the parent scope (so it's visible for calls)
-          struct symlist* parent_symtab = current_symtab->next;
-          if (parent_symtab != NULL) {
-              insert_sym(parent_symtab, $2, ret, FUNCTION, NULL, yylineno, line);
-          }
-          
-          // Add return type to the current scope for its own use
-          // This is needed for the current scope_exit() and future references
-          ret_type = ret;
-          insert_sym(current_symtab, "return", ret, F_RETURN, NULL, yylineno, line);
-          
-          scope_exit(); 
-        }
-    | name_or_ioread '=' FUNCTION  '(' param_list ')'
-        { scope_enter(); param_list = $5; }
-            chunk   END
-        { 
-          enum LUA_TYPE ret = infer_func_return_type($8);
-          // Create the function AST node with the inferred return type
-          $$ = new_func_def(FDEF_T, NULL, $5, $8, ret);
-          
-          // For anonymous functions, we can't easily add them to the symbol table
-          // But we should still set the return type in the current scope
-          ret_type = ret;
-          insert_sym(current_symtab, "return", ret, F_RETURN, NULL, yylineno, line);
-          
-          scope_exit(); 
-        }
-    ;
+ func_definition
+     : FUNCTION ID '(' param_list ')'
+         { scope_enter(); param_list = $4; } // current_symtab è ora lo scope della funzione
+             chunk   END
+         {
+           // Passa current_symtab (che è lo scope interno della funzione)
+           enum LUA_TYPE ret = infer_func_return_type($7, current_symtab);
+           $$ = new_func_def(FDEF_T, $2, $4, $7, ret);
+
+           struct symlist* parent_symtab = current_symtab->next;
+           if (parent_symtab != NULL) {
+               insert_sym(parent_symtab, $2, ret, FUNCTION, $4, yylineno, line);
+           }
+           // ret_type = ret; // Questa variabile globale non sembra critica per la logica principale
+           insert_sym(current_symtab, "$return", ret, F_RETURN, NULL, yylineno, line); // Simbolo per il tipo di ritorno
+           scope_exit();
+         }
+     | FUNCTION ID '(' ')'
+         { scope_enter(); param_list = NULL;} // current_symtab è ora lo scope della funzione
+             chunk   END
+         {
+           enum LUA_TYPE ret = infer_func_return_type($6, current_symtab); // Passa current_symtab
+           $$ = new_func_def(FDEF_T, $2, NULL, $6, ret);
+           struct symlist* parent_symtab = current_symtab->next;
+           if (parent_symtab != NULL) {
+               insert_sym(parent_symtab, $2, ret, FUNCTION, NULL, yylineno, line);
+           }
+           // ret_type = ret;
+           insert_sym(current_symtab, "$return", ret, F_RETURN, NULL, yylineno, line);
+           scope_exit();
+         }
+     | name_or_ioread '=' FUNCTION  '(' param_list ')'
+         { scope_enter(); param_list = $5; } // current_symtab è ora lo scope della funzione
+             chunk   END
+         {
+           enum LUA_TYPE ret = infer_func_return_type($8, current_symtab); // Passa current_symtab
+           char* func_name_str = NULL;
+           if ($1->nodetype == VAR_T && $1->node.var) {
+               func_name_str = $1->node.var->name; // Il nome a cui la funzione è assegnata
+           }
+           // Crea il nodo FDEF. Se func_name_str è NULL, è effettivamente anonima.
+           // new_func_def dovrebbe fare strdup del nome se lo memorizza.
+           struct AstNode* fdef_node = new_func_def(FDEF_T, func_name_str ? strdup(func_name_str) : NULL, $5, $8, ret);
+
+           // Crea un nodo di assegnazione: name_or_ioread = fdef_node
+           // $$ = new_expression(EXPR_T, ASS_T, $1, fdef_node);
+           // La tua grammatica ha questo in func_definition, non assignment.
+           // Quindi $$ deve essere un FDEF_T, ma l'assegnazione a name_or_ioread
+           // deve essere gestita. Per ora, assumo che il parser si aspetti FDEF_T.
+           $$ = fdef_node;
+
+
+           // Aggiungi alla symbol table del parent scope
+           if (func_name_str) {
+               struct symlist* parent_symtab = current_symtab->next;
+               if (parent_symtab != NULL) {
+                   insert_sym(parent_symtab, func_name_str, ret, FUNCTION, $5, yylineno, line);
+               }
+           }
+           // ret_type = ret;
+           insert_sym(current_symtab, "$return", ret, F_RETURN, NULL, yylineno, line);
+           scope_exit();
+         }
+     ;
 
 param_list
     : param
@@ -205,10 +210,10 @@ table_field
     | /* empty */
         { $$ = new_table_field(TABLE_FIELD_T, NULL, NULL); }
 
-assignment
-    : name_or_ioread '=' expr
-        { $$ = new_expression(EXPR_T, ASS_T, $1, $3); fill_symtab(current_symtab, $$, eval_expr_type($3).type, VARIABLE); }
-    ;
+ assignment
+     : name_or_ioread '=' expr
+         { $$ = new_expression(EXPR_T, ASS_T, $1, $3); fill_symtab(current_symtab, $$, eval_expr_type($3, current_symtab).type, VARIABLE); }
+     ;
 
 chunk
     : statement_list                                               { $$ = $1; }
@@ -228,12 +233,12 @@ statement
     ;
 
 selection_statement
-    : IF if_cond THEN 
-      { scope_enter(); } 
-      chunk 
+    : IF if_cond THEN
+      { scope_enter(); }
+      chunk
       { $<ast>$ = $5; }
       selection_ending
-      { 
+      {
         /* if else exists */
         if ($7)
           $$ = new_if(IF_T, $2, $<ast>6, $7);
@@ -243,10 +248,10 @@ selection_statement
     ;
 
 selection_ending
-    : END 
+    : END
       { scope_exit(); $$ = NULL;} // No else
-    | ELSE 
-      { scope_exit(); scope_enter(); } 
+    | ELSE
+      { scope_exit(); scope_enter(); }
       chunk END
       { $$ = $3;  scope_exit(); } // Else
     ;
@@ -267,15 +272,15 @@ start_expr
         {$$ = NULL; }
     ;
 
-end_expr
-    : expr                                                          { check_cond(eval_expr_type($1).type); $$ = $1; }
-    | /* empty */                                                   { $$ = NULL; }
-    ;
+ end_expr
+     : expr                                                          { check_cond(eval_expr_type($1, current_symtab).type); $$ = $1; }
+     | /* empty */                                                   { $$ = NULL; }
+     ;
 
-step
-    : ',' expr                                                    { eval_expr_type($2); $$ = $2; }
-    | /* empty */                                                 { $$ = NULL; }
-    ;
+ step
+     : ',' expr                                                    { eval_expr_type($2, current_symtab); $$ = $2; }
+     | /* empty */                                                 { $$ = NULL; }
+     ;
 
 return_statement
     : RETURN optional_expr_list
@@ -292,7 +297,7 @@ expr  // Definizione di base per le espressioni, costruisce sulla precedenza
     | expr '+' expr                                                 { $$ = new_expression(EXPR_T, ADD_T, $1, $3); }
     | expr '-' expr                                                 { $$ = new_expression(EXPR_T, SUB_T, $1, $3); }
     | expr '*' expr                                                 { $$ = new_expression(EXPR_T, MUL_T, $1, $3); }
-    | expr '/' expr                                                 { $$ = new_expression(EXPR_T, DIV_T, $1, $3); check_division($3); }
+    | expr '/' expr                                                 { $$ = new_expression(EXPR_T, DIV_T, $1, $3); check_division($3, current_symtab); }
     | NOT primary_expr                                              { $$ = new_expression(EXPR_T, NOT_T, NULL, $2); }
     | expr AND expr                                                 { $$ = new_expression(EXPR_T, AND_T, $1, $3); }
     | expr OR expr                                                  { $$ = new_expression(EXPR_T, OR_T, $1, $3); }
@@ -332,7 +337,7 @@ func_call
     : name_or_ioread '(' args ')' { // name_or_ioread può essere 'ID' o 'io.read'
                                      $$ = new_func_call(FCALL_T, $1, $3);
                                      check_fcall($1, $3); // Chiamata alla funzione di controllo semantico
-                                     
+
                                      // Aggiorna il tipo di ritorno in base alla definizione della funzione
                                      if ($1->nodetype == VAR_T) {
                                          struct symbol* func_sym = find_symtab(current_symtab, $1->node.var->name);
@@ -344,7 +349,7 @@ func_call
     | name_or_ioread '(' ')'      {
                                      $$ = new_func_call(FCALL_T, $1, NULL);
                                      check_fcall($1, NULL);
-                                     
+
                                      // Aggiorna il tipo di ritorno in base alla definizione della funzione
                                      if ($1->nodetype == VAR_T) {
                                          struct symbol* func_sym = find_symtab(current_symtab, $1->node.var->name);
@@ -457,7 +462,7 @@ void scope_exit() {
     if(print_symtab_flag)
         print_symtab(current_symtab);
     //check_usage(current_symtab);
-    
+
     current_symtab = current_symtab->next;
     current_scope_lvl--;
 }

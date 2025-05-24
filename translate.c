@@ -161,7 +161,7 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
                 else
                 {
                     // È la prima dichiarazione, aggiungi il tipo
-                    enum LUA_TYPE type = eval_expr_type(n->node.expr->r).type;
+                    enum LUA_TYPE type = eval_expr_type(n->node.expr->r, current_scope).type;
                     fprintf(output_fp, "%s %s", lua_type_to_c_string(type), varname);
 
                     // Aggiungi il simbolo alla tabella simboli durante la traduzione
@@ -390,7 +390,7 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
                         fprintf(output_fp, " ");
                     }
 
-                    struct complex_type ct = eval_expr_type(current_arg_for_format);
+                    struct complex_type ct = eval_expr_type(current_arg_for_format, current_scope);
                     enum LUA_TYPE type_of_arg = ct.type;
 
                     // Controllo se l'argomento è un VALORE STRINGA LETTERALE
@@ -456,7 +456,7 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
                 bool needs_comma = false; // Flag per tracciare se serve una virgola
                 while (current_arg_for_value)
                 {
-                    struct complex_type ct = eval_expr_type(current_arg_for_value);
+                    struct complex_type ct = eval_expr_type(current_arg_for_value, current_scope);
                     enum LUA_TYPE type_of_arg = ct.type;
 
                     bool is_literal_string = (current_arg_for_value->nodetype == VAL_T &&
@@ -591,7 +591,7 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
             fprintf(output_fp, "%s(", n->node.fdef->name);
             if (n->node.fdef->params)
             {
-                translate_params(n->node.fdef->params);
+                translate_params(n->node.fdef->params, current_scope);
             }
             fprintf(output_fp, ") {\n");
 
@@ -640,7 +640,7 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
                             // Se troviamo l'argomento, usa il suo tipo
                             if (current_arg)
                             {
-                                param_type = eval_expr_type(current_arg).type;
+                                param_type = eval_expr_type(current_arg, current_scope).type;
                             }
                         }
                     }
@@ -652,7 +652,7 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
                          arg->node.decl->var->nodetype == VAR_T)
                 {
                     // Parametro con valore di default
-                    enum LUA_TYPE param_type = eval_expr_type(arg->node.decl->expr).type;
+                    enum LUA_TYPE param_type = eval_expr_type(arg->node.decl->expr, func_scope).type;
                     insert_sym(func_scope, arg->node.decl->var->node.var->name,
                                param_type, PARAMETER, NULL, 0, "");
                 }
@@ -694,7 +694,7 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
 }
 
 // Funzione per tradurre una lista di parametri di funzione con i loro tipi
-void translate_params(struct AstNode *params)
+void translate_params(struct AstNode *params, struct symlist *current_symtab)
 {
     bool first = true;
     while (params)
@@ -724,7 +724,7 @@ void translate_params(struct AstNode *params)
                  params->node.decl->var->nodetype == VAR_T)
         {
             // Parameter with default value - we infer type from the default value
-            enum LUA_TYPE param_type = eval_expr_type(params->node.decl->expr).type;
+            enum LUA_TYPE param_type = eval_expr_type(params->node.decl->expr, current_symtab).type;
             fprintf(output_fp, "%s %s", lua_type_to_c_string(param_type),
                     params->node.decl->var->node.var->name);
         }
@@ -738,6 +738,7 @@ void translate_params(struct AstNode *params)
         params = params->next;
     }
 }
+
 
 // Funzione per generare il prototipo di funzione nell'header
 void generate_func_prototype(struct AstNode *func_node)
@@ -763,7 +764,7 @@ void generate_func_prototype(struct AstNode *func_node)
         // Parametri
         if (func_node->node.fdef->params)
         {
-            translate_params(func_node->node.fdef->params);
+            translate_params(func_node->node.fdef->params, root_symtab);
         }
 
         fprintf(output_fp_h, ");\n");

@@ -11,6 +11,7 @@ enum sym_type
     VARIABLE,
     PARAMETER,
     F_RETURN,
+    FUNCTION_SYM,
 };
 
 // struttura del simbolo
