@@ -119,7 +119,7 @@ global_statement
 
            struct symlist* parent_symtab = current_symtab->next;
            if (parent_symtab != NULL) {
-               insert_sym(parent_symtab, $2, ret, FUNCTION, $4, yylineno, line);
+               insert_sym(parent_symtab, $2, ret, FUNCTION_SYM, $4, yylineno, line);
            }
            // ret_type = ret; // Questa variabile globale non sembra critica per la logica principale
            insert_sym(current_symtab, "$return", ret, F_RETURN, NULL, yylineno, line); // Simbolo per il tipo di ritorno
@@ -133,7 +133,7 @@ global_statement
            $$ = new_func_def(FDEF_T, $2, NULL, $6, ret);
            struct symlist* parent_symtab = current_symtab->next;
            if (parent_symtab != NULL) {
-               insert_sym(parent_symtab, $2, ret, FUNCTION, NULL, yylineno, line);
+               insert_sym(parent_symtab, $2, ret, FUNCTION_SYM, NULL, yylineno, line);
            }
            // ret_type = ret;
            insert_sym(current_symtab, "$return", ret, F_RETURN, NULL, yylineno, line);
@@ -164,7 +164,7 @@ global_statement
            if (func_name_str) {
                struct symlist* parent_symtab = current_symtab->next;
                if (parent_symtab != NULL) {
-                   insert_sym(parent_symtab, func_name_str, ret, FUNCTION, $5, yylineno, line);
+                   insert_sym(parent_symtab, func_name_str, ret, FUNCTION_SYM, $5, yylineno, line);
                }
            }
            // ret_type = ret;

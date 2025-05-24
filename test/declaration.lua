@@ -23,5 +23,4 @@ n = {a = 1, b = 2}      -- dictionary-like table
 z = {"one", "two", "three", "four"} -- mixed table with string
 w = {a = true, b = false, c = "trues_tring"} -- table with boolean values
 o = {1, 2.2, 2.3, a = 4.3}    -- mixed table
-p = {{1, 2}, {3, 4}}    -- nested tables
-q = {}                  -- empty table
+p = {}                  -- empty table
