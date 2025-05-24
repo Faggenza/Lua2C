@@ -8,10 +8,11 @@
 #include "semantic.h"
 #include "symtab.h"
 
-FILE *output_fp;         // File pointer per l'output C
-FILE *output_fp_h;       // File pointer per l'output C
-int translate_depth = 0; // Per l'indentazione
-int scope_lvl = 0;       // Per la gestione degli scope
+FILE *output_fp;             // File pointer per l'output C
+FILE *output_fp_h;           // File pointer per l'output C
+int translate_depth = 0;     // Per l'indentazione
+int scope_lvl = 0;           // Per la gestione degli scope
+int table_field_counter = 0; // Per generare chiavi automatiche per i campi tabella
 
 // Converte un LUA_TYPE nel corrispondente tipo stringa C
 const char *lua_type_to_c_string(enum LUA_TYPE type)
@@ -364,23 +365,52 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
         {
             translate_depth++; // Increase indentation for table fields
             struct AstNode *field = n->node.table->fields;
-            if (field->next == NULL)
+
+            // Special case: table with no fields
+            if (!field)
+            {
+                translate_depth--; // Restore indentation
+                fprintf(output_fp, " }");
+                break;
+            }
+
+            // Special case: table with a single null field
+            if (field && field->next == NULL &&
+                (field->nodetype != TABLE_FIELD_T | STRING_T | INT_T | FLOAT_T | NUMBER_T | BOOLEAN_T))
+            {
+                translate_depth--; // Restore indentation
+                fprintf(output_fp, " }");
+                break;
+            }
+
+            // Reset global field counter before processing fields
+            table_field_counter = 0;
+
+            // Single field case
+            if (field && field->next == NULL)
             {
                 // If there's only one field, no need for a comma
+                translate_tab();
                 translate_node(field, current_scope);
                 translate_depth--; // Restore indentation after single field
+                fprintf(output_fp, "\n");
+                translate_tab();
                 fprintf(output_fp, "}");
                 break;
             }
+
             fprintf(output_fp, "\n");
+
             while (field)
             {
                 translate_tab();
                 translate_node(field, current_scope);
                 fprintf(output_fp, ",\n");
                 field = field->next;
+                // Field counter is incremented in TABLE_FIELD_T case when needed
             }
             translate_depth--; // Restore indentation after fields
+            translate_tab();
         }
         fprintf(output_fp, "}");
         break;
@@ -393,48 +423,68 @@ void translate_node(struct AstNode *n, struct symlist *current_scope)
                 fprintf(output_fp, "{ \"");
                 translate_node(n->node.tfield->key, current_scope);
                 fprintf(output_fp, "\", ");
-
-                // Determina il tipo del valore
-                enum LUA_TYPE type = eval_expr_type(n->node.tfield->value).type;
-
-                switch (type)
-                {
-                case STRING_T:
-                    fprintf(output_fp, "{.string_value = \"");
-                    translate_node(n->node.tfield->value, current_scope);
-                    fprintf(output_fp, "\"}");
-                    break;
-                case INT_T:
-                    fprintf(output_fp, "{.int_value = ");
-                    translate_node(n->node.tfield->value, current_scope);
-                    fprintf(output_fp, "}");
-                    break;
-                case FLOAT_T:
-                case NUMBER_T:
-                    fprintf(output_fp, "{.float_value = ");
-                    translate_node(n->node.tfield->value, current_scope);
-                    fprintf(output_fp, "}");
-                    break;
-                case BOOLEAN_T:
-                    fprintf(output_fp, "{.bool_value = ");
-                    translate_node(n->node.tfield->value, current_scope);
-                    fprintf(output_fp, "}");
-                    break;
-                default:
-                    fprintf(output_fp, "/* unsupported type */");
-                    break;
-                }
-                fprintf(output_fp, " }");
             }
             else
             {
-                // Stampa solo il valore del campo se non c'è una chiave
-                translate_node(n->node.tfield->value, current_scope);
+                // Generate automatic key name if no key is provided
+                fprintf(output_fp, "{ \"key_%d\", ", table_field_counter++);
             }
+
+            // Determina il tipo del valore
+            enum LUA_TYPE type = NIL_T;
+
+            // Direct type checking for values to handle numeric literals correctly
+            if (n->node.tfield->value && n->node.tfield->value->nodetype == VAL_T)
+            {
+                type = n->node.tfield->value->node.val->val_type;
+            }
+            else
+            {
+                // For expressions, use the regular eval_expr_type function
+                type = eval_expr_type(n->node.tfield->value).type;
+            }
+
+            switch (type)
+            {
+            case STRING_T:
+                fprintf(output_fp, "{.string_value = ");
+                translate_node(n->node.tfield->value, current_scope);
+                fprintf(output_fp, "}");
+                break;
+            case INT_T:
+                fprintf(output_fp, "{.int_value = ");
+                translate_node(n->node.tfield->value, current_scope);
+                fprintf(output_fp, "}");
+                break;
+            case FLOAT_T:
+            case NUMBER_T:
+                fprintf(output_fp, "{.float_value = ");
+                translate_node(n->node.tfield->value, current_scope);
+                fprintf(output_fp, "}");
+                break;
+            case FALSE_T:
+                fprintf(output_fp, "{.bool_value = ");
+                translate_node(n->node.tfield->value, current_scope);
+                fprintf(output_fp, "}");
+                break;
+            case TRUE_T:
+                fprintf(output_fp, "{.bool_value = ");
+                translate_node(n->node.tfield->value, current_scope);
+                fprintf(output_fp, "}");
+                break;
+            default:
+                // Fallback to int_value for unknown types
+                fprintf(output_fp, "{.int_value = ");
+                translate_node(n->node.tfield->value, current_scope);
+                fprintf(output_fp, "} /* default type */");
+                break;
+            }
+            fprintf(output_fp, " }");
         }
         else
         {
-            fprintf(output_fp, "/* null_table_field */");
+            // For null table fields, just create an empty entry with a key
+            fprintf(output_fp, "{ \"key_%d\", {.int_value = 0} }", table_field_counter++);
         }
         break;
     case RETURN_T:
