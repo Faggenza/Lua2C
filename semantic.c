@@ -243,13 +243,6 @@ struct complex_type eval_expr_type(struct AstNode* expr, struct symlist* current
     }
 }
 
-/* Check conditional expressions */
-void check_cond(enum LUA_TYPE type)
-{
-    /* In Lua, any value except nil and false is considered true */
-    /* No actual checking needed - all types can be conditions */
-}
-
 /* Check that division doesn't involve zero */
 void check_division(struct AstNode* expr, struct symlist* current_scope)
 {
@@ -267,28 +260,6 @@ void check_division(struct AstNode* expr, struct symlist* current_scope)
         }
     }
 }
-
-/* Check if an expression is used as a statement */
-struct AstNode* check_expr_statement(struct AstNode* expr)
-{
-    /* In Lua, expressions can be statements without assignment */
-    /* Only function calls, assignments, and variable declarations have effects */
-    if (expr->nodetype != FCALL_T && expr->nodetype != EXPR_T)
-    {
-        yywarning("expression without effect");
-    }
-    return expr;
-}
-
-/* Check function call */
-// void check_fcall(char *name, struct AstNode *args)
-//  {
-/* In Lua, function calls are much more flexible than in C */
-/* Check only if function exists - no parameter type checking */
-
-/* We could check for standard library functions or user-defined ones */
-/* For now, this is a simplified check */
-// }
 
 void check_fcall(struct AstNode* func_expr, struct AstNode* args)
 {
@@ -385,48 +356,6 @@ void check_fcall(struct AstNode* func_expr, struct AstNode* args)
     }
 }
 
-/* Check returned values */
-void check_return(struct AstNode* expr)
-{
-    /* In Lua, return values are dynamically typed */
-    /* No checking required for type correctness */
-}
-
-/* Check variable references */
-void check_var_reference(struct AstNode* var)
-{
-    /* In Lua, accessing an undefined variable returns nil */
-    /* This is not an error, but we might want to warn about it */
-}
-
-/* Check table access */
-void check_table_access(struct AstNode* table, struct AstNode* key)
-{
-    /* In Lua, accessing a non-existent table key returns nil */
-    /* No error, but we could warn about potential issues */
-}
-
-/* Check variable assignment */
-void check_var_assignment(struct AstNode* var, struct AstNode* expr)
-{
-    /* In Lua, variables can be assigned any type */
-    /* No type checking required */
-}
-
-/* Check format strings (for print) */
-void check_format_string(struct AstNode* format_string, struct AstNode* args, enum FUNC_TYPE f_type)
-{
-    /* In Lua, string formatting works differently - could implement a simple check */
-    /* For compatibility with the existing code, we'll leave this function but simplify it */
-}
-
-/* Controllo del valore di ritorno delle funzioni */
-void check_func_return(enum LUA_TYPE type, struct AstNode* stmt_list)
-{
-    /* In Lua, le funzioni possono restituire qualsiasi tipo o nessun valore */
-    /* Non è necessario il controllo del tipo di ritorno */
-}
-
 /* Evaluate constant expressions */
 int eval_constant_expr(struct AstNode* expr)
 {
@@ -470,40 +399,6 @@ int eval_constant_expr(struct AstNode* expr)
 
     default:
         return 0;
-    }
-}
-
-/* Check binary operations for valid operand types */
-void check_binary_op(enum EXPRESSION_TYPE op, struct AstNode* left, struct AstNode* right,
-                     struct symlist* current_scope)
-{
-    /* In Lua, most operators are flexible about types */
-    /* The only strict requirements are for arithmetic operations (need numbers) */
-
-    struct complex_type l_type = eval_expr_type(left, current_scope);
-    struct complex_type r_type = eval_expr_type(right, current_scope);
-
-    /* Only perform checks for constant expressions */
-    if (l_type.kind == CONSTANT && r_type.kind == CONSTANT)
-    {
-        switch (op)
-        {
-        case ADD_T:
-        case SUB_T:
-        case MUL_T:
-        case DIV_T:
-            /* Require numbers for arithmetic */
-            if (!((l_type.type == NUMBER_T || l_type.type == INT_T || l_type.type == FLOAT_T) &&
-                (r_type.type == NUMBER_T || r_type.type == INT_T || r_type.type == FLOAT_T)))
-            {
-                yywarning("arithmetic operation on potentially non-numeric operands");
-            }
-            break;
-
-        default:
-            /* No specific requirements for other operators */
-            break;
-        }
     }
 }
 

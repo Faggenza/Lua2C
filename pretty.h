@@ -1,7 +1,6 @@
 #ifndef PRETTY_H
 #define PRETTY_H
 
-#include <stdio.h>
 #include "ast.h"
 /* Funzioni per il print dell'Ast */
 void print_ast(struct AstNode* n);

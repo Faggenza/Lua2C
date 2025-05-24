@@ -42,12 +42,9 @@ struct symlist* create_symtab(int scope, struct symlist* next);
 struct symlist* delete_symtab(struct symlist* syml);
 struct symbol* find_symtab(struct symlist* syml, char* name);
 void print_symtab(struct symlist* syml);
-void check_usage(struct symlist* syml);
 
 // gestione dei singoli simboli
 void insert_sym(struct symlist* syml, char* name, enum LUA_TYPE type, enum sym_type sym_type, struct AstNode* pl,
                 int lineno, char* line);
 struct symbol* find_sym(struct symlist* syml, char* name);
-void remove_sym(struct symlist* syml, struct symbol* s);
-
 #endif

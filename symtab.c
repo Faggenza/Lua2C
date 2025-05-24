@@ -120,33 +120,3 @@ struct symbol* find_sym(struct symlist* syml, char* name)
 
     return NULL;
 }
-
-/* Rimuove un simbolo dalla symbol table passata */
-void remove_sym(struct symlist* syml, struct symbol* s)
-{
-    /*  syml = symbol table
-        s = simbolo da rimuovere
-    */
-    HASH_DEL(syml->symtab, s);
-
-    free(s->line);
-    free(s);
-}
-
-/* Controlla se tutte le variabili presenti nella Symbol Table sono state utilizzate */
-void check_usage(struct symlist* syml)
-{
-    /*  syml = symbol table a controllare
-     */
-    struct symbol* s;
-
-    // hh.next = per iterare sugli hash, equivale a fare il next del simbolo
-    for (s = syml->symtab; s != NULL; s = s->hh.next)
-    {
-        if (s->sym_type == VARIABLE && s->used_flag == 0)
-        {
-            yywarning(error_string_format("variable " BOLD "%s" RESET " declared but not used", s->name));
-            yynote(error_string_format("declaration of " BOLD "%s" RESET " was here", s->name), s->lineno, s->line);
-        }
-    }
-}

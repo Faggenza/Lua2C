@@ -1,5 +1,4 @@
 #include "pretty.h"
-#include "global.h"
 #include <stdlib.h>
 #include <stdio.h>
 

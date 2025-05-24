@@ -277,7 +277,7 @@ start_expr
     ;
 
  end_expr
-     : expr                                                          { check_cond(eval_expr_type($1, current_symtab).type); $$ = $1; }
+     : expr                                                          { $$ = $1; }
      | /* empty */                                                   { $$ = NULL; }
      ;
 

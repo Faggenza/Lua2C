@@ -38,7 +38,7 @@ enum NODE_TYPE
 // Tipo di espressione
 enum EXPRESSION_TYPE
 {
-    ASS_T, // =
+    ASS_T,
     ADD_T,
     SUB_T,
     DIV_T,
@@ -80,13 +80,6 @@ struct forNode
     struct AstNode* end; // valore finale (10)
     struct AstNode* step; // step (opzionale, può essere NULL)
     struct AstNode* stmt; // corpo del ciclo
-};
-
-// Struttura del nodo while
-struct whileNode
-{
-    struct AstNode* cond;
-    struct AstNode* body;
 };
 
 // Struttura del nodo valore
@@ -160,7 +153,6 @@ struct AstNode
         struct expression* expr;
         struct ifNode* ifn;
         struct forNode* forn;
-        // struct whileNode *whilen;
         struct declaration* decl;
         struct returnNode* ret;
         struct funcCall* fcall;
@@ -182,7 +174,6 @@ struct AstNode* new_return(enum NODE_TYPE nodetype, struct AstNode* expr);
 struct AstNode* new_func_call(enum NODE_TYPE nodetype, struct AstNode* func_expr, struct AstNode* args);
 struct AstNode* new_func_def(enum NODE_TYPE nodetype, char* name, struct AstNode* params, struct AstNode* code,
                              enum LUA_TYPE ret_type);
-struct AstNode* new_while(enum NODE_TYPE nodetype, struct AstNode* cond, struct AstNode* body);
 struct AstNode* new_for(enum NODE_TYPE nodetype, char* varname, struct AstNode* start, struct AstNode* end,
                         struct AstNode* step, struct AstNode* stmt);
 struct AstNode* new_if(enum NODE_TYPE nodetype, struct AstNode* cond, struct AstNode* body, struct AstNode* else_body);

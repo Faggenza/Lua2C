@@ -1114,7 +1114,7 @@ void translate(struct AstNode* root_ast_node)
         }
         current_node = current_node->next;
     }
-
+    printf(">> Header completo in '%s'.\n", output_filename_h);
     fclose(output_fp_h);
-    free(output_filename_c); // Libera la memoria allocata per il nome del file
+    free(output_filename_c);
 }

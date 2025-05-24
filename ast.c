@@ -183,22 +183,6 @@ struct AstNode* new_for(enum NODE_TYPE nodetype, char* varname, struct AstNode* 
     return node;
 }
 
-/* Crea un nodo while */
-/*struct AstNode *new_while(enum NODE_TYPE nodetype, struct AstNode *cond, struct AstNode *body)
-{
-    struct whileNode *whilen = malloc(sizeof(struct whileNode));
-    struct AstNode *node = malloc(sizeof(struct AstNode));
-
-    whilen->cond = cond;
-    whilen->body = body;
-
-    node->nodetype = nodetype;
-    node->node.whilen = whilen;
-    node->next = NULL;
-
-    return node;
-}*/
-
 /* Crea un nodo if */
 struct AstNode* new_if(enum NODE_TYPE nodetype, struct AstNode* cond, struct AstNode* body, struct AstNode* else_body)
 {
