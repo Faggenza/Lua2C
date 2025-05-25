@@ -11,7 +11,7 @@ struct scope_tracker
     struct symlist* current_scope;
 };
 
-// Global counter for table field indices
+// Contatore globale per gli indici dei campi delle tabelle
 extern int table_field_counter;
 
 void translate(struct AstNode* root);
