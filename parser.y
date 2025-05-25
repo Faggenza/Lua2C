@@ -13,8 +13,8 @@ extern FILE *yyin;
 extern int yylineno;
 extern char *line;
 
-struct AstNode *root;
-struct AstNode *param_list = NULL; // puntatore alla lista dei parametri di una funzione, da inserire nello scope
+struct AstNode *root; // Nodo radice dell'albero AST
+struct AstNode *param_list = NULL; // puntatore alla lista dei parametri di una funzione
 enum LUA_TYPE ret_type = -1; // tipo di ritorno della funzione, da inserire nello scope
 
 void scope_enter();
@@ -25,7 +25,6 @@ int print_symtab_flag = 0;
 int print_ast_flag = 0;
 void print_usage();
 
-// void check_var_reference(struct AstNode *var);
 void check_fcall(struct AstNode *func_expr, struct AstNode *args);
 
 // Funzione helper per creare l'identificatore per io.read e liberare le stringhe originali
@@ -43,11 +42,11 @@ static struct AstNode* new_io_read_identifier_node(char* ns_token, char* func_to
         free(func_token); // Libera la stringa strdup-pata dal lexer per "read"
         return var_node;
     }
-    // Se non è "io.read", è un errore per questa implementazione semplificata
+    // Se non è "io.read" è un errore
     yyerror(error_string_format("Unsupported table member access: %s.%s. Only 'io.read' is supported.", ns_token, func_token));
     free(ns_token);
     free(func_token);
-    return new_error(ERROR_NODE_T); // Ritorna un nodo errore
+    return new_error(ERROR_NODE_T);
 }
 %}
 
@@ -110,7 +109,7 @@ global_statement
 
  func_definition
      : FUNCTION ID '(' param_list ')'
-         { scope_enter(); param_list = $4; } // current_symtab è ora lo scope della funzione
+         { scope_enter(); param_list = $4; }
              chunk   END
          {
            // Passa current_symtab (che è lo scope interno della funzione)
@@ -121,53 +120,42 @@ global_statement
            if (parent_symtab != NULL) {
                insert_sym(parent_symtab, $2, ret, FUNCTION_SYM, $4, yylineno, line);
            }
-           // ret_type = ret; // Questa variabile globale non sembra critica per la logica principale
-           insert_sym(current_symtab, "$return", ret, F_RETURN, NULL, yylineno, line); // Simbolo per il tipo di ritorno
+           insert_sym(current_symtab, "$return", ret, F_RETURN, NULL, yylineno, line);
            scope_exit();
          }
      | FUNCTION ID '(' ')'
-         { scope_enter(); param_list = NULL;} // current_symtab è ora lo scope della funzione
+         { scope_enter(); param_list = NULL;}
              chunk   END
          {
-           enum LUA_TYPE ret = infer_func_return_type($6, current_symtab); // Passa current_symtab
+           enum LUA_TYPE ret = infer_func_return_type($6, current_symtab);
            $$ = new_func_def(FDEF_T, $2, NULL, $6, ret);
            struct symlist* parent_symtab = current_symtab->next;
            if (parent_symtab != NULL) {
                insert_sym(parent_symtab, $2, ret, FUNCTION_SYM, NULL, yylineno, line);
            }
-           // ret_type = ret;
            insert_sym(current_symtab, "$return", ret, F_RETURN, NULL, yylineno, line);
            scope_exit();
          }
      | name_or_ioread '=' FUNCTION  '(' param_list ')'
-         { scope_enter(); param_list = $5; } // current_symtab è ora lo scope della funzione
+         { scope_enter(); param_list = $5; }
              chunk   END
          {
-           enum LUA_TYPE ret = infer_func_return_type($8, current_symtab); // Passa current_symtab
+           enum LUA_TYPE ret = infer_func_return_type($8, current_symtab);
            char* func_name_str = NULL;
            if ($1->nodetype == VAR_T && $1->node.var) {
-               func_name_str = $1->node.var->name; // Il nome a cui la funzione è assegnata
+               func_name_str = $1->node.var->name;
            }
-           // Crea il nodo FDEF. Se func_name_str è NULL, è effettivamente anonima.
-           // new_func_def dovrebbe fare strdup del nome se lo memorizza.
            struct AstNode* fdef_node = new_func_def(FDEF_T, func_name_str ? strdup(func_name_str) : NULL, $5, $8, ret);
 
-           // Crea un nodo di assegnazione: name_or_ioread = fdef_node
-           // $$ = new_expression(EXPR_T, ASS_T, $1, fdef_node);
-           // La tua grammatica ha questo in func_definition, non assignment.
-           // Quindi $$ deve essere un FDEF_T, ma l'assegnazione a name_or_ioread
-           // deve essere gestita. Per ora, assumo che il parser si aspetti FDEF_T.
            $$ = fdef_node;
 
 
-           // Aggiungi alla symbol table del parent scope
            if (func_name_str) {
                struct symlist* parent_symtab = current_symtab->next;
                if (parent_symtab != NULL) {
                    insert_sym(parent_symtab, func_name_str, ret, FUNCTION_SYM, $5, yylineno, line);
                }
            }
-           // ret_type = ret;
            insert_sym(current_symtab, "$return", ret, F_RETURN, NULL, yylineno, line);
            scope_exit();
          }
@@ -243,7 +231,6 @@ selection_statement
       { $<ast>$ = $5; }
       selection_ending
       {
-        /* if else exists */
         if ($7)
           $$ = new_if(IF_T, $2, $<ast>6, $7);
         else // else end
@@ -253,11 +240,11 @@ selection_statement
 
 selection_ending
     : END
-      { scope_exit(); $$ = NULL;} // No else
+      { scope_exit(); $$ = NULL;}
     | ELSE
       { scope_exit(); scope_enter(); }
       chunk END
-      { $$ = $3;  scope_exit(); } // Else
+      { $$ = $3;  scope_exit(); }
     ;
 
 if_cond
@@ -296,7 +283,8 @@ optional_expr_list
     | args        { $$ = $1; } %prec LOWEST
     ;
 
-expr  // Definizione di base per le espressioni, costruisce sulla precedenza
+// Espressioni, con precedenza e associatività
+expr
     : primary_expr
     | expr '+' expr                                                 { $$ = new_expression(EXPR_T, ADD_T, $1, $3); }
     | expr '-' expr                                                 { $$ = new_expression(EXPR_T, SUB_T, $1, $3); }
@@ -314,7 +302,8 @@ expr  // Definizione di base per le espressioni, costruisce sulla precedenza
     | '-' primary_expr %prec UMINUS                                 { $$ = new_expression(EXPR_T, NEG_T, NULL, $2); }
     ;
 
-primary_expr  // Espressioni "atomiche" o che non sono operatori binari/unari di livello superiore
+// Espressioni primarie, che non sono operatori binari/unari di livello superiore
+primary_expr
     : name_or_ioread           { $$ = $1; }
     | number                   { $$ = $1; }
     | STRING                   { $$ = new_value(VAL_T, STRING_T, $1); }
@@ -327,7 +316,7 @@ primary_expr  // Espressioni "atomiche" o che non sono operatori binari/unari di
 
 name_or_ioread
     : ID { $$ = new_variable(VAR_T, $1, NULL); }
-    | ID DOT ID { $$ = new_io_read_identifier_node($1, $3); } // Usa la funzione helper
+    | ID DOT ID { $$ = new_io_read_identifier_node($1, $3); }
     ;
 
 number
@@ -340,7 +329,7 @@ number
 func_call
     : name_or_ioread '(' args ')' { // name_or_ioread può essere 'ID' o 'io.read'
                                      $$ = new_func_call(FCALL_T, $1, $3);
-                                     check_fcall($1, $3); // Chiamata alla funzione di controllo semantico
+                                     check_fcall($1, $3);
 
                                      // Aggiorna il tipo di ritorno in base alla definizione della funzione
                                      if ($1->nodetype == VAR_T) {
@@ -354,7 +343,6 @@ func_call
                                      $$ = new_func_call(FCALL_T, $1, NULL);
                                      check_fcall($1, NULL);
 
-                                     // Aggiorna il tipo di ritorno in base alla definizione della funzione
                                      if ($1->nodetype == VAR_T) {
                                          struct symbol* func_sym = find_symtab(current_symtab, $1->node.var->name);
                                          if (func_sym) {
