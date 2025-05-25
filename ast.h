@@ -75,17 +75,17 @@ struct ifNode
 // Struttura del nodo for
 struct forNode
 {
-    char* varname; // variabile del for (i)
-    struct AstNode* start; // valore iniziale (1)
-    struct AstNode* end; // valore finale (10)
-    struct AstNode* step; // step (opzionale, può essere NULL)
-    struct AstNode* stmt; // corpo del ciclo
+    char* varname;
+    struct AstNode* start;
+    struct AstNode* end;
+    struct AstNode* step;
+    struct AstNode* stmt;
 };
 
 // Struttura del nodo valore
 struct value
 {
-    enum LUA_TYPE val_type; // Determinato dinamicamente
+    enum LUA_TYPE val_type;
     char* string_val;
 };
 
@@ -93,49 +93,49 @@ struct value
 struct variable
 {
     char* name;
-    struct AstNode* table_key; // Per accesso alla tabella: t["key"] o t.key
-    int by_reference; // 1 se per riferimento, 0 se per valore
+    struct AstNode* table_key;
+    int by_reference;
 };
 
 // Struttura per una tabella Lua
 struct table
 {
-    struct AstNode* fields; // Lista di campi della tabella
+    struct AstNode* fields;
 };
 
 // Struttura per un campo di tabella Lua
 struct tableField
 {
-    struct AstNode* key; // Può essere nil per indici numerici automatici
+    struct AstNode* key;
     struct AstNode* value;
 };
 
 // Struttura del nodo dichiarazione locale
 struct declaration
 {
-    struct AstNode* var; // Non conserva tipo - in Lua è dinamico
-    struct AstNode* expr; // Espressione di inizializzazione (opzionale)
+    struct AstNode* var;
+    struct AstNode* expr;
 };
 
 // Struttura del nodo return
 struct returnNode
 {
-    struct AstNode* expr; // Può essere una lista di espressioni in Lua
+    struct AstNode* expr;
 };
 
 // Struttura del nodo chiamata a funzione
 struct funcCall
 {
-    char* name; // Può essere nil per funzioni anonime
-    struct AstNode* func_expr; // Può essere un nome o un'espressione che valuta a funzione
+    char* name;
+    struct AstNode* func_expr;
     struct AstNode* args;
-    enum LUA_TYPE return_type; // Tipo di ritorno dedotto dalla definizione della funzione
+    enum LUA_TYPE return_type;
 };
 
 // Struttura del nodo definizione di funzione
 struct funcDef
 {
-    char* name; // Può essere nil per funzioni anonime
+    char* name;
     struct AstNode* params;
     struct AstNode* code;
     enum LUA_TYPE ret_type;
@@ -164,7 +164,7 @@ struct AstNode
     struct AstNode* next;
 };
 
-/* Funzioni per creare i nodi */
+// Funzioni per creare i nodi
 struct AstNode* new_value(enum NODE_TYPE nodetype, enum LUA_TYPE val_type, char* string_val);
 struct AstNode* new_variable(enum NODE_TYPE nodetype, char* name, struct AstNode* table_key);
 struct AstNode* new_expression(enum NODE_TYPE nodetype, enum EXPRESSION_TYPE expr_type, struct AstNode* l,
@@ -181,11 +181,11 @@ struct AstNode* new_table(enum NODE_TYPE nodetype, struct AstNode* fields);
 struct AstNode* new_table_field(enum NODE_TYPE nodetype, struct AstNode* key, struct AstNode* value);
 struct AstNode* new_error(enum NODE_TYPE nodetype);
 
-/* Funzioni per linkare due nodi */
+// Funzioni per linkare due nodi
 struct AstNode* link_AstNode(struct AstNode* node, struct AstNode* next);
 struct AstNode* append_AstNode(struct AstNode* node, struct AstNode* next);
 
-/* Funzioni per inferire i tipi */
+// Funzioni per inferire i tipi
 enum LUA_TYPE infer_type(char* value);
 
 #endif

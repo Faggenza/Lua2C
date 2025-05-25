@@ -4,7 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 
-/* Inferisce il tipo da un valore stringa */
+// Inferisce il tipo da un valore stringa
 enum LUA_TYPE infer_type(char* value)
 {
     if (!value)
@@ -14,30 +14,25 @@ enum LUA_TYPE infer_type(char* value)
     if (strcmp(value, "true") == 0 || strcmp(value, "false") == 0)
         return BOOLEAN_T;
 
-    // Controlla se è un numero
     char* endptr;
     double num = strtod(value, &endptr);
     if (*endptr == '\0')
     {
-        // Se contiene un punto o 'e'/'E' per notazione esponenziale, è un float
         if (strchr(value, '.') || strchr(value, 'e') || strchr(value, 'E'))
             return FLOAT_T;
         else
             return INT_T;
     }
 
-    // Altrimenti è una stringa
     return STRING_T;
 }
 
-/* Crea un nodo valore - ora accetta il tipo esplicitamente */
+// Crea un nodo valore che accetta il tipo esplicitamente
 struct AstNode* new_value(enum NODE_TYPE nodetype, enum LUA_TYPE val_type, char* string_val)
 {
     struct value* val = malloc(sizeof(struct value));
     struct AstNode* node = malloc(sizeof(struct AstNode));
 
-    // If val_type is explicitly provided and valid, use it
-    // Otherwise, infer the type from the string value
     if (val_type != 0 && val_type != ERROR_T)
     {
         val->val_type = val_type;
@@ -56,7 +51,7 @@ struct AstNode* new_value(enum NODE_TYPE nodetype, enum LUA_TYPE val_type, char*
     return node;
 }
 
-/* Crea un nodo variabile */
+// Crea un nodo variabile
 struct AstNode* new_variable(enum NODE_TYPE nodetype, char* name, struct AstNode* table_key)
 {
     struct variable* var = malloc(sizeof(struct variable));
@@ -72,13 +67,13 @@ struct AstNode* new_variable(enum NODE_TYPE nodetype, char* name, struct AstNode
     return node;
 }
 
-/* Modifica il valore del campo reference di un nodo di tipo VAR_T */
+// Modifica il valore del campo reference di un nodo di tipo VAR_T
 void by_reference(struct AstNode* node)
 {
     node->node.var->by_reference = 1;
 }
 
-/* Crea un nodo dichiarazione - non include tipi espliciti in Lua */
+// Crea un nodo dichiarazione che non include tipi espliciti in Lua
 struct AstNode* new_declaration(enum NODE_TYPE nodetype, struct AstNode* var, struct AstNode* expr)
 {
     struct declaration* decl = malloc(sizeof(struct declaration));
@@ -94,7 +89,7 @@ struct AstNode* new_declaration(enum NODE_TYPE nodetype, struct AstNode* var, st
     return node;
 }
 
-/* Crea un nodo espressione */
+// Crea un nodo espressione
 struct AstNode* new_expression(enum NODE_TYPE nodetype, enum EXPRESSION_TYPE expr_type, struct AstNode* l,
                                struct AstNode* r)
 {
@@ -112,7 +107,7 @@ struct AstNode* new_expression(enum NODE_TYPE nodetype, enum EXPRESSION_TYPE exp
     return node;
 }
 
-/* Crea un nuovo nodo return */
+// Crea un nuovo nodo return
 struct AstNode* new_return(enum NODE_TYPE nodetype, struct AstNode* expr)
 {
     struct returnNode* rnode = malloc(sizeof(struct returnNode));
@@ -127,7 +122,7 @@ struct AstNode* new_return(enum NODE_TYPE nodetype, struct AstNode* expr)
     return node;
 }
 
-/* Crea un nodo chiamata a funzione */
+// Crea un nodo chiamata a funzione
 struct AstNode* new_func_call(enum NODE_TYPE nodetype, struct AstNode* func_expr, struct AstNode* args)
 {
     struct funcCall* fcall = malloc(sizeof(struct funcCall));
@@ -135,7 +130,7 @@ struct AstNode* new_func_call(enum NODE_TYPE nodetype, struct AstNode* func_expr
 
     fcall->func_expr = func_expr;
     fcall->args = args;
-    fcall->return_type = NIL_T; // Default return type, will be updated by check_fcall if function is found
+    fcall->return_type = NIL_T;
 
     node->nodetype = nodetype;
     node->node.fcall = fcall;
@@ -144,7 +139,7 @@ struct AstNode* new_func_call(enum NODE_TYPE nodetype, struct AstNode* func_expr
     return node;
 }
 
-/* Crea un nodo definizione di funzione */
+// Crea un nodo definizione di funzione
 struct AstNode* new_func_def(enum NODE_TYPE nodetype, char* name, struct AstNode* params, struct AstNode* code,
                              enum LUA_TYPE ret_type)
 {
@@ -163,7 +158,7 @@ struct AstNode* new_func_def(enum NODE_TYPE nodetype, char* name, struct AstNode
     return node;
 }
 
-/* Crea un nodo for */
+// Crea un nodo for
 struct AstNode* new_for(enum NODE_TYPE nodetype, char* varname, struct AstNode* start, struct AstNode* end,
                         struct AstNode* step, struct AstNode* stmt)
 {
@@ -183,7 +178,7 @@ struct AstNode* new_for(enum NODE_TYPE nodetype, char* varname, struct AstNode* 
     return node;
 }
 
-/* Crea un nodo if */
+// Crea un nodo if
 struct AstNode* new_if(enum NODE_TYPE nodetype, struct AstNode* cond, struct AstNode* body, struct AstNode* else_body)
 {
     struct ifNode* ifn = malloc(sizeof(struct ifNode));
@@ -200,8 +195,7 @@ struct AstNode* new_if(enum NODE_TYPE nodetype, struct AstNode* cond, struct Ast
     return node;
 }
 
-/* Crea un nodo tabella */
-
+// Crea un nodo tabella
 struct AstNode* new_table(enum NODE_TYPE nodetype, struct AstNode* fields)
 {
     struct table* t = malloc(sizeof(struct table));
@@ -232,7 +226,7 @@ struct AstNode* new_table_field(enum NODE_TYPE nodetype, struct AstNode* key, st
     return node;
 }
 
-/* Crea un nodo errore */
+// Crea un nodo errore
 struct AstNode* new_error(enum NODE_TYPE nodetype)
 {
     struct AstNode* node = malloc(sizeof(struct AstNode));
@@ -242,14 +236,14 @@ struct AstNode* new_error(enum NODE_TYPE nodetype)
     return node;
 }
 
-/* Funzione usata per creare una lista di nodi AST partendo dall'ultimo */
+// Funzione usata per creare una lista di nodi AST partendo dall'ultimo
 struct AstNode* link_AstNode(struct AstNode* node, struct AstNode* next)
 {
     node->next = next;
     return node;
 }
 
-/* Funzione usata per creare una lista di nodi AST partendo dal primo */
+// Funzione usata per creare una lista di nodi AST partendo dal primo
 struct AstNode* append_AstNode(struct AstNode* node, struct AstNode* next)
 {
     node->next = next;
