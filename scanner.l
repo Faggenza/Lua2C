@@ -12,7 +12,7 @@
 
 char *line;
 void copy_line();
-char string_buf[230000]; // Max Lua string length
+char string_buf[230000]; // lunghezza massima di una stringa Lua
 
 %}
 
@@ -92,8 +92,6 @@ char string_buf[230000]; // Max Lua string length
 "="                         { return yytext[0]; }
 
 
-
-
     /* operatori di confronto */
 
 ">" |
@@ -157,4 +155,3 @@ void yynote(char *s, int lineno, char *line){
     fprintf(stderr, "%s:%d " BLUE "note:" RESET " %s\n", filename, lineno, s);
     fprintf(stderr, " %s\n", line);
 }
-

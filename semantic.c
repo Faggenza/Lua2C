@@ -24,7 +24,7 @@ enum LUA_TYPE eval_bool(char* t)
     }
 }
 
-/* Evaluate expression type - in Lua this means inferring the runtime type */
+// Valuta il tipo di espressione - in Lua significa inferire il tipo a runtime
 struct complex_type eval_expr_type(struct AstNode* expr, struct symlist* current_scope)
 {
     struct complex_type result;
@@ -50,65 +50,37 @@ struct complex_type eval_expr_type(struct AstNode* expr, struct symlist* current
         result.type = TABLE_T;
         result.kind = DYNAMIC;
         return result;
+
     case VAR_T:
         if (expr->node.var && expr->node.var->name)
         {
-            // Controlla che il nome esista
             if (strcmp(expr->node.var->name, "io.read") == 0)
             {
-                result.type = FUNCTION_T; // "io.read" si riferisce a una funzione predefinita
+                result.type = FUNCTION_T;
             }
             else
             {
-                // Cerca la variabile nella symbol table corrente (o globale se necessario)
-                // È cruciale che 'current_symtab' (o un meccanismo di lookup simile)
-                // sia accessibile e punti allo scope corretto.
-                // Se eval_expr_type è chiamata ricorsivamente all'interno di funzioni,
-                // la gestione dello scope deve essere corretta.
-                // Usiamo 'root_symtab' come fallback per le globali se 'current_symtab'
-                // non è lo scope più esterno o non è disponibile.
-                // Se stai processando codice globale, current_symtab dovrebbe essere root_symtab.
-
-                // struct symlist *scope_to_search = current_symtab;
-                // if (!scope_to_search)
-                // {
-                // Fallback se current_symtab è NULL per qualche motivo
-                //     scope_to_search = root_symtab;
-                // }
-
                 struct symbol* sym = NULL;
                 if (current_scope)
                 {
-                    // Solo cerca se abbiamo uno scope valido
                     sym = find_symtab(current_scope, expr->node.var->name);
                 }
 
                 if (sym)
                 {
-                    // Trovato il simbolo! Usa il suo tipo.
                     result.type = sym->type;
-                    // Potresti anche voler impostare result.kind se la symbol table
-                    // traccia se una variabile è una costante (meno comune in Lua).
                 }
                 else
                 {
-                    // Variabile non trovata nella symbol table.
-                    // In Lua, questo significherebbe che la variabile è 'nil'.
-                    // Per la traduzione, questo è un punto critico.
-                    // Potrebbe essere un errore (variabile non dichiarata se vuoi uno stile più statico)
-                    // o potresti assumere 'nil' o un tipo dinamico.
-                    // Per 'print', se una variabile non dichiarata viene stampata, Lua stampa 'nil'.
                     yywarning(error_string_format(
                         "Variable '%s' used in expression but not found in symbol table (or symbol table access issue). Assuming nil for now.",
                         expr->node.var->name));
-                    result.type = NIL_T; // Comportamento più vicino a Lua per variabili non definite
-                    // In precedenza era USERDATA_T, che causava "userdata"
+                    result.type = NIL_T;
                 }
             }
         }
         else
         {
-            // Nodo VAR_T senza nome, dovrebbe essere un errore del parser o AST
             yyerror("Encountered VAR_T node without a name during type evaluation.");
             result.type = ERROR_T;
         }
@@ -123,13 +95,10 @@ struct complex_type eval_expr_type(struct AstNode* expr, struct symlist* current
             struct AstNode* fcall_args = expr->node.fcall->args;
             if (fcall_args == NULL)
             {
-                // io.read()
                 result.type = STRING_T;
             }
             else
             {
-                // io.read(format)
-                // Semplificazione: il tipo di ritorno dipende dal primo formato
                 struct complex_type arg_type = eval_expr_type(fcall_args, current_scope);
                 if (arg_type.type == STRING_T && fcall_args->nodetype == VAL_T)
                 {
@@ -145,11 +114,11 @@ struct complex_type eval_expr_type(struct AstNode* expr, struct symlist* current
                 }
                 else
                 {
-                    result.type = ERROR_T; // Formato non valido o non costante
+                    result.type = ERROR_T;
                 }
             }
         }
-        // Gestione print (non restituisce valore significativo per l'espressione)
+        // Gestione print
         else if (expr->node.fcall->func_expr && expr->node.fcall->func_expr->nodetype == VAR_T &&
             expr->node.fcall->func_expr->node.var && expr->node.fcall->func_expr->node.var->name &&
             strcmp(expr->node.fcall->func_expr->node.var->name, "print") == 0)
@@ -162,7 +131,6 @@ struct complex_type eval_expr_type(struct AstNode* expr, struct symlist* current
             // Prova a usare il tipo di ritorno memorizzato nel nodo fcall (impostato dal parser)
             if (expr->node.fcall->return_type != 0 && expr->node.fcall->return_type != NIL_T)
             {
-                // NIL_T era default
                 result.type = expr->node.fcall->return_type;
             }
             // Altrimenti, prova a dedurlo dalla symbol table
@@ -176,20 +144,20 @@ struct complex_type eval_expr_type(struct AstNode* expr, struct symlist* current
                 }
                 if (func_sym && func_sym->sym_type == FUNCTION_SYM)
                 {
-                    result.type = func_sym->type; // sym->type per FUNCTION è il tipo di ritorno
+                    result.type = func_sym->type;
                 }
                 else
                 {
                     yywarning(error_string_format(
                         "Return type for function call '%s' could not be determined. Assuming dynamic/userdata.",
                         expr->node.fcall->func_expr->node.var->name));
-                    result.type = USERDATA_T; // Fallback per funzioni non trovate o senza tipo di ritorno noto
+                    result.type = USERDATA_T;
                 }
             }
             else
             {
                 // Chiamata a espressione complessa, es. (func_var)()
-                result.type = USERDATA_T; // Tipo dinamico/sconosciuto
+                result.type = USERDATA_T;
             }
         }
         return result;
@@ -201,10 +169,7 @@ struct complex_type eval_expr_type(struct AstNode* expr, struct symlist* current
         case SUB_T:
         case MUL_T:
         case DIV_T:
-            // Questa è una semplificazione. Lua fa coercizione.
-            // Per ora, se gli operandi sono numeri, il risultato è un numero.
-            // Altrimenti, in Lua potrebbe essere un errore o concatenazione (per .. non +).
-            result.type = NUMBER_T; // Assumiamo operazione numerica
+            result.type = NUMBER_T;
             result.kind = DYNAMIC;
             return result;
 
@@ -225,8 +190,6 @@ struct complex_type eval_expr_type(struct AstNode* expr, struct symlist* current
             return eval_expr_type(expr->node.expr->r, current_scope);
 
         case ASS_T: // var = expr
-            // Il "valore" di un'assegnazione è l'RHS, ma raramente usato come espressione.
-            // Per la tipizzazione, è il tipo dell'RHS.
             return eval_expr_type(expr->node.expr->r, current_scope);
 
         case PAR_T: // (expr)
@@ -238,17 +201,16 @@ struct complex_type eval_expr_type(struct AstNode* expr, struct symlist* current
             return result;
         }
     default:
-        result.type = USERDATA_T; // o ERROR_T
+        result.type = USERDATA_T;
         return result;
     }
 }
 
-/* Check that division doesn't involve zero */
+// Controlla che la divisione non coinvolga lo zero
 void check_division(struct AstNode* expr, struct symlist* current_scope)
 {
     struct complex_type t = eval_expr_type(expr, current_scope);
 
-    /* Can only check if it's a constant */
     if (t.kind == CONSTANT && (t.type == NUMBER_T || t.type == INT_T || t.type == FLOAT_T))
     {
         if (expr->nodetype == VAL_T && expr->node.val && expr->node.val->string_val)
@@ -273,8 +235,6 @@ void check_fcall(struct AstNode* func_expr, struct AstNode* args)
         {
             // Se ci sono argomenti
             arg_count = 1; // Iniziamo a contare
-            // Per semplicità, consideriamo solo il primo argomento per i controlli dettagliati.
-            // Lua permette più argomenti, che portano a più valori di ritorno.
 
             if (current_arg->nodetype == VAL_T)
             {
@@ -288,8 +248,6 @@ void check_fcall(struct AstNode* func_expr, struct AstNode* args)
                     }
                     else
                     {
-                        // In Lua, io.read("qualsiasi_stringa_non_formato") è un errore runtime.
-                        // Qui potremmo essere più restrittivi.
                         yyerror("io.read: argument must be a format string or a number");
                     }
                 }
@@ -300,7 +258,6 @@ void check_fcall(struct AstNode* func_expr, struct AstNode* args)
                     {
                         yywarning("io.read: numeric format is float, will be treated as integer");
                     }
-                    // Potresti aggiungere un controllo se è negativo: atof(current_arg->node.val->string_val) < 0
                 }
                 else
                 {
@@ -310,7 +267,6 @@ void check_fcall(struct AstNode* func_expr, struct AstNode* args)
             else
             {
                 // L'argomento di io.read (se presente) deve essere una costante stringa o numerica
-                // per questa analisi statica.
                 yyerror("io.read: argument must be a literal format string or number");
             }
 
@@ -318,8 +274,6 @@ void check_fcall(struct AstNode* func_expr, struct AstNode* args)
             {
                 yywarning(
                     "io.read: multiple arguments provided. Translation to C might only support the first or be complex.");
-                // Qui potresti iterare su current_arg->next per controllare anche gli altri,
-                // ma la gestione di ritorni multipli è il vero problema per la traduzione.
             }
         }
         // Se arg_count == 0 (cioè args è NULL), è io.read() che è valido (default "*l").
@@ -344,19 +298,18 @@ void check_fcall(struct AstNode* func_expr, struct AstNode* args)
         }
         else
         {
-            // Funzione non trovata nella symbol table, avvisiamo
+            // Funzione non trovata nella symbol table
             yywarning(error_string_format("Function '%s' called but not defined", func_expr->node.var->name));
         }
     }
     else
     {
         // Chiamata a qualcosa che non è un ID semplice (es. (get_func())() )
-        // Questo è più complesso e potrebbe non essere supportato ora.
         yywarning("calling a complex expression as a function is not fully checked yet");
     }
 }
 
-/* Evaluate constant expressions */
+// Valuta espressioni costanti
 int eval_constant_expr(struct AstNode* expr)
 {
     if (!expr)
@@ -402,7 +355,7 @@ int eval_constant_expr(struct AstNode* expr)
     }
 }
 
-/* Infer the return type of a function by analyzing its code and return statements */
+// Inferisce il tipo di ritorno di una funzione analizzando il suo codice e le istruzioni di return
 enum LUA_TYPE infer_func_return_type(struct AstNode* code, struct symlist* func_scope)
 {
     if (!code)
@@ -432,8 +385,7 @@ enum LUA_TYPE infer_func_return_type(struct AstNode* code, struct symlist* func_
             }
             else if (current_return_expr_type != first_return_type)
             {
-                // Tipi di ritorno multipli e diversi.
-                // Potremmo generalizzare (es. INT e FLOAT -> NUMBER)
+                // Tipi di ritorno multipli e diversi
                 if ((first_return_type == INT_T || first_return_type == FLOAT_T || first_return_type == NUMBER_T) &&
                     (current_return_expr_type == INT_T || current_return_expr_type == FLOAT_T ||
                         current_return_expr_type == NUMBER_T))
@@ -453,7 +405,7 @@ enum LUA_TYPE infer_func_return_type(struct AstNode* code, struct symlist* func_
                 else
                 {
                     yywarning("Function has multiple incompatible return types. Defaulting to a generic type (void*).");
-                    return USERDATA_T; // Indica tipo dinamico/sconosciuto per C
+                    return USERDATA_T;
                 }
             }
         }
@@ -466,13 +418,12 @@ enum LUA_TYPE infer_func_return_type(struct AstNode* code, struct symlist* func_
             {
                 else_type = infer_func_return_type(current->node.ifn->else_body, func_scope);
             }
-            // Semplice logica: se uno dei branch ritorna qualcosa, lo consideriamo.
-            // Una logica più complessa gestirebbe la coerenza tra i tipi.
+            // Semplice logica: se uno dei branch ritorna qualcosa, lo consideriamo
             if (if_type != NIL_T && inferred_type == NIL_T)
                 inferred_type = if_type;
             if (else_type != NIL_T && inferred_type == NIL_T)
                 inferred_type = else_type;
-            // Se if_type e else_type sono diversi e non NIL, potremmo dover generalizzare o avvisare.
+            // Se if_type e else_type sono diversi e non NIL, potremmo dover generalizzare o avvisare
             if (if_type != NIL_T && else_type != NIL_T && if_type != else_type)
             {
                 if ((if_type == INT_T || if_type == FLOAT_T || if_type == NUMBER_T) &&
@@ -486,7 +437,7 @@ enum LUA_TYPE infer_func_return_type(struct AstNode* code, struct symlist* func_
                     yywarning(
                         "Function has different return types in if/else branches. Type inference may be inaccurate.");
                     if (inferred_type == NIL_T)
-                        return USERDATA_T; // Se non c'era un tipo prima
+                        return USERDATA_T;
                 }
             }
         }
@@ -496,7 +447,6 @@ enum LUA_TYPE infer_func_return_type(struct AstNode* code, struct symlist* func_
             if (for_type != NIL_T && inferred_type == NIL_T)
                 inferred_type = for_type;
         }
-        // Aggiungere WHILE_T se presente
         current = current->next;
     }
     return inferred_type;

@@ -4,22 +4,22 @@
 #include "ast.h"
 #include "symtab.h"
 
-/* Types of built-in functions */
+// Tipi di funzioni built-in
 enum FUNC_TYPE
 {
     PRINT_T,
     READ_T
 };
 
-/* Complex type for expression evaluation */
+// Tipo complesso per la valutazione delle espressioni
 struct complex_type
 {
     enum LUA_TYPE type;
 
     enum
     {
-        DYNAMIC, // Value determined at runtime
-        CONSTANT // Value known at compile time
+        DYNAMIC, // Valore determinato a runtime
+        CONSTANT // Value noto a compile time
     } kind;
 };
 
