@@ -3,7 +3,8 @@
 #include <stdio.h>
 
 int depth = 0;
-/* Funzione per stampare il numero di tabulazioni */
+
+// Funzione per stampare il numero di tabulazioni
 void print_tab(int depth)
 {
     for (int i = 0; i < depth; i++)
@@ -12,7 +13,7 @@ void print_tab(int depth)
     }
 }
 
-/* Funzione per printare i nodi Ast */
+// Funzione per printare i nodi Ast
 void print_node(struct AstNode* n)
 {
     switch (n->nodetype)
@@ -157,7 +158,7 @@ void print_node(struct AstNode* n)
     }
 }
 
-/* Funzione per printare l'Ast */
+// Funzione per printare l'Ast
 void print_ast(struct AstNode* n)
 {
     while (n)
@@ -180,7 +181,7 @@ void print_ast(struct AstNode* n)
     }
 }
 
-/* Funzione per printare liste di nodi */
+// Funzione per printare liste di nodi
 void print_list(struct AstNode* l)
 {
     while (l)
@@ -195,25 +196,7 @@ void print_list(struct AstNode* l)
     }
 }
 
-/* Funzione per printare le dichiarazioni multiple come singole dichiarazioni */
-void print_decl(struct AstNode* l, char* type)
-{
-    /* splitta le dichiarazioni multiple , in quanto in golang non possiamo averle con assegnazione se non sono tutte con
-    assegnazione, es int a, b=0, c; */
-    while (l)
-    {
-        print_tab(depth);
-        printf("%s ", type);
-        print_node(l);
-        l = l->next;
-        if (l)
-        {
-            printf(" ; \n");
-        }
-    }
-}
-
-/* Convertire un tipo di espressione in una stringa */
+// Convertire un tipo di espressione in una stringa
 char* convert_expr_type(enum EXPRESSION_TYPE expr_type)
 {
     switch (expr_type)
@@ -284,36 +267,5 @@ char* convert_var_type(enum LUA_TYPE type)
         return "error";
     default:
         return "unknown";
-    }
-}
-
-/* Funzione per convertire il tipo di nodo */
-// usata per debug
-char* convert_node_type(enum NODE_TYPE t)
-{
-    switch (t)
-    {
-    case EXPR_T:
-        return "expr node";
-    case IF_T:
-        return "if node";
-    case VAL_T:
-        return "val node";
-    case VAR_T:
-        return "var node";
-    case DECL_T:
-        return "decl node";
-    case RETURN_T:
-        return "ret node";
-    case FCALL_T:
-        return "func call node";
-    case FDEF_T:
-        return "func def node";
-    case FOR_T:
-        return "for node";
-    case ERROR_NODE_T:
-        return "error node";
-    default:
-        return "unknown node";
     }
 }
