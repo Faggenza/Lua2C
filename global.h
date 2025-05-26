@@ -12,9 +12,9 @@
 extern char *filename;
 extern int error_num;
 extern int main_flag;
-extern int current_scope_lvl; // indica il livello dello scope corrente
+extern int current_scope_lvl;
 extern struct symlist *current_symtab;
-extern struct symlist *root_symtab; // puntatore alla symbol table globale (scope più esterno)
+extern struct symlist *root_symtab;
 
 /* funzioni per la gestione degli errori */
 void yyerror(const char *s);

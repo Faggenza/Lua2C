@@ -407,7 +407,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    // inizializzazione variabili globali
+    // inizializzazione variabili globali, forse inutile
     error_num = 0;
     current_scope_lvl = 0;
     current_symtab = NULL;
@@ -442,9 +442,7 @@ void scope_enter() {
         param_list = NULL;
     }
 
-    // We now handle function return types explicitly in the function definition rules
-    // so we don't need to add them here automatically
-    ret_type = -1; // Reset ret_type to default value
+    ret_type = -1; // Resetta ret_type al valore di default
 }
 
 /* Chiude uno scope. Eventualmente effettua il print della Symbol Table.
@@ -453,7 +451,6 @@ void scope_enter() {
 void scope_exit() {
     if(print_symtab_flag)
         print_symtab(current_symtab);
-    //check_usage(current_symtab);
 
     current_symtab = current_symtab->next;
     current_scope_lvl--;

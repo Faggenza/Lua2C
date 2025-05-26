@@ -3,8 +3,8 @@ parser.output
 parser.tab.c
 parser.tab.h
 transpiler
-prova.c
-test/prova.lua
-test/*.c
-test/*.h
-.vscode/
+test/**/*.c
+test/**/*.h
+test/**/*.out
+.vscode/*
+.idea/*

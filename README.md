@@ -24,6 +24,3 @@ Options:
     -t  print parse tree
     -s  print symtable
 ```
-# TODO 
-    - general clean-up
-    - ??dynamic imports??

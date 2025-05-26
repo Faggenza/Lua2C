@@ -8,7 +8,7 @@
 
 int div_by_zero; // flag che indica se ho una divisione per in eval_array_dim
 
-enum LUA_TYPE eval_bool(char* t)
+enum LUA_TYPE eval_bool(char *t)
 {
     switch (t[0])
     {
@@ -25,11 +25,11 @@ enum LUA_TYPE eval_bool(char* t)
 }
 
 // Valuta il tipo di espressione - in Lua significa inferire il tipo a runtime
-struct complex_type eval_expr_type(struct AstNode* expr, struct symlist* current_scope)
+struct complex_type eval_expr_type(struct AstNode *expr, struct symlist *current_scope)
 {
     struct complex_type result;
     result.kind = DYNAMIC; // Default a dinamico per Lua
-    result.type = NIL_T; // Inizializza a nil
+    result.type = NIL_T;   // Inizializza a nil
 
     if (!expr)
     {
@@ -46,7 +46,6 @@ struct complex_type eval_expr_type(struct AstNode* expr, struct symlist* current
         return result;
 
     case TABLE_NODE_T:
-        // Per ora non supportato
         result.type = TABLE_T;
         result.kind = DYNAMIC;
         return result;
@@ -60,7 +59,7 @@ struct complex_type eval_expr_type(struct AstNode* expr, struct symlist* current
             }
             else
             {
-                struct symbol* sym = NULL;
+                struct symbol *sym = NULL;
                 if (current_scope)
                 {
                     sym = find_symtab(current_scope, expr->node.var->name);
@@ -72,9 +71,7 @@ struct complex_type eval_expr_type(struct AstNode* expr, struct symlist* current
                 }
                 else
                 {
-                    yywarning(error_string_format(
-                        "Variable '%s' used in expression but not found in symbol table (or symbol table access issue). Assuming nil for now.",
-                        expr->node.var->name));
+                    // Variable non trovata nella symbol table, assumiamo nil
                     result.type = NIL_T;
                 }
             }
@@ -92,7 +89,7 @@ struct complex_type eval_expr_type(struct AstNode* expr, struct symlist* current
             expr->node.fcall->func_expr->node.var && expr->node.fcall->func_expr->node.var->name &&
             strcmp(expr->node.fcall->func_expr->node.var->name, "io.read") == 0)
         {
-            struct AstNode* fcall_args = expr->node.fcall->args;
+            struct AstNode *fcall_args = expr->node.fcall->args;
             if (fcall_args == NULL)
             {
                 result.type = STRING_T;
@@ -102,7 +99,7 @@ struct complex_type eval_expr_type(struct AstNode* expr, struct symlist* current
                 struct complex_type arg_type = eval_expr_type(fcall_args, current_scope);
                 if (arg_type.type == STRING_T && fcall_args->nodetype == VAL_T)
                 {
-                    const char* fmt = fcall_args->node.val->string_val;
+                    const char *fmt = fcall_args->node.val->string_val;
                     if (strcmp(fmt, "*n") == 0)
                         result.type = NUMBER_T;
                     else
@@ -120,8 +117,8 @@ struct complex_type eval_expr_type(struct AstNode* expr, struct symlist* current
         }
         // Gestione print
         else if (expr->node.fcall->func_expr && expr->node.fcall->func_expr->nodetype == VAR_T &&
-            expr->node.fcall->func_expr->node.var && expr->node.fcall->func_expr->node.var->name &&
-            strcmp(expr->node.fcall->func_expr->node.var->name, "print") == 0)
+                 expr->node.fcall->func_expr->node.var && expr->node.fcall->func_expr->node.var->name &&
+                 strcmp(expr->node.fcall->func_expr->node.var->name, "print") == 0)
         {
             result.type = NIL_T; // print non restituisce un valore in Lua
         }
@@ -135,9 +132,9 @@ struct complex_type eval_expr_type(struct AstNode* expr, struct symlist* current
             }
             // Altrimenti, prova a dedurlo dalla symbol table
             else if (expr->node.fcall->func_expr && expr->node.fcall->func_expr->nodetype == VAR_T &&
-                expr->node.fcall->func_expr->node.var && expr->node.fcall->func_expr->node.var->name)
+                     expr->node.fcall->func_expr->node.var && expr->node.fcall->func_expr->node.var->name)
             {
-                struct symbol* func_sym = NULL;
+                struct symbol *func_sym = NULL;
                 if (current_scope)
                 {
                     func_sym = find_symtab(current_scope, expr->node.fcall->func_expr->node.var->name);
@@ -207,7 +204,7 @@ struct complex_type eval_expr_type(struct AstNode* expr, struct symlist* current
 }
 
 // Controlla che la divisione non coinvolga lo zero
-void check_division(struct AstNode* expr, struct symlist* current_scope)
+void check_division(struct AstNode *expr, struct symlist *current_scope)
 {
     struct complex_type t = eval_expr_type(expr, current_scope);
 
@@ -223,13 +220,13 @@ void check_division(struct AstNode* expr, struct symlist* current_scope)
     }
 }
 
-void check_fcall(struct AstNode* func_expr, struct AstNode* args)
+void check_fcall(struct AstNode *func_expr, struct AstNode *args)
 {
     if (func_expr->nodetype == VAR_T &&
         strcmp(func_expr->node.var->name, "io.read") == 0)
     {
         // È una chiamata a io.read
-        struct AstNode* current_arg = args;
+        struct AstNode *current_arg = args;
         int arg_count = 0;
         if (current_arg != NULL)
         {
@@ -240,7 +237,7 @@ void check_fcall(struct AstNode* func_expr, struct AstNode* args)
             {
                 if (current_arg->node.val->val_type == STRING_T)
                 {
-                    const char* fmt = current_arg->node.val->string_val;
+                    const char *fmt = current_arg->node.val->string_val;
                     if (strcmp(fmt, "*n") == 0 || strcmp(fmt, "*l") == 0 ||
                         strcmp(fmt, "*a") == 0 || strcmp(fmt, "*L") == 0)
                     {
@@ -282,7 +279,7 @@ void check_fcall(struct AstNode* func_expr, struct AstNode* args)
     {
         // Chiamata a una funzione normale (es. f())
         // Cerchiamo la funzione nella symbol table per ottenere il tipo di ritorno
-        struct symbol* func_sym = find_symtab(current_symtab, func_expr->node.var->name);
+        struct symbol *func_sym = find_symtab(current_symtab, func_expr->node.var->name);
 
         // Il tipo di ritorno dovrebbe essere aggiornato nel nodo della chiamata di funzione
         // che però non abbiamo direttamente qui. Lo strumento check_fcall viene chiamato
@@ -296,11 +293,6 @@ void check_fcall(struct AstNode* func_expr, struct AstNode* args)
             // quando traduciamo la definizione della funzione
             func_sym->pl = args;
         }
-        else
-        {
-            // Funzione non trovata nella symbol table
-            yywarning(error_string_format("Function '%s' called but not defined", func_expr->node.var->name));
-        }
     }
     else
     {
@@ -310,7 +302,7 @@ void check_fcall(struct AstNode* func_expr, struct AstNode* args)
 }
 
 // Valuta espressioni costanti
-int eval_constant_expr(struct AstNode* expr)
+int eval_constant_expr(struct AstNode *expr)
 {
     if (!expr)
         return 0;
@@ -334,15 +326,15 @@ int eval_constant_expr(struct AstNode* expr)
         case MUL_T:
             return eval_constant_expr(expr->node.expr->l) * eval_constant_expr(expr->node.expr->r);
         case DIV_T:
+        {
+            int divisor = eval_constant_expr(expr->node.expr->r);
+            if (divisor == 0)
             {
-                int divisor = eval_constant_expr(expr->node.expr->r);
-                if (divisor == 0)
-                {
-                    yyerror("division by zero in constant expression");
-                    return 0;
-                }
-                return eval_constant_expr(expr->node.expr->l) / divisor;
+                yyerror("division by zero in constant expression");
+                return 0;
             }
+            return eval_constant_expr(expr->node.expr->l) / divisor;
+        }
         case NEG_T:
             return -eval_constant_expr(expr->node.expr->r);
 
@@ -356,12 +348,12 @@ int eval_constant_expr(struct AstNode* expr)
 }
 
 // Inferisce il tipo di ritorno di una funzione analizzando il suo codice e le istruzioni di return
-enum LUA_TYPE infer_func_return_type(struct AstNode* code, struct symlist* func_scope)
+enum LUA_TYPE infer_func_return_type(struct AstNode *code, struct symlist *func_scope)
 {
     if (!code)
         return NIL_T;
 
-    struct AstNode* current = code;
+    struct AstNode *current = code;
     enum LUA_TYPE inferred_type = NIL_T;
     int return_count = 0;
     enum LUA_TYPE first_return_type = NIL_T;
@@ -388,7 +380,7 @@ enum LUA_TYPE infer_func_return_type(struct AstNode* code, struct symlist* func_
                 // Tipi di ritorno multipli e diversi
                 if ((first_return_type == INT_T || first_return_type == FLOAT_T || first_return_type == NUMBER_T) &&
                     (current_return_expr_type == INT_T || current_return_expr_type == FLOAT_T ||
-                        current_return_expr_type == NUMBER_T))
+                     current_return_expr_type == NUMBER_T))
                 {
                     inferred_type = NUMBER_T;
                 }
