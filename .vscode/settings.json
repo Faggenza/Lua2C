@@ -16,7 +16,8 @@
         "functional": "c",
         "tuple": "c",
         "type_traits": "c",
-        "utility": "c"
+        "utility": "c",
+        "table.h": "c"
     },
     "makefile.configureOnOpen": false
 }
