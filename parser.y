@@ -13,9 +13,9 @@ extern FILE *yyin;
 extern int yylineno;
 extern char *line;
 
-struct AstNode *root; // Nodo radice dell'albero AST
-struct AstNode *param_list = NULL; // puntatore alla lista dei parametri di una funzione
-enum LUA_TYPE ret_type = -1; // tipo di ritorno della funzione, da inserire nello scope
+struct AstNode *root; 
+struct AstNode *param_list = NULL; 
+enum LUA_TYPE ret_type = -1; 
 
 void scope_enter();
 void scope_exit();
@@ -38,8 +38,8 @@ static struct AstNode* new_io_read_identifier_node(char* ns_token, char* func_to
         // 'full_name' sarà quindi gestito (eventualmente liberato) insieme al nodo AST.
         struct AstNode* var_node = new_variable(VAR_T, full_name, NULL);
 
-        free(ns_token); // Libera la stringa strdup-pata dal lexer per "io"
-        free(func_token); // Libera la stringa strdup-pata dal lexer per "read"
+        free(ns_token); 
+        free(func_token); 
         return var_node;
     }
     // Se non è "io.read" è un errore
@@ -269,7 +269,11 @@ start_expr
      ;
 
  step
-     : ',' expr                                                    { eval_expr_type($2, current_symtab); $$ = $2; }
+    //  : ',' expr                                                    { eval_expr_type($2, current_symtab); $$ = $2; }
+     : ',' number 
+        { eval_expr_type($2, current_symtab); $$ = $2; }
+     | ',' '-' number %prec UMINUS
+        { eval_expr_type(new_expression(EXPR_T, NEG_T, NULL, $3), current_symtab); $$ = new_expression(EXPR_T, NEG_T, NULL, $3); }
      | /* empty */                                                 { $$ = NULL; }
      ;
 

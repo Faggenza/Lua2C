@@ -6,5 +6,8 @@ transpiler
 test/**/*.c
 test/**/*.h
 test/**/*.out
+test/**/**/*.c
+test/**/**/*.h
+test/**/**/*.out
 .vscode/
 .idea/
