@@ -488,7 +488,7 @@ void fill_symtab(struct symlist * syml, struct AstNode *n, enum LUA_TYPE type, e
     Mostra a schermo l'uso del transpilatore
 */
 void print_usage(){
-    printf("Usage: ./compiler [options] file  \n");
+    printf("Usage: ./transpiler [options] file  \n");
     printf("options: \n");
     printf(" --help \t Display this information. \n");
     printf(" -h \t\t Display this information. \n");
