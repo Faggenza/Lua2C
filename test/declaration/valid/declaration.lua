@@ -16,3 +16,6 @@ k = false
 
 -- Nil
 l = nil
+
+--anonymous function
+m = function(g) return 42 end
