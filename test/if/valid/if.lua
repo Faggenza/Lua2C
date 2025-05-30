@@ -14,16 +14,6 @@ else
     s = "b is not greater than 5"
 end
 
--- If-elseif-else statement
--- local c = 5
--- if c > 10 then
---     s = "c is greater than 10"
--- elseif c == 5 then
---     s = "c is equal to 5"
--- else
---     s = "c is less than 5"
--- end
-
 -- Nested if statements
 d = 15
 e = 20
