@@ -1,6 +1,5 @@
 -- Programma per calcolare la serie di Fibonacci
 
--- Funzione per calcolare il valore di Fibonacci
 function fibonacci(n)
     if n <= 0 then
         return 0
@@ -20,7 +19,10 @@ function fibonacci(n)
     end
 end
 
--- Richiesta input all'utente
+print("\nEnter your name:")
+user_name = io.read()
+print("Hello, ", user_name)
+
 print("Inserisci il numero di termini della serie di Fibonacci da calcolare:")
 input = io.read("*n")
 
@@ -32,4 +34,3 @@ if input then
 else
     print("Per favore, inserisci un numero valido.")
 end
--- Fine del programma
