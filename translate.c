@@ -893,30 +893,6 @@ void generate_func_prototype(struct AstNode *func_node)
     }
 }
 
-/* Funzione per tradurre l'Ast (lista di statement) */
-void translate_ast(struct AstNode *n)
-{
-    // Accedi alla symtab radice
-    scope_lvl++;
-    struct symlist *local_scope = create_symtab(scope_lvl, root_symtab);
-
-    while (n)
-    {
-        translate_tab();
-
-        translate_node(n, local_scope);
-
-        if (n->nodetype != FDEF_T && n->nodetype != FOR_T && n->nodetype != IF_T)
-        {
-            fprintf(output_fp, ";\n");
-        }
-        n = n->next;
-    }
-
-    delete_symtab(local_scope);
-    scope_lvl--;
-}
-
 void translate(struct AstNode *root_ast_node)
 {
     printf(">> Inizio traduzione da Lua a C...\n");
