@@ -1,4 +1,4 @@
-<div style="display:flex; justify-content: center; gap: 60px">
+<div style="display:flex; justify-content: center; gap: 12%">
 <img src="./img/lua_Logo.png" alt="Lua" width="150" />
 <img src="./img/C_Logo.png" alt="C" width="138" />
 </div>
