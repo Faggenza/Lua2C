@@ -301,52 +301,6 @@ void check_fcall(struct AstNode *func_expr, struct AstNode *args)
     }
 }
 
-// Valuta espressioni costanti
-int eval_constant_expr(struct AstNode *expr)
-{
-    if (!expr)
-        return 0;
-
-    switch (expr->nodetype)
-    {
-    case VAL_T:
-        if (expr->node.val->val_type == NUMBER_T)
-        {
-            return atof(expr->node.val->string_val);
-        }
-        return 0;
-
-    case EXPR_T:
-        switch (expr->node.expr->expr_type)
-        {
-        case ADD_T:
-            return eval_constant_expr(expr->node.expr->l) + eval_constant_expr(expr->node.expr->r);
-        case SUB_T:
-            return eval_constant_expr(expr->node.expr->l) - eval_constant_expr(expr->node.expr->r);
-        case MUL_T:
-            return eval_constant_expr(expr->node.expr->l) * eval_constant_expr(expr->node.expr->r);
-        case DIV_T:
-        {
-            int divisor = eval_constant_expr(expr->node.expr->r);
-            if (divisor == 0)
-            {
-                yyerror("division by zero in constant expression");
-                return 0;
-            }
-            return eval_constant_expr(expr->node.expr->l) / divisor;
-        }
-        case NEG_T:
-            return -eval_constant_expr(expr->node.expr->r);
-
-        default:
-            return 0;
-        }
-
-    default:
-        return 0;
-    }
-}
-
 // Inferisce il tipo di ritorno di una funzione analizzando il suo codice e le istruzioni di return
 enum LUA_TYPE infer_func_return_type(struct AstNode *code, struct symlist *func_scope)
 {
