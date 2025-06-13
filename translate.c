@@ -1045,7 +1045,7 @@ void translate(struct AstNode *root_ast_node)
 
     fprintf(output_fp_h, "char *c_lua_io_read_bytes(int n)\n\
 {\n\
-    char *buff = malloc(sizeof(char) * (n + 1));\n\
+    char *buff = (char *)malloc(sizeof(char) * (n + 1));\n\
     scanf(\"%%ms\", &buff);\n\
     buff[n] = \'\\0\';\n\
     return buff;\n\
